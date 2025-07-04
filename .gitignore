@@ -1,0 +1,6 @@
+VIS
+
+bin/*
+!bin/.gitignore
+
+.vscode/*
