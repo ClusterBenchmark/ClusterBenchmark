@@ -5,12 +5,19 @@
 
 static inline void parse_id(char *Data, size_t *p, long long *v)
 {
-    while (Data[*p] < '0' || Data[*p] > '9')
+    while ((Data[*p] < '0' || Data[*p] > '9') && Data[*p] != '\n')
         (*p)++;
 
     *v = 0;
     while (Data[*p] >= '0' && Data[*p] <= '9')
         *v = (*v) * 10 + Data[(*p)++] - '0';
+}
+
+static inline void skip_line(char *Data, size_t *p)
+{
+    while (Data[*p] != '\n')
+        (*p)++;
+    (*p)++;
 }
 
 graph *graph_parse(FILE *f)
@@ -22,20 +29,35 @@ graph *graph_parse(FILE *f)
     char *Data = mmap(0, size, PROT_READ, MAP_PRIVATE, fileno_unlocked(f), 0);
     size_t p = 0;
 
+    while (Data[p] == '%')
+        skip_line(Data, &p);
+
     long long n, m, t;
     parse_id(Data, &p, &n);
     parse_id(Data, &p, &m);
     parse_id(Data, &p, &t);
 
-    int *V = malloc(sizeof(int) * (n + 1));
+    skip_line(Data, &p);
+
+    long long *V = malloc(sizeof(long long) * (n + 1));
     int *E = malloc(sizeof(int) * (m * 2));
 
-    long long *W = malloc(sizeof(long long) * n);
+    long long *EW = NULL, *VW = NULL;
+
+    if (t == 10 || t == 11)
+        VW = malloc(sizeof(long long) * n);
+    if (t == 1 || t == 11)
+        EW = malloc(sizeof(long long) * (m * 2));
 
     int ei = 0;
     for (int u = 0; u < n; u++)
     {
-        parse_id(Data, &p, W + u);
+        while (Data[p] == '%')
+            skip_line(Data, &p);
+
+        if (VW != NULL)
+            parse_id(Data, &p, VW + u);
+
         V[u] = ei;
         while (ei < m * 2)
         {
@@ -46,8 +68,12 @@ graph *graph_parse(FILE *f)
 
             long long e;
             parse_id(Data, &p, &e);
-            E[ei++] = e - 1;
-            ;
+            E[ei] = e - 1;
+
+            if (EW != NULL)
+                parse_id(Data, &p, EW + ei);
+
+            ei++;
         }
         p++;
     }
@@ -56,7 +82,7 @@ graph *graph_parse(FILE *f)
     munmap(Data, size);
 
     graph *g = malloc(sizeof(graph));
-    *g = (graph){.n = n, .V = V, .E = E, .W = W};
+    *g = (graph){.n = n, .m = m, .V = V, .E = E, .VW = VW, .EW = EW};
 
     return g;
 }
@@ -68,7 +94,8 @@ void graph_free(graph *g)
 
     free(g->V);
     free(g->E);
-    free(g->W);
+    free(g->VW);
+    free(g->EW);
 
     free(g);
 }
@@ -80,15 +107,15 @@ static inline int compare(const void *a, const void *b)
 
 int graph_validate(graph *g)
 {
-    int M = 0;
+    int m = 0;
     for (int u = 0; u < g->n; u++)
     {
         if (g->V[u + 1] - g->V[u] < 0)
             return 0;
 
-        M += g->V[u + 1] - g->V[u];
+        m += g->V[u + 1] - g->V[u];
 
-        for (int i = g->V[u]; i < g->V[u + 1]; i++)
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
             if (i < 0 || i >= g->V[g->n])
                 return 0;
@@ -99,7 +126,7 @@ int graph_validate(graph *g)
         }
     }
 
-    if (M != g->V[g->n])
+    if (m != g->V[g->n] || m / 2 != g->m)
         return 0;
 
     return 1;
