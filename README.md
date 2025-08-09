@@ -234,6 +234,7 @@ University of Pittsburgh, US
 * **Dataset** Cora, Citeseer, Amazon Photo, Amazon Computers, Reddit, ogbn-arxiv, ogbn-products, ogbn‑papers100M
 * Available at [Link](https://dl.acm.org/doi/abs/10.1145/3637528.3671967)
 
+MAGI is not really a clustering algorithm. Instead, it performs graph embedding and then runs k-means clustering. This means the user needs to know the number of clusters upfront.
 
 ### Bayan (2024)
 
