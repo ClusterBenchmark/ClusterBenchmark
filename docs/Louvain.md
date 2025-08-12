@@ -14,3 +14,5 @@ Renaud Lambiotte, Etienne Lefebvre1
 ## Code
 
 The code is available as [SourceForge](https://sourceforge.net/projects/louvain/). I have not tried to compile it yet, but it seems easy enough to use.
+
+There is also python bindings included in both NetworkX and the iGraph.

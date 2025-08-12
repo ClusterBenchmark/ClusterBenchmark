@@ -1,0 +1,9 @@
+solver,modularity,clusters,F1,accuracy
+CluStRE,0.87433971,52898,0.88656562,0.80477179
+Infomap,dnf,dnf,dnf,dnf
+Leiden,0.88117325,52978,0.89003462,0.81057893
+Louvain,0.87653016,52860,0.88797388,0.80739684
+MAGI,dnf,dnf,dnf,dnf
+VieClus,dnf,dnf,dnf,dnf
+Walktrap,dnf,dnf,dnf,dnf
+Truth,0.72866156,47,1.00000000,1.00000000

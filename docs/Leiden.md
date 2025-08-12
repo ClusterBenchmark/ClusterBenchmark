@@ -13,3 +13,5 @@ Short recap:
 ## Code
 
 The is a pip installable python package available at [GitHub](https://github.com/vtraag/leidenalg). The official reference implementation was written in Java, and is also available at [GitHub](https://github.com/CWTSLeiden/networkanalysis).
+
+This was exteremely slow (about 2h on the largest graph).
