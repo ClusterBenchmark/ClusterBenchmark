@@ -1,7 +1,7 @@
 SHELL = /bin/bash
 
 CC = gcc
-CFLAGS = -std=gnu17 -O3 -g -march=native -I include -fopenmp
+CFLAGS = -std=gnu17 -O3 -g -I include -fopenmp
 
 OBJ = graph.o
 
@@ -35,7 +35,7 @@ EVAL : $(OBJ_EVAL)
 	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 CLUSTER : $(OBJ_CLUSTER)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 bin/%.o : %.c
 	$(CC) $(CFLAGS) -MMD -c $< -o $@

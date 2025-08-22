@@ -20,11 +20,6 @@ static inline void skip_line(char *Data, size_t *p)
     (*p)++;
 }
 
-static inline int compare(const void *a, const void *b)
-{
-    return (*(int *)a - *(int *)b);
-}
-
 graph *graph_parse(FILE *f)
 {
     fseek(f, 0, SEEK_END);
