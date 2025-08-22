@@ -1,9 +1,11 @@
-VIS
 
 bin/*
 !bin/.gitignore
 
 .vscode/*
-CONVERT
 .gitignore
+
+VIS
+CONVERT
 EVAL
+CLUSTER

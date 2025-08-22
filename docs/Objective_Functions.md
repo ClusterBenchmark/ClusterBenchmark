@@ -10,6 +10,24 @@ Where $K_{C_i \rightarrow C_i}$ is the weight of intra-cluster edges in $C_i$, a
 
 Problem with resolution. Can be remedied somewhat by a resolution limit (resolution parameter).
 
+Another equivalent formulation that is easy to implement is defined as follows.
+
+$$Q = \sum_{c \in C} \left[ \frac{L_c}{m} - \left(\frac{K_c}{2m}\right)^2 \right]$$
+
+Where:
+* $L_c$ is the number of internal edges in community $c$ (counted once)
+* $K_c$ is the sum of degrees of nodes in community $c$
+* $m$ is the number of edges in the graph
+
+Furthermore, for programming a numerically stable modularity score, it is beneficial to use only integer values. To achive this, the general idea is to multiply the modularity with $4m^2$ to get a discrete integer optimization function.
+
+Let:
+* $L_\Sigma = \sum_{c \in C} L_c$
+* $S = \sum_{c \in C} K_c$
+
+Now, we can maximize a single integer value $N$ defined as follows. $$N = 4mL_\Sigma - S$$
+To get the modularity, we can simply take $Q = \frac{N}{4m^2}$.
+
 ## Coverage
 
 Fraction of edges contained inside the clusters and edges containd in the graph.

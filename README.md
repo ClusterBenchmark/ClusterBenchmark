@@ -30,6 +30,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | CommDGI | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) |
 | [Leiden]() | 2019 | Netherlands | 5057 | &#x2705; | | &#x2705; | | | | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC6435756/) | [GitHub](https://github.com/vtraag/leidenalg) |
 | [DMoN](docs/DMoN.md) | 2020 | Germany | 438 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://www.jmlr.org/papers/v24/20-998.html) | [GitHub](https://github.com/google-research/google-research/tree/master/graph_embedding/dmon) |
+| [GNNS](docs/GNNS.md) | 2022 | US | 24 | | &#x2705; | &#x2705; | | | | [Link](https://appliednetsci.springeropen.com/articles/10.1007/s41109-022-00500-z) | [GitHub](https://github.com/Alexander-Belyi/GNNS) |
 | Ucode | 2023 | Denmark | 18 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://link.springer.com/article/10.1007/s10994-023-06402-0) |
 | DGCluster | 2023 | US | 10 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://ojs.aaai.org/index.php/AAAI/article/view/28983) |
 | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
