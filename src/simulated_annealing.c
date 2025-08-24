@@ -33,6 +33,11 @@ simulated_annealing *simulated_annealing_init(graph *g)
 
     simulated_annealing_reset(sa, g);
 
+    sa->best_c = malloc(sizeof(int) * g->n);
+    for (int i = 0; i < g->n; i++)
+        sa->best_c[i] = sa->Community[i];
+    sa->best_n = sa->n;
+
     return sa;
 }
 
@@ -42,12 +47,14 @@ void simulated_annealing_free(simulated_annealing *sa)
     free(sa->K);
     free(sa->Community);
 
+    free(sa->best_c);
+
     free(sa);
 }
 
 double simulated_annealing_get_modularity_score(simulated_annealing *sa, graph *g)
 {
-    return (double)sa->n / (16.0 * g->m * g->m);
+    return (double)sa->n / (4.0 * g->m * g->m);
 }
 
 static inline void simulated_annealing_move_vertex(simulated_annealing *sa, graph *g, int u, int c)
@@ -83,18 +90,37 @@ static inline void simulated_annealing_move_vertex(simulated_annealing *sa, grap
     sa->l_sum += new_internal;
 
     sa->s += Ko2 + Kn2 - (Ko1 + Kn1);
-
     sa->n = 4ll * g->m * sa->l_sum - sa->s;
+
+    sa->Community[u] = c;
+}
+
+long long count_internal_edges(simulated_annealing *sa, graph *g)
+{
+    long long l_sum = 0;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        for (int i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+
+            if (sa->Community[u] == sa->Community[v])
+                l_sum++;
+        }
+    }
+
+    return l_sum / 2;
 }
 
 void simulated_annealing_run(simulated_annealing *sa, graph *g)
 {
-    double start = get_wtime();
+    simulated_annealing_reset(sa, g);
 
     for (int k = 0; k < (1 << 25); k++)
     {
         double t = 1.0 - ((double)(k + 1) / (double)(1 << 25));
-        t /= 4.0;
+        t /= 8.0;
 
         int u = rand() % g->n;
         int d = g->V[u + 1] - g->V[u];
@@ -112,14 +138,22 @@ void simulated_annealing_run(simulated_annealing *sa, graph *g)
 
         simulated_annealing_move_vertex(sa, g, u, c);
 
-        if (sa->n < old_n || rand() > exp((double)(sa->n - old_n) / t) * (double)RAND_MAX)
+        double score = (double)(sa->n - old_n) / 100000.0;
+        if (sa->n < old_n && rand() > exp(score / t) * (double)RAND_MAX)
         {
             simulated_annealing_move_vertex(sa, g, u, old_c);
         }
 
+        if (sa->n > sa->best_n)
+        {
+            sa->best_n = sa->n;
+            // for (int u = 0; u < g->n; u++)
+            //     sa->best_c[u] = sa->Community[u];
+        }
+
         if ((k % 1028) == 0)
         {
-            printf("\r%20lld,%20lld,%20lld,%10.8lf", sa->n, sa->l_sum, sa->s, simulated_annealing_get_modularity_score(sa, g));
+            printf("\r%15d,%12.8lf,%12.8lf,%12.8lf", k, t, simulated_annealing_get_modularity_score(sa, g), (double)sa->best_n / (4.0 * g->m * g->m));
             fflush(stdout);
         }
     }

@@ -23,7 +23,7 @@ Furthermore, for programming a numerically stable modularity score, it is benefi
 
 Let:
 * $L_\Sigma = \sum_{c \in C} L_c$
-* $S = \sum_{c \in C} K_c$
+* $S = \sum_{c \in C} K_c^2$
 
 Now, we can maximize a single integer value $N$ defined as follows. $$N = 4mL_\Sigma - S$$
 To get the modularity, we can simply take $Q = \frac{N}{4m^2}$.

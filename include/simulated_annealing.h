@@ -8,6 +8,9 @@ typedef struct
 
     long long *L, *K;
     int *Community;
+
+    int *best_c;
+    long long best_n;
 } simulated_annealing;
 
 simulated_annealing *simulated_annealing_init(graph *g);
