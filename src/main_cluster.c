@@ -1,7 +1,9 @@
-#include <graph.h>
-#include <local_search.h>
+#include "graph.h"
+#include "difference_core.h"
+#include "local_search.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 int path_name_offset(char *path)
 {
@@ -20,41 +22,41 @@ int main(int argc, char **argv)
     graph *g = graph_parse(f);
     fclose(f);
 
+    graph_sort_edges(g);
+    graph_default_weights(g);
+
     if (!graph_validate(g))
         printf("Error in graph\n");
 
-    local_search *ls = local_search_init(g, 0);
+    d_core *dc = d_core_init(g, 16, 0);
+    dc->step_time = 10.0;
 
-    printf("%20s,%10d,%10d,%10.6lf\n",
-           argv[1] + path_name_offset(argv[1]),
-           g->n, g->m,
-           local_search_get_modularity_score(ls, g));
+    d_core_run(dc, g, 600.0, 1);
 
-    local_search_explore(ls, g, 600.0, 1);
+    d_core_free(dc);
 
-    int *FM = malloc(sizeof(int) * g->n);
-    for (int i = 0; i < g->n; i++)
-        FM[i] = -1;
+    // int *FM = malloc(sizeof(int) * g->n);
+    // for (int i = 0; i < g->n; i++)
+    //     FM[i] = -1;
 
-    int c = 0;
-    for (int u = 0; u < g->n; u++)
-    {
-        if (FM[ls->Community[u]] < 0)
-            FM[ls->Community[u]] = c++;
-    }
+    // int c = 0;
+    // for (int u = 0; u < g->n; u++)
+    // {
+    //     if (FM[ls->Community[u]] < 0)
+    //         FM[ls->Community[u]] = c++;
+    // }
 
-    f = fopen("clusters.csv", "w");
-    fprintf(f, "id,cluster\n");
-    for (int u = 0; u < g->n; u++)
-    {
-        fprintf(f, "%d,%d\n", u, FM[ls->Community[u]]);
-    }
-    fclose(f);
+    // f = fopen("clusters.csv", "w");
+    // fprintf(f, "id,cluster\n");
+    // for (int u = 0; u < g->n; u++)
+    // {
+    //     fprintf(f, "%d,%d\n", u, FM[ls->Community[u]]);
+    // }
+    // fclose(f);
 
-    free(FM);
+    // free(FM);
 
     graph_free(g);
-    local_search_free(ls);
 
     return 0;
 }

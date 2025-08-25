@@ -5,7 +5,20 @@
 
 static inline int compare(const void *a, const void *b)
 {
-    return (*(int *)a - *(int *)b);
+    return *(int *)a - *(int *)b;
+}
+
+static inline int compare_r(const void *a, const void *b, void *c)
+{
+    int *ID = (int *)c;
+    return ID[*(int *)a] - ID[*(int *)b];
+}
+
+static inline void swap_int(int **a, int **b)
+{
+    int *t = *a;
+    *a = *b;
+    *b = t;
 }
 
 static inline double get_wtime()
@@ -24,4 +37,21 @@ static inline void shuffle(int *list, int n, unsigned int *seed)
         list[j] = list[i];
         list[i] = t;
     }
+}
+
+static inline void parse_id(char *Data, size_t *p, long long *v)
+{
+    while ((Data[*p] < '0' || Data[*p] > '9') && Data[*p] != '\n')
+        (*p)++;
+
+    *v = 0;
+    while (Data[*p] >= '0' && Data[*p] <= '9')
+        *v = (*v) * 10 + Data[(*p)++] - '0';
+}
+
+static inline void skip_line(char *Data, size_t *p)
+{
+    while (Data[*p] != '\n')
+        (*p)++;
+    (*p)++;
 }

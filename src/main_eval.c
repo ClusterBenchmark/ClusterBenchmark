@@ -6,7 +6,7 @@ int main(int argc, char **argv)
     graph *g = graph_parse(f);
     fclose(f);
 
-    printf("%d %d\n", g->n, g->m);
+    printf("%lld %lld\n", g->n, g->m);
 
     if (!graph_validate(g))
         printf("Error in graph\n");

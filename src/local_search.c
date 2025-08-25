@@ -2,19 +2,10 @@
 #include "util.h"
 
 #include <stdlib.h>
+#include <assert.h>
 
-void local_search_reset(local_search *ls, graph *g)
-{
-    ls->l_sum = 0;
-    ls->s = 0;
-    for (int u = 0; u < g->n; u++)
-    {
-        ls->K[u] = g->V[u + 1] - g->V[u];
-        ls->s += ls->K[u] * ls->K[u];
-        ls->Community[u] = u;
-    }
-    ls->n = 4 * g->m * ls->l_sum - ls->s;
-}
+#define MAX_QUEUE (1 << 5)
+#define TIME_INTERVAL (1 << 7)
 
 local_search *local_search_init(graph *g, unsigned int seed)
 {
@@ -24,18 +15,15 @@ local_search *local_search_init(graph *g, unsigned int seed)
     ls->s = 0;
     ls->n = 0;
 
+    ls->max_queue = MAX_QUEUE;
+
     ls->K = malloc(sizeof(long long) * g->n);
     ls->Community = malloc(sizeof(int) * g->n);
 
     ls->seed = seed;
 
-    local_search_reset(ls, g);
-
     ls->Temp = malloc(sizeof(int) * g->n);
-    ls->Temp_set = malloc(sizeof(int) * g->n);
-
-    for (int i = 0; i < g->n; i++)
-        ls->Temp_set[i] = 0;
+    ls->Temp_set = malloc(sizeof(long long) * g->n);
 
     ls->queue_count = g->n;
     ls->Queue = malloc(sizeof(int) * g->n);
@@ -43,23 +31,13 @@ local_search *local_search_init(graph *g, unsigned int seed)
     ls->In_queue = malloc(sizeof(int) * g->n);
     ls->In_queue_old = malloc(sizeof(int) * g->n);
 
-    for (int i = 0; i < g->n; i++)
-        ls->Queue[i] = i;
-
-    for (int i = 0; i < g->n; i++)
-        ls->Queue_old[i] = 0;
-
-    for (int i = 0; i < g->n; i++)
-        ls->In_queue[i] = 1;
-
-    for (int i = 0; i < g->n; i++)
-        ls->In_queue_old[i] = 0;
-
     ls->log_count = 0;
     ls->log_alloc = (1 << 10);
 
     ls->Log_vertex = malloc(sizeof(int) * ls->log_alloc);
     ls->Log_community = malloc(sizeof(int) * ls->log_alloc);
+
+    local_search_reset(ls, g);
 
     return ls;
 }
@@ -83,7 +61,49 @@ void local_search_free(local_search *ls)
     free(ls);
 }
 
-static inline void local_search_move_vertex(local_search *ls, graph *g, int u, int c, int log)
+void local_search_reset(local_search *ls, graph *g)
+{
+    ls->l_sum = 0;
+    ls->s = 0;
+    for (int u = 0; u < g->n; u++)
+    {
+        ls->K[u] = g->VW[u];
+        ls->s += ls->K[u] * ls->K[u];
+        ls->Community[u] = u;
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+            if (v == u)
+                ls->l_sum += g->EW[i];
+        }
+    }
+    ls->n = 4 * g->m * ls->l_sum - ls->s;
+
+    ls->queue_count = g->n;
+
+    for (int i = 0; i < g->n; i++)
+        ls->Queue[i] = i;
+
+    for (int i = 0; i < g->n; i++)
+        ls->Queue_old[i] = 0;
+
+    for (int i = 0; i < g->n; i++)
+        ls->In_queue[i] = 1;
+
+    for (int i = 0; i < g->n; i++)
+        ls->In_queue_old[i] = 0;
+
+    ls->log_count = 0;
+
+    ls->time = 0.0;
+    ls->time_ref = get_wtime();
+
+    for (int i = 0; i < g->n; i++)
+        ls->Temp_set[i] = 0;
+}
+
+void local_search_move_vertex(local_search *ls, graph *g, int u, int c, int log, int queue)
 {
     int old_c = ls->Community[u];
     if (old_c == c)
@@ -102,33 +122,34 @@ static inline void local_search_move_vertex(local_search *ls, graph *g, int u, i
         ls->log_count++;
     }
 
-    int degree = g->V[u + 1] - g->V[u];
+    long long d = g->VW[u];
     ls->s -= ls->K[old_c] * ls->K[old_c] + ls->K[c] * ls->K[c];
 
-    ls->K[old_c] -= degree;
-    ls->K[c] += degree;
+    ls->K[old_c] -= d;
+    ls->K[c] += d;
 
     ls->s += ls->K[old_c] * ls->K[old_c] + ls->K[c] * ls->K[c];
 
-    int old_internal = 0, new_internal = 0;
-    for (int i = g->V[u]; i < g->V[u + 1]; i++)
+    long long old_internal = 0, new_internal = 0;
+    for (long long i = g->V[u]; i < g->V[u + 1]; i++)
     {
         int v = g->E[i];
-        if (!ls->In_queue[v] && ls->Community[v] != c)
+        if (v == u)
+            continue;
+
+        if (queue && !ls->In_queue[v])
         {
             ls->Queue[ls->queue_count++] = v;
             ls->In_queue[v] = 1;
         }
 
         if (ls->Community[v] == old_c)
-            old_internal++;
+            old_internal += g->EW[i];
         else if (ls->Community[v] == c)
-            new_internal++;
+            new_internal += g->EW[i];
     }
 
-    ls->l_sum -= old_internal;
-    ls->l_sum += new_internal;
-
+    ls->l_sum += new_internal - old_internal;
     ls->n = 4ll * g->m * ls->l_sum - ls->s;
 
     ls->Community[u] = c;
@@ -136,32 +157,34 @@ static inline void local_search_move_vertex(local_search *ls, graph *g, int u, i
 
 static inline void local_search_best_move(local_search *ls, graph *g, int u, int log)
 {
-    int d = g->V[u + 1] - g->V[u];
+    long long d = g->VW[u], old_internal = 0;
     int cu = ls->Community[u];
-    int old_internal = 0;
 
-    for (int i = g->V[u]; i < g->V[u + 1]; i++)
+    for (long long i = g->V[u]; i < g->V[u + 1]; i++)
     {
         int v = g->E[i];
+        if (v == u)
+            continue;
+
         int cv = ls->Community[v];
         if (cv == cu)
-            old_internal++;
+            old_internal += g->EW[i];
         else
-            ls->Temp_set[cv]++;
+            ls->Temp_set[cv] += g->EW[i];
     }
 
     int best_c = -1;
-    long long best_diff = 0;
-    int best_new_internal = 0;
+    long long best_diff = 0, best_new_internal = 0;
 
-    for (int i = g->V[u]; i < g->V[u + 1]; i++)
+    for (long long i = g->V[u]; i < g->V[u + 1]; i++)
     {
         int v = g->E[i];
         int cv = ls->Community[v];
-        if (ls->Community[v] == ls->Community[u] || ls->Temp_set[cv] == 0)
+
+        if (v == u || ls->Community[v] == ls->Community[u] || ls->Temp_set[cv] == 0)
             continue;
 
-        int new_internal = ls->Temp_set[cv];
+        long long new_internal = ls->Temp_set[cv];
 
         long long sd = (ls->K[cu] - d) * (ls->K[cu] - d) +
                        (ls->K[cv] + d) * (ls->K[cv] + d) -
@@ -181,7 +204,7 @@ static inline void local_search_best_move(local_search *ls, graph *g, int u, int
 
     if (best_c >= 0)
     {
-        ls->l_sum += (best_new_internal - old_internal);
+        ls->l_sum += best_new_internal - old_internal;
         ls->s += (ls->K[cu] - d) * (ls->K[cu] - d) +
                  (ls->K[best_c] + d) * (ls->K[best_c] + d) -
                  (ls->K[cu] * ls->K[cu] + ls->K[best_c] * ls->K[best_c]);
@@ -206,42 +229,16 @@ static inline void local_search_best_move(local_search *ls, graph *g, int u, int
             ls->log_count++;
         }
 
-        for (int i = g->V[u]; i < g->V[u + 1]; i++)
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
             int v = g->E[i];
-            if (!ls->In_queue[v] && ls->Community[v] != best_c)
+            if (v != u && !ls->In_queue[v])
             {
                 ls->Queue[ls->queue_count++] = v;
                 ls->In_queue[v] = 1;
             }
         }
     }
-}
-
-static inline long long local_search_move_score(local_search *ls, graph *g, int u, int c)
-{
-    int old_c = ls->Community[u];
-    if (old_c == c)
-        return 0;
-
-    int d = g->V[u + 1] - g->V[u];
-    long long sd = (ls->K[old_c] - d) * (ls->K[old_c] - d) +
-                   (ls->K[c] + d) * (ls->K[c] + d) -
-                   (ls->K[old_c] * ls->K[old_c] + ls->K[c] * ls->K[c]);
-
-    int old_internal = 0, new_internal = 0;
-    for (int i = g->V[u]; i < g->V[u + 1]; i++)
-    {
-        int v = g->E[i];
-        if (ls->Community[v] == old_c)
-            old_internal++;
-        else if (ls->Community[v] == c)
-            new_internal++;
-    }
-
-    long long diff = 4ll * g->m * (new_internal - old_internal) - sd;
-
-    return diff;
 }
 
 double local_search_get_modularity_score(local_search *ls, graph *g)
@@ -256,13 +253,8 @@ void local_search_greedy(local_search *ls, graph *g, int log)
         int count = ls->queue_count;
         ls->queue_count = 0;
 
-        int *t = ls->Queue;
-        ls->Queue = ls->Queue_old;
-        ls->Queue_old = t;
-
-        t = ls->In_queue;
-        ls->In_queue = ls->In_queue_old;
-        ls->In_queue_old = t;
+        swap_int(&ls->Queue, &ls->Queue_old);
+        swap_int(&ls->In_queue, &ls->In_queue_old);
 
         shuffle(ls->Queue_old, count, &ls->seed);
 
@@ -272,27 +264,6 @@ void local_search_greedy(local_search *ls, graph *g, int log)
             ls->In_queue_old[u] = 0;
 
             local_search_best_move(ls, g, u, log);
-
-            // int options = 0;
-            // for (int i = g->V[u]; i < g->V[u + 1]; i++)
-            // {
-            //     int v = g->E[i];
-            //     if (ls->Community[v] != ls->Community[u] && !ls->Temp_set[ls->Community[v]])
-            //     {
-            //         ls->Temp_set[ls->Community[v]] = 1;
-            //         ls->Temp[options++] = ls->Community[v];
-            //     }
-            // }
-
-            // shuffle(ls->Temp, options, &ls->seed);
-
-            // for (int i = 0; i < options; i++)
-            // {
-            //     long long diff = local_search_move_score(ls, g, u, ls->Temp[i]);
-            //     if (diff > 0)
-            //         local_search_move_vertex(ls, g, u, ls->Temp[i], log);
-            //     ls->Temp_set[ls->Temp[i]] = 0;
-            // }
         }
     }
 }
@@ -302,12 +273,12 @@ void local_search_bfs_perturbe(local_search *ls, graph *g, int log)
     int u = rand_r(&ls->seed) % g->n;
     int c = rand_r(&ls->seed) % g->n;
 
-    local_search_move_vertex(ls, g, u, c, log);
+    local_search_move_vertex(ls, g, u, c, log, 1);
 
-    for (int i = g->V[u]; i < g->V[u + 1]; i++)
+    for (long long i = g->V[u]; i < g->V[u + 1]; i++)
     {
         int v = g->E[i];
-        local_search_move_vertex(ls, g, v, c, log);
+        local_search_move_vertex(ls, g, v, c, log, 1);
     }
 }
 
@@ -319,20 +290,19 @@ void local_search_perturbe(local_search *ls, graph *g, int log)
 
     int c = rand_r(&ls->seed) % g->n;
 
-    local_search_move_vertex(ls, g, u, c, log);
+    local_search_move_vertex(ls, g, u, c, log, 1);
 
-    int size = rand_r(&ls->seed) % 32;
+    int size = rand_r(&ls->seed) % ls->max_queue;
 
-    for (int i = 0; i < 32 &&
+    for (int i = 0; i < ls->max_queue &&
                     ls->queue_count > 0 &&
                     ls->queue_count < size &&
                     ls->n <= best;
          i++)
     {
         int v = ls->Queue[rand_r(&ls->seed) % ls->queue_count];
-        c = rand_r(&ls->seed) % g->n;
 
-        local_search_move_vertex(ls, g, v, c, log);
+        local_search_move_vertex(ls, g, v, c, log, 1);
     }
 }
 
@@ -344,54 +314,56 @@ void local_search_unwind(local_search *ls, graph *g, int t)
         int u = ls->Log_vertex[ls->log_count];
         int c = ls->Log_community[ls->log_count];
 
-        local_search_move_vertex(ls, g, u, c, 0);
+        local_search_move_vertex(ls, g, u, c, 0, 0);
     }
+}
+
+void local_search_report(local_search *ls, graph *g, long long it)
+{
+    printf("\r%10lld: %12.8lf %8.2lf", it,
+           local_search_get_modularity_score(ls, g), ls->time);
+    fflush(stdout);
+}
+
+void local_search_print_header(local_search *ls, graph *g, double tl)
+{
+    printf("Running baseline local search for %.2lf seconds\n", tl);
+    printf("%11s %12s %8s\n", "It.", "Q", "Time");
+    local_search_report(ls, g, 0);
 }
 
 void local_search_explore(local_search *ls, graph *g, double tl, int verbose)
 {
     long long best = ls->n, c = 0;
+    double start = get_wtime();
 
     if (verbose)
-    {
-        printf("Running baseline local search for %.2lf seconds\n", tl);
-        printf("%11s %12s %8s\n", "It.", "Q", "Time");
-        printf("\r%10lld: %12.8lf %8.2lf", 0ll, local_search_get_modularity_score(ls, g), 0.0);
-        fflush(stdout);
-    }
-    double start = get_wtime(), time = 0.0;
+        local_search_print_header(ls, g, tl);
 
     local_search_greedy(ls, g, 0);
 
     if (ls->n > best)
     {
         best = ls->n;
-        time = get_wtime() - start;
+        ls->time = get_wtime() - ls->time_ref;
         if (verbose)
-        {
-            printf("\r%10lld:%12.8lf %8.2lf", 0ll, local_search_get_modularity_score(ls, g), time);
-            fflush(stdout);
-        }
+            local_search_report(ls, g, 0);
     }
 
     while (1)
     {
-        if ((c++ & ((1 << 7) - 1)) == 0)
+        if ((c++ & (TIME_INTERVAL - 1)) == 0)
         {
-            // c = 0;
             if (get_wtime() - start > tl)
                 break;
 
             if (verbose)
-            {
-                printf("\r%10lld: %12.8lf %8.2lf", c, local_search_get_modularity_score(ls, g), time);
-                fflush(stdout);
-            }
+                local_search_report(ls, g, c);
         }
 
         ls->log_count = 0;
 
-        if ((rand_r(&ls->seed) % 8) == 0)
+        if ((rand_r(&ls->seed) % 32) == 0)
             local_search_bfs_perturbe(ls, g, 1);
         else
             local_search_perturbe(ls, g, 1);
@@ -401,13 +373,10 @@ void local_search_explore(local_search *ls, graph *g, double tl, int verbose)
         if (ls->n > best)
         {
             best = ls->n;
-            time = get_wtime() - start;
+            ls->time = get_wtime() - ls->time_ref;
             ls->log_count = 0;
             if (verbose)
-            {
-                printf("\r%10lld: %12.8lf %8.2lf", c, local_search_get_modularity_score(ls, g), time);
-                fflush(stdout);
-            }
+                local_search_report(ls, g, c);
         }
         if (ls->n < best)
         {
