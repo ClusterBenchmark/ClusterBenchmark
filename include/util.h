@@ -3,32 +3,43 @@
 #include <time.h>
 #include <stdlib.h>
 
-static inline int compare(const void *a, const void *b)
+static inline int util_compare(const void *a, const void *b)
 {
     return *(int *)a - *(int *)b;
 }
 
-static inline int compare_r(const void *a, const void *b, void *c)
+static inline int util_compare_r(const void *a, const void *b, void *c)
 {
     int *ID = (int *)c;
     return ID[*(int *)a] - ID[*(int *)b];
 }
 
-static inline void swap_int(int **a, int **b)
+static inline void util_swap_int(int **a, int **b)
 {
     int *t = *a;
     *a = *b;
     *b = t;
 }
 
-static inline double get_wtime()
+static inline double util_get_wtime()
 {
     struct timespec tp;
     clock_gettime(CLOCK_REALTIME, &tp);
     return (double)tp.tv_sec + ((double)tp.tv_nsec / 1e9);
 }
 
-static inline void shuffle(int *list, int n, unsigned int *seed)
+static inline int util_path_name_offset(char *path)
+{
+    int offset = 0;
+    for (int i = 0; path[i] != '\0'; i++)
+    {
+        if (path[i] == '/')
+            offset = i + 1;
+    }
+    return offset;
+}
+
+static inline void util_shuffle(int *list, int n, unsigned int *seed)
 {
     for (int i = 0; i < n - 1; i++)
     {
@@ -39,7 +50,7 @@ static inline void shuffle(int *list, int n, unsigned int *seed)
     }
 }
 
-static inline void parse_id(char *Data, size_t *p, long long *v)
+static inline void util_parse_id(char *Data, size_t *p, long long *v)
 {
     while ((Data[*p] < '0' || Data[*p] > '9') && Data[*p] != '\n')
         (*p)++;
@@ -49,7 +60,7 @@ static inline void parse_id(char *Data, size_t *p, long long *v)
         *v = (*v) * 10 + Data[(*p)++] - '0';
 }
 
-static inline void skip_line(char *Data, size_t *p)
+static inline void util_skip_line(char *Data, size_t *p)
 {
     while (Data[*p] != '\n')
         (*p)++;

@@ -17,14 +17,14 @@ graph *graph_parse(FILE *f)
     size_t p = 0;
 
     while (Data[p] == '%')
-        skip_line(Data, &p);
+        util_skip_line(Data, &p);
 
     long long n, m, t;
-    parse_id(Data, &p, &n);
-    parse_id(Data, &p, &m);
-    parse_id(Data, &p, &t);
+    util_parse_id(Data, &p, &n);
+    util_parse_id(Data, &p, &m);
+    util_parse_id(Data, &p, &t);
 
-    skip_line(Data, &p);
+    util_skip_line(Data, &p);
 
     long long *V = malloc(sizeof(long long) * (n + 1));
     int *E = malloc(sizeof(int) * (m * 2));
@@ -40,10 +40,10 @@ graph *graph_parse(FILE *f)
     for (int u = 0; u < n; u++)
     {
         while (Data[p] == '%')
-            skip_line(Data, &p);
+            util_skip_line(Data, &p);
 
         if (VW != NULL)
-            parse_id(Data, &p, VW + u);
+            util_parse_id(Data, &p, VW + u);
 
         V[u] = ei;
         while (ei < m * 2)
@@ -54,11 +54,11 @@ graph *graph_parse(FILE *f)
                 break;
 
             long long e;
-            parse_id(Data, &p, &e);
+            util_parse_id(Data, &p, &e);
             E[ei] = e - 1;
 
             if (EW != NULL)
-                parse_id(Data, &p, EW + ei);
+                util_parse_id(Data, &p, EW + ei);
 
             ei++;
         }
@@ -138,7 +138,7 @@ void graph_sort_edges(graph *g)
         for (int i = 0; i < d; i++)
             buff1[i] = g->E[g->V[u] + i];
 
-        qsort_r(order, d, sizeof(int), compare_r, g->E + g->V[u]);
+        qsort_r(order, d, sizeof(int), util_compare_r, g->E + g->V[u]);
 
         for (int i = 0; i < d; i++)
             g->E[g->V[u] + i] = buff1[order[i]];
@@ -194,9 +194,7 @@ void graph_contract_bfs(graph *g, graph *gc, int *A, int *FM, int s, int *R, int
         r = w;
         w = 0;
 
-        int *t = R;
-        R = W;
-        W = t;
+        util_swap_int(&R, &W);
     }
 
     gc->n++;

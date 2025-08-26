@@ -202,7 +202,7 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                     continue;
 
                 double remaining_time = tl - (omp_get_wtime() - start);
-                double duration = c->step_time * 0.5;
+                double duration = c->step_time * 0.1;
                 if (remaining_time < duration)
                     duration = remaining_time;
 
@@ -233,12 +233,17 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                 d_core_update_best(c);
                 if (verbose)
                     d_core_print(c, g, ci, elapsed);
-
-                ci++;
             }
+            ci++;
         }
     }
 
     if (verbose)
         printf("\n");
+}
+
+int *d_core_get_best_clustering(d_core *d)
+{
+    int best = d_core_find_overall_best(d);
+    return d->LS[best]->Community;
 }

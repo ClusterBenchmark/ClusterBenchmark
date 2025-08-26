@@ -97,7 +97,7 @@ void local_search_reset(local_search *ls, graph *g)
     ls->log_count = 0;
 
     ls->time = 0.0;
-    ls->time_ref = get_wtime();
+    ls->time_ref = util_get_wtime();
 
     for (int i = 0; i < g->n; i++)
         ls->Temp_set[i] = 0;
@@ -253,10 +253,10 @@ void local_search_greedy(local_search *ls, graph *g, int log)
         int count = ls->queue_count;
         ls->queue_count = 0;
 
-        swap_int(&ls->Queue, &ls->Queue_old);
-        swap_int(&ls->In_queue, &ls->In_queue_old);
+        util_swap_int(&ls->Queue, &ls->Queue_old);
+        util_swap_int(&ls->In_queue, &ls->In_queue_old);
 
-        shuffle(ls->Queue_old, count, &ls->seed);
+        util_shuffle(ls->Queue_old, count, &ls->seed);
 
         for (int i = 0; i < count; i++)
         {
@@ -335,7 +335,7 @@ void local_search_print_header(local_search *ls, graph *g, double tl)
 void local_search_explore(local_search *ls, graph *g, double tl, int verbose)
 {
     long long best = ls->n, c = 0;
-    double start = get_wtime();
+    double start = util_get_wtime();
 
     if (verbose)
         local_search_print_header(ls, g, tl);
@@ -345,7 +345,7 @@ void local_search_explore(local_search *ls, graph *g, double tl, int verbose)
     if (ls->n > best)
     {
         best = ls->n;
-        ls->time = get_wtime() - ls->time_ref;
+        ls->time = util_get_wtime() - ls->time_ref;
         if (verbose)
             local_search_report(ls, g, 0);
     }
@@ -354,7 +354,7 @@ void local_search_explore(local_search *ls, graph *g, double tl, int verbose)
     {
         if ((c++ & (TIME_INTERVAL - 1)) == 0)
         {
-            if (get_wtime() - start > tl)
+            if (util_get_wtime() - start > tl)
                 break;
 
             if (verbose)
@@ -373,7 +373,7 @@ void local_search_explore(local_search *ls, graph *g, double tl, int verbose)
         if (ls->n > best)
         {
             best = ls->n;
-            ls->time = get_wtime() - ls->time_ref;
+            ls->time = util_get_wtime() - ls->time_ref;
             ls->log_count = 0;
             if (verbose)
                 local_search_report(ls, g, c);
