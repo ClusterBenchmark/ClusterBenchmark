@@ -110,8 +110,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    printf("Running %s %s %s (%d)\n", argv[0], argv[1], argv[2], argc);
-
     FILE *f = fopen(argv[1], "r");
     if (f == NULL)
         printf("Failed to open graph file\n");
@@ -138,30 +136,32 @@ int main(int argc, char **argv)
     if (argc == 4)
     {
         f = fopen(argv[3], "r");
+        if (f == NULL)
+            printf("Failed to open ground truth clustering file\n");
         truth = clustering_parse(f, g->n);
         fclose(f);
     }
 
     int offset = util_path_name_offset(argv[1]);
 
-    printf("%25s,%12lld,%12lld", argv[1] + offset, g->n, g->m);
+    printf("%s,%lld,%lld", argv[1] + offset, g->n, g->m);
 
     double q;
     long long n;
     int n_clusters;
     compute_modularity(g, cluster, &n, &q, &n_clusters);
-    printf(",%12.8lf,%15lld,%12d", q, n, n_clusters);
+    printf(",%.8lf,%lld,%d", q, n, n_clusters);
 
     if (truth != NULL)
     {
         int tp, fp, tn, fn;
         compute_metrics(g, cluster, truth, &tp, &fp, &tn, &fn);
 
-        printf(",%12.8lf", (2.0 * (double)tp) / (2.0 * (double)tp + (double)fp + (double)fn));
-        printf(",%12.8lf", (double)(tp + tn) / (double)g->V[g->n]);
+        printf(",%.8lf", (2.0 * (double)tp) / (2.0 * (double)tp + (double)fp + (double)fn));
+        printf(",%.8lf", (double)(tp + tn) / (double)g->V[g->n]);
     }
 
-    printf("\n");
+    // printf("\n");
 
     graph_free(g);
     free(cluster);

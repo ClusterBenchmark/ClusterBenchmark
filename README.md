@@ -22,9 +22,9 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | [Walktrap](docs/Walktrap.md) | 2005 | Paris | 2860 | &#x2705; | | &#x2705; | | | | [Link](https://arxiv.org/abs/physics/0512106v1) | |
 | [Infomap](docs/Infomap.md) | 2007 | US | 5356 | &#x2705; | | &#x2705; | | | &#x2705; | [Link](https://www.pnas.org/doi/abs/10.1073/pnas.0706851105) | [GitHub](https://github.com/mapequation/infomap) |
 | [Louvain](docs/Louvain.md) | 2008 | Belgium | 26291 | &#x2705; | | &#x2705; | | | | [Link](https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008/meta) | [SourceForge](https://sourceforge.net/projects/louvain/) |
-| VNS | 2012 | Brazil | 65 | &#x2705; | | &#x2705; | | | | [Link](https://web.archive.org/web/20170810064738id_/http://www.lix.polytechnique.fr/Labo/Leo.Liberti/dimacs10.pdf) | 
-| SCD | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) |
-| Hollocou | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) |
+| [VNS](docs/VNS.md) | 2012 | Brazil | 65 | &#x2705; | | &#x2705; | | | | [Link](https://web.archive.org/web/20170810064738id_/http://www.lix.polytechnique.fr/Labo/Leo.Liberti/dimacs10.pdf) | 
+| [SCD](docs/SCD.md) | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) |
+| [Hollocou](docs/Hollocou.md) | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | [GitHub](https://github.com/ahollocou/graph-streaming)
 | [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](http://vieclus.taa.univie.ac.at/) | [GitHub](https://github.com/VieClus/VieClus) |
 | InfoFlow | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) |
 | CommDGI | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) |
@@ -143,39 +143,6 @@ Walktrap | dnf | dnf | dnf | dnf
 Truth | 0.72866156 | 47 | 1.00000000 | 1.00000000
 
 ## Solvers cont.
-
-### VNS (2012)
-
-* **Place** Dept. of Computer Engineering and Automation, Universidade Federal do Rio Grande do Norte, Brazil
-* **Authors** Daniel Aloise, Gilles Caporossi, Pierre Hansen, Leo Liberti, Sylvain Perron, Manuel Ruiz
-* **Type** Algorithm Engineering
-* **Strategy** Variable neighborhood search
-* **Cited** 65
-* **Objective** Modularity
-* **Dataset** 10th DIMACS
-* Available at [Link](https://web.archive.org/web/20170810064738id_/http://www.lix.polytechnique.fr/Labo/Leo.Liberti/dimacs10.pdf)
-
-### SCD (2014)
-
-* **Place** Universitat Politècnica de Catalunya (UPC), Barcelona
-* **Authors** Arnau Prat-Pérez, David Dominguez-Sal, Josep-LLuis Larriba-Pey
-* **Type** Algorithm Engineering, Parallel
-* **Strategy** Build clusters around nodes with many triangles, then iterative refinement
-* **Cited** 192
-* **Objective** WCC (triangle counting), Ground Truth
-* **Dataset** Amazon, DBLP, YT, LiveJ., Orkut, and Friend
-* Available at [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ)
-
-### Hollocou (2017)
-
-* **Place** National Institute for Research in Digital Science and Technology, France
-* **Authors** Alexandre Hollocou, Julien Maudet, Thomas Bonald, Marc Lelarge
-* **Type** Algorithm Engineering, Streaming
-* **Strategy** Single pass edge streaming, compare degrees of its endpoints
-* **Cited** 18
-* **Objective** Modularity, Ground Truth
-* **Dataset** Amazon, DBLP, YT, LiveJ., Orkut, and Friend
-* Available at [Link](https://arxiv.org/abs/1712.04337)
 
 ### InfoFlow (2019)
 
