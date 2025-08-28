@@ -26,7 +26,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | [SCD](docs/SCD.md) | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) |
 | [Hollocou](docs/Hollocou.md) | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | [GitHub](https://github.com/ahollocou/graph-streaming)
 | [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](http://vieclus.taa.univie.ac.at/) | [GitHub](https://github.com/VieClus/VieClus) |
-| InfoFlow | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) |
+| [InfoFlow](docs/InfoFlow.md) | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) | [GitHub](https://github.com/felixfung/InfoFlow)
 | CommDGI | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) |
 | [Leiden]() | 2019 | Netherlands | 5057 | &#x2705; | | &#x2705; | | | | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC6435756/) | [GitHub](https://github.com/vtraag/leidenalg) |
 | [DMoN](docs/DMoN.md) | 2020 | Germany | 438 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://www.jmlr.org/papers/v24/20-998.html) | [GitHub](https://github.com/google-research/google-research/tree/master/graph_embedding/dmon) |
@@ -143,17 +143,6 @@ Walktrap | dnf | dnf | dnf | dnf
 Truth | 0.72866156 | 47 | 1.00000000 | 1.00000000
 
 ## Solvers cont.
-
-### InfoFlow (2019)
-
-* **Place** Department of Ophthalmology, State University of New York, US
-* **Authors** Park K. Fung
-* **Type** Algorithm Engineering
-* **Strategy** Greedy community merging
-* **Cited** 3
-* **Objective** Map Equation
-* **Dataset** Large real world graphs (no details beyond size)
-* Available at [Link](https://www.mdpi.com/2504-2289/3/3/42)
 
 ### CommDGI (2018)
 
