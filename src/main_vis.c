@@ -1,3 +1,5 @@
+#include "graph.h"
+
 #include <SDL2/SDL.h>
 #include <stdint.h>
 
@@ -48,6 +50,21 @@ int main(int argc, char **argv)
     int running = 1;
     SDL_Event e;
 
+    FILE *f = fopen(argv[1], "r");
+    graph *g = graph_parse(f);
+    fclose(f);
+
+    graph_sort_edges(g);
+
+    int *X = malloc(g->n * sizeof(int)),
+        *Y = malloc(g->n * sizeof(int));
+
+    for (int i = 0; i < g->n; i++)
+    {
+        X[i] = rand() % WIDTH;
+        Y[i] = rand() % HEIGHT;
+    }
+
     uint32_t color = 0;
     while (running)
     {
@@ -63,9 +80,15 @@ int main(int argc, char **argv)
         {
             for (int j = 0; j < WIDTH; j++)
             {
-                pixels[i * WIDTH + j] = color++;
+                pixels[i * WIDTH + j] = 0xffffff;
             }
         }
+
+        for (int u = 0; u < g->n; u++)
+        {
+            pixels[Y[u] * WIDTH + X[u]] = 0;
+        }
+
         // for (int i = 0; i < 1000; i++)
         // { // million points
         //   // int x = rand() % WIDTH;
