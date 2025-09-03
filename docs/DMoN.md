@@ -13,3 +13,5 @@ Short recap:
 ## Code
 
 I have not tried it yet, but there is a [GitHub](https://github.com/google-research/google-research/tree/master/graph_embedding/dmon) repository for the project.
+
+Now I tried, and it seems to only for with cuda.

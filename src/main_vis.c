@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "force_layout.h"
 
 #include <SDL2/SDL.h>
 #include <stdint.h>
@@ -6,22 +7,17 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 
-uint32_t pixels[WIDTH * HEIGHT];
-
-static inline void putpixel(int x, int y, uint32_t color)
-{
-    if ((unsigned)x < WIDTH && (unsigned)y < HEIGHT)
-        pixels[y * WIDTH + x] = color;
-}
-
-void draw_line(int x0, int y0, int x1, int y1, uint32_t color)
+void draw_line(int x0, int y0, int x1, int y1, uint32_t color, uint32_t *pixels)
 {
     int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
     int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
     int err = dx + dy, e2;
     while (1)
     {
-        putpixel(x0, y0, color);
+        // if (pixels[y0 * WIDTH + x0] == color)
+        //     break;
+
+        pixels[y0 * WIDTH + x0] = color;
         if (x0 == x1 && y0 == y1)
             break;
         e2 = 2 * err;
@@ -47,6 +43,8 @@ int main(int argc, char **argv)
     SDL_Texture *tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_RGB888,
                                          SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
 
+    uint32_t *pixels = malloc(sizeof(uint32_t) * WIDTH * HEIGHT);
+
     int running = 1;
     SDL_Event e;
 
@@ -56,14 +54,9 @@ int main(int argc, char **argv)
 
     graph_sort_edges(g);
 
-    int *X = malloc(g->n * sizeof(int)),
-        *Y = malloc(g->n * sizeof(int));
+    force_layout *fl = force_layout_init(g, HEIGHT, WIDTH);
 
-    for (int i = 0; i < g->n; i++)
-    {
-        X[i] = rand() % WIDTH;
-        Y[i] = rand() % HEIGHT;
-    }
+    // force_layout_step(fl, g, 10.0, 1000000000);
 
     uint32_t color = 0;
     while (running)
@@ -74,27 +67,25 @@ int main(int argc, char **argv)
                 running = 0;
         }
 
-        // simulation step (replace with your own logic)
-        color = 0;
-        for (int i = 0; i < HEIGHT; i++)
+        force_layout_step(fl, g, 0.01, 10000000);
+
+        memset(pixels, 0xff, sizeof(uint32_t) * WIDTH * HEIGHT);
+
+        for (int u = 0; u < g->n; u++)
         {
-            for (int j = 0; j < WIDTH; j++)
+            for (int i = g->V[u]; i < g->V[u + 1]; i++)
             {
-                pixels[i * WIDTH + j] = 0xffffff;
+                int v = g->E[i];
+
+                if (u > v)
+                    draw_line(fl->X[u], fl->Y[u], fl->X[v], fl->Y[v], 0x000000, pixels);
             }
         }
 
         for (int u = 0; u < g->n; u++)
         {
-            pixels[Y[u] * WIDTH + X[u]] = 0;
+            pixels[(int)(fl->Y[u]) * WIDTH + (int)(fl->X[u])] = 0x0000ff;
         }
-
-        // for (int i = 0; i < 1000; i++)
-        // { // million points
-        //   // int x = rand() % WIDTH;
-        //   // int y = rand() % HEIGHT;
-        //   // putpixel(x, y, color);
-        // }
 
         SDL_UpdateTexture(tex, NULL, pixels, WIDTH * sizeof(uint32_t));
         SDL_RenderClear(ren);

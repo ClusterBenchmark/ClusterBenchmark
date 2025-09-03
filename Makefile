@@ -5,7 +5,7 @@ CFLAGS = -std=gnu17 -O3 -march=native -g -I include -fopenmp
 
 OBJ = graph.o
 
-OBJ_VIS = $(OBJ) main_vis.o
+OBJ_VIS = $(OBJ) main_vis.o force_layout.o
 OBJ_CONVERT = $(OBJ) main_convert.o
 OBJ_EVAL = $(OBJ) main_eval.o
 OBJ_CLUSTER = $(OBJ) main_cluster.o difference_core.o local_search.o
@@ -26,7 +26,7 @@ all : VIS CONVERT EVAL CLUSTER
 -include $(DEP:.o=.d)
 
 VIS : $(OBJ_VIS)
-	$(CC) $(CFLAGS) -o $@ $^ `sdl2-config --cflags --libs`
+	$(CC) $(CFLAGS) -o $@ $^ `sdl2-config --cflags --libs` -lm
 
 CONVERT : $(OBJ_CONVERT)
 	$(CC) $(CFLAGS) -o $@ $^
