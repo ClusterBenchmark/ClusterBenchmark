@@ -1,0 +1,30 @@
+\documentclass{standalone}
+
+\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{numprint}
+
+\pgfplotstableset{
+    col sep=comma,
+    column type={r},
+    string replace*={_}{\_},
+    string type, % For non-numeric columns
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule}
+}
+
+% Read CSV into a table
+\pgfplotstableread{modularity.csv}\modularity
+
+\begin{document}
+
+\pgfplotstabletypeset[
+    columns={solver,Cora,Citeseer,Amazon-Photo,Amazon-Computers,OGBN-Arxiv,Reddit,OGBN-Products},
+    columns/solver/.style={
+            column name=Solver $\downarrow$ / Graph $\rightarrow$,
+            string type,
+            column type={l}
+        }
+]{\modularity}
+
+\end{document}

@@ -202,7 +202,7 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                     continue;
 
                 double remaining_time = tl - (omp_get_wtime() - start);
-                double duration = c->step_time * 0.1;
+                double duration = c->step_time * 1.0;
                 if (remaining_time < duration)
                     duration = remaining_time;
 

@@ -1,8 +1,0 @@
-name,vertices,edges
-cora,2708,5278
-citeseer,3327,4552
-amazon_photo,7650,119081
-amazon_computers,13752,245861
-ogbn-arxiv,169343,1157799
-Reddit,232965,57307946
-ogbn-products,2449029,61859012

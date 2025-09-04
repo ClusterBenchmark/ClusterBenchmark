@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     }
 
     d_core *dc = d_core_init(g, 16, 0);
-    dc->step_time = 10.0;
+    dc->step_time = 5.0;
 
     d_core_run(dc, g, 300.0, 1);
 
