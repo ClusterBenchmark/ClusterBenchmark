@@ -6,6 +6,8 @@ int main(int argc, char **argv)
     graph *g = graph_parse(f);
     fclose(f);
 
+    graph_sort_edges(g);
+
     printf("%lld %lld\n", g->n, g->m);
 
     f = fopen(argv[2], "w");
@@ -16,7 +18,8 @@ int main(int argc, char **argv)
         for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
             int v = g->E[i];
-            fprintf(f, "%d,%d\n", u, v);
+            if (u < v)
+                fprintf(f, "%d,%d\n", u, v);
         }
     }
 
