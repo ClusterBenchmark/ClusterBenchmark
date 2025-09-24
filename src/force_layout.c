@@ -3,29 +3,46 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
+
+const float EPS = 0.0001f;
+const float MAX_FORCE = 10.0f;
 
 // --- Parameters (tune) ---
-const float REST_L = 200.0f;   // L
-const float K_SPRING = 0.15f;  // k_s
-const float K_REPEL = 50.0f;   // k_r
-const float SOFTEN_EPS = 0.5f; // ε
+const float REST_L = 50.0f;
+const float K_SPRING = 0.15f;
+const float K_REPEL = 0.1f;
+const float K_GRAVITY = 0.1f;
+const float SOFTEN_EPS = 0.01f;
+const float DECAY = 0.999f;
 
-force_layout *force_layout_init(graph *g, int h, int w)
+force_layout *force_layout_init(graph *g)
 {
     force_layout *fl = malloc(sizeof(force_layout));
 
-    *fl = (force_layout){.h = h, .w = w, .n = g->n};
+    *fl = (force_layout){.n = g->n};
 
-    fl->Grid = calloc(h * w, sizeof(int));
     fl->X = calloc(g->n, sizeof(float));
     fl->Y = calloc(g->n, sizeof(float));
 
+    fl->fX = calloc(g->n, sizeof(float));
+    fl->fY = calloc(g->n, sizeof(float));
+
+    fl->vX = calloc(g->n, sizeof(float));
+    fl->vY = calloc(g->n, sizeof(float));
+
+    fl->Grid = calloc(INNER_WIDTH * INNER_WIDTH, sizeof(cell));
+
     for (int i = 0; i < g->n; i++)
     {
-        fl->X[i] = rand() % w;
-        fl->Y[i] = rand() % h;
+        fl->X[i] = (rand() % OUTER_WIDTH);
+        fl->Y[i] = (rand() % OUTER_WIDTH);
 
-        fl->Grid[(int)(fl->Y[i]) * fl->w + (int)(fl->X[i])]++;
+        fl->fX[i] = 0.0f;
+        fl->fY[i] = 0.0f;
+
+        fl->vX[i] = 0.0f;
+        fl->vY[i] = 0.0f;
     }
 
     return fl;
@@ -33,99 +50,196 @@ force_layout *force_layout_init(graph *g, int h, int w)
 
 void force_layout_free(force_layout *fl)
 {
-    free(fl->Grid);
     free(fl->X);
     free(fl->Y);
+
+    free(fl->fX);
+    free(fl->fY);
+
+    free(fl->vX);
+    free(fl->vY);
+
+    free(fl->Grid);
 
     free(fl);
 }
 
-void force_layout_forces_fruchterman_reingold(force_layout *fl, graph *g, int u, float *fx, float *fy)
+void force_layout_forces_repel_cell(force_layout *fl, int u, graph *g, int cx, int cy)
 {
-    float ux = fl->X[u], uy = fl->Y[u];
+    if (cx < 0 || cx >= INNER_WIDTH || cy < 0 || cy >= INNER_WIDTH)
+        return;
 
-    // Gravity
+    cell *c = fl->Grid + cx * INNER_WIDTH + cy;
 
-    float cx = fl->w / 2;
-    float cy = fl->h / 2;
-
-    float cd = sqrtf(cx * cx + cy * cy);
-
-    *fx = (cx - ux), *fy = (cy - uy);
-
-    // Springs between neighbors
-
-    for (int i = g->V[u]; i < g->V[u + 1]; i++)
+    for (int i = 0; i < c->n; i++)
     {
-        int v = g->E[i];
+        int v = c->V[i];
+        if (v == u)
+            continue;
 
-        float dx = fl->X[v] - fl->X[u];
-        float dy = fl->Y[v] - fl->Y[u];
+        float dx = fl->X[u] - fl->X[v];
+        float dy = fl->Y[u] - fl->Y[v];
 
-        float d = sqrtf(dx * dx + dy * dy + SOFTEN_EPS * SOFTEN_EPS);
-        float s = K_SPRING * (d - REST_L);
+        float d = sqrtf(dx * dx + dy * dy + EPS);
+        if (d > 10.0f + EPS)
+            d -= 10.0f;
 
-        *fx += s * (dx / d);
-        *fy += s * (dy / d);
+        fl->fX[u] += K_REPEL * (dx / (d * d)) * (float)g->VW[v];
+        fl->fY[u] += K_REPEL * (dy / (d * d)) * (float)g->VW[v];
+    }
+}
+
+void force_layout_forces_repel(force_layout *fl, graph *g)
+{
+    memset(fl->Grid, 0, sizeof(cell) * INNER_WIDTH * INNER_WIDTH);
+
+    for (int u = 0; u < g->n; u++)
+    {
+        int gx = fl->X[u] / CELL_WIDTH,
+            gy = fl->Y[u] / CELL_WIDTH;
+
+        cell *c = fl->Grid + gx * INNER_WIDTH + gy;
+
+        if (c->n < CELL_MAX)
+        {
+            c->V[c->n++] = u;
+            c->mass += g->VW[u];
+        }
     }
 
-    for (int _dy = -250; _dy <= 250; _dy++)
+    for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
     {
-        int _y = uy + _dy;
-        if (_y < 0 || _y >= fl->h)
-            continue;
-        for (int _dx = -250; _dx <= 250; _dx++)
+        cell *c = fl->Grid + i;
+
+        for (int j = 0; j < c->n; j++)
         {
-            int _x = ux + _dx;
-            if (_x < 0 || _x >= fl->w || fl->Grid[_y * fl->w + _x] == 0)
+            int u = c->V[j];
+
+            c->cx += fl->X[u] * (float)g->VW[u];
+            c->cy += fl->Y[u] * (float)g->VW[u];
+        }
+
+        if (c->n > 0)
+        {
+            c->cx /= c->mass;
+            c->cy /= c->mass;
+        }
+    }
+
+    for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
+    {
+        cell *c = fl->Grid + i;
+
+        for (int j = 0; j < INNER_WIDTH * INNER_WIDTH; j++)
+        {
+            if (i == j)
                 continue;
 
-            float dx = _dx, dy = _dy;
-            float d2 = dx * dx + dy * dy;
+            cell *x = fl->Grid + j;
 
-            float inv_d = 1.0 / sqrt(d2 + 0.0001);
-            float inv_d2 = 1.0 / (d2 + 0.0001);
+            float dx = c->cx - x->cx;
+            float dy = c->cy - x->cy;
 
-            float s = K_REPEL * inv_d2;
-            float ux = dx * inv_d;
-            float uy = dy * inv_d;
+            float _d = dx * dx + dy * dy + EPS;
 
-            *fx += s * ux * fl->Grid[_y * fl->w + _x];
-            *fy += s * uy * fl->Grid[_y * fl->w + _x];
+            c->fx += K_REPEL * (dx / _d) * x->mass;
+            c->fy += K_REPEL * (dy / _d) * x->mass;
+        }
+    }
+
+    for (int u = 0; u < g->n; u++)
+    {
+        int gx = fl->X[u] / CELL_WIDTH,
+            gy = fl->Y[u] / CELL_WIDTH;
+
+        cell *c = fl->Grid + gx * INNER_WIDTH + gy;
+
+        // TODO, adjust so adjacent cells remain unchanged
+        fl->fX[u] += c->fx;
+        fl->fY[u] += c->fy;
+
+        force_layout_forces_repel_cell(fl, u, g, gx - 1, gy - 1);
+        force_layout_forces_repel_cell(fl, u, g, gx - 1, gy);
+        force_layout_forces_repel_cell(fl, u, g, gx - 1, gy + 1);
+        force_layout_forces_repel_cell(fl, u, g, gx, gy - 1);
+        force_layout_forces_repel_cell(fl, u, g, gx, gy);
+        force_layout_forces_repel_cell(fl, u, g, gx, gy + 1);
+        force_layout_forces_repel_cell(fl, u, g, gx + 1, gy - 1);
+        force_layout_forces_repel_cell(fl, u, g, gx + 1, gy);
+        force_layout_forces_repel_cell(fl, u, g, gx + 1, gy + 1);
+    }
+}
+
+void force_layout_forces_spring(force_layout *fl, graph *g)
+{
+    float gx = OUTER_WIDTH / 2, gy = OUTER_WIDTH / 2;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        float x = fl->X[u], y = fl->Y[u];
+
+        float dx_g = gx - x,
+              dy_g = gy - y;
+
+        float d_g = sqrtf(dx_g * dx_g + dy_g * dy_g);
+
+        if (d_g > 50.0f)
+        {
+            fl->fX[u] += (dx_g / d_g) * K_GRAVITY;
+            fl->fY[u] += (dy_g / d_g) * K_GRAVITY;
+        }
+
+        for (int i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+
+            float dx = fl->X[v] - fl->X[u];
+            float dy = fl->Y[v] - fl->Y[u];
+
+            float d = sqrtf(dx * dx + dy * dy) + EPS;
+            float s = K_SPRING * (d - REST_L);
+
+            fl->fX[u] += s * (dx / d);
+            fl->fY[u] += s * (dy / d);
         }
     }
 }
 
-void force_layout_step(force_layout *fl, graph *g, double tl, long long il)
+void force_layout_step(force_layout *fl, graph *g)
 {
-    double t0 = util_get_wtime();
-    for (long long i = 0; i < il; i++)
+    for (int u = 0; u < g->n; u++)
     {
-        if (util_get_wtime() - t0 > tl)
-            break;
+        fl->fX[u] = 0.0f;
+        fl->fY[u] = 0.0f;
+    }
 
-        int u = rand() % g->n;
+    force_layout_forces_spring(fl, g);
+    force_layout_forces_repel(fl, g);
 
-        float fx, fy;
-        force_layout_forces_fruchterman_reingold(fl, g, u, &fx, &fy);
+    for (int u = 0; u < g->n; u++)
+    {
+        fl->fX[u] = fl->fX[u] != fl->fX[u] ? 0.0f : fl->fX[u];
+        fl->fY[u] = fl->fY[u] != fl->fY[u] ? 0.0f : fl->fY[u];
 
-        fl->Grid[(int)(fl->Y[u]) * fl->w + (int)(fl->X[u])]--;
+        fl->fX[u] = fl->fX[u] > MAX_FORCE ? MAX_FORCE : fl->fX[u];
+        fl->fX[u] = fl->fX[u] < -MAX_FORCE ? -MAX_FORCE : fl->fX[u];
 
-        fl->X[u] += fx * 0.01;
-        fl->Y[u] += fy * 0.01;
+        fl->fY[u] = fl->fY[u] > MAX_FORCE ? MAX_FORCE : fl->fY[u];
+        fl->fY[u] = fl->fY[u] < -MAX_FORCE ? -MAX_FORCE : fl->fY[u];
 
-        // printf("%f %f\n", fx, fy);
+        fl->vX[u] = fl->vX[u] * (1.0f - SOFTEN_EPS) + fl->fX[u] * SOFTEN_EPS;
+        fl->vY[u] = fl->vY[u] * (1.0f - SOFTEN_EPS) + fl->fY[u] * SOFTEN_EPS;
 
-        if (fl->X[u] < 0.0f)
-            fl->X[u] = 0.0f;
-        if (fl->X[u] > fl->w - 1)
-            fl->X[u] = fl->w - 1;
+        fl->vX[u] *= DECAY;
+        fl->vY[u] *= DECAY;
 
-        if (fl->Y[u] < 0.0f)
-            fl->Y[u] = 0.0f;
-        if (fl->Y[u] > fl->h - 1)
-            fl->Y[u] = fl->h - 1;
+        fl->X[u] += fl->vX[u];
+        fl->Y[u] += fl->vY[u];
 
-        fl->Grid[(int)(fl->Y[u]) * fl->w + (int)(fl->X[u])]++;
+        fl->X[u] = fl->X[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->X[u];
+        fl->X[u] = fl->X[u] < 0.0f ? 0.0f : fl->X[u];
+
+        fl->Y[u] = fl->Y[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->Y[u];
+        fl->Y[u] = fl->Y[u] < 0.0f ? 0.0f : fl->Y[u];
     }
 }

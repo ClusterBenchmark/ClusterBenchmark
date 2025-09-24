@@ -1,7 +1,7 @@
 SHELL = /bin/bash
 
 CC = gcc
-CFLAGS = -std=gnu17 -O3 -march=native -g -I include -fopenmp
+CFLAGS = -std=gnu17 -O3 -g -I include -fopenmp
 
 OBJ = graph.o
 

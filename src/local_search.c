@@ -363,7 +363,7 @@ void local_search_explore(local_search *ls, graph *g, double tl, int verbose)
 
         ls->log_count = 0;
 
-        if ((rand_r(&ls->seed) % 32) == 0)
+        if (0 && (rand_r(&ls->seed) % 32) == 0)
             local_search_bfs_perturbe(ls, g, 1);
         else
             local_search_perturbe(ls, g, 1);

@@ -22,6 +22,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    printf("%lld %lld\n", g->n, g->m);
+
+    local_search *ls = local_search_init(g, 0);
+    local_search_explore(ls, g, 30.0, 1);
+    local_search_free(ls);
+
     d_core *dc = d_core_init(g, 16, 0);
     dc->step_time = 5.0;
 

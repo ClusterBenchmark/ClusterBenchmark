@@ -5,11 +5,7 @@
 #include <stdint.h>
 
 #define WIDTH 1920
-#define HEIGHT 1080
-
-void draw_line_thick(int x0, int y0, int x1, int y1, uint32_t color, int width, uint32_t *pixels)
-{
-}
+#define HEIGHT 900
 
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color, uint32_t *pixels)
 {
@@ -51,10 +47,16 @@ void draw_circle(int xm, int ym, int r, uint32_t color, uint32_t *pixels)
         pixels[(ym + x) * WIDTH + (xm + y)] = color; /* IV. Quadrant +x -y */
 
         r = err;
-        if (r <= y)
-            err += ++y * 2 + 1; /* e_xy+e_y < 0 */
-        if (r > x || err > y)   /* e_xy+e_x > 0 or no 2nd y-step */
+        if (r <= y) /* e_xy+e_y < 0 */
+        {
+            err += ++y * 2 + 1;
+        }
+
+        if (r > x || err > y) /* e_xy+e_x > 0 or no 2nd y-step */
+        {
             err += ++x * 2 + 1; /* -> x-step now */
+        }
+
     } while (x < 0);
 }
 
@@ -77,14 +79,15 @@ int main(int argc, char **argv)
     fclose(f);
 
     graph_sort_edges(g);
+    graph_default_weights(g);
+    for (int u = 0; u < g->n; u++)
+        g->VW[u] = 1;
 
-    force_layout *fl = force_layout_init(g, HEIGHT, WIDTH);
+    printf("%lld %lld\n", g->n, g->m);
 
-    // force_layout_step(fl, g, 10.0, 1000000000);
+    force_layout *fl = force_layout_init(g);
 
     uint32_t color = 0;
-
-    int x = WIDTH / 2, y = HEIGHT / 2;
 
     while (running)
     {
@@ -92,36 +95,44 @@ int main(int argc, char **argv)
         {
             if (e.type == SDL_QUIT)
                 running = 0;
-            if (e.type == SDL_MOUSEMOTION)
-            {
-                // printf("%d %d\n", e.motion.x, e.motion.y);
-                x = e.motion.x;
-                y = e.motion.y;
-            }
         }
 
-        // force_layout_step(fl, g, 0.01, 10000000);
+        force_layout_step(fl, g);
 
         memset(pixels, 0xff, sizeof(uint32_t) * WIDTH * HEIGHT);
 
-        draw_line(WIDTH / 2, HEIGHT / 2, x, y, 0x00, pixels);
-        draw_circle(WIDTH / 2, HEIGHT / 2, abs((WIDTH / 2) - x), 0x00, pixels);
+        for (int i = 0; i < INNER_WIDTH; i++)
+        {
+            draw_line(i * CELL_WIDTH, 0, i * CELL_WIDTH, HEIGHT, color, pixels);
+        }
+        for (int i = 0; i < INNER_WIDTH; i++)
+        {
+            draw_line(0, i * CELL_WIDTH, WIDTH, i * CELL_WIDTH, color, pixels);
+        }
 
-        // for (int u = 0; u < g->n; u++)
-        // {
-        //     for (int i = g->V[u]; i < g->V[u + 1]; i++)
-        //     {
-        //         int v = g->E[i];
+#pragma omp parallel for
+        for (int u = 0; u < g->n; u++)
+        {
+            int x = fl->X[u], y = fl->Y[u];
 
-        //         if (u > v)
-        //             draw_line(fl->X[u], fl->Y[u], fl->X[v], fl->Y[v], 0x000000, pixels);
-        //     }
-        // }
+            if (x - 3 < 0 || x + 3 >= WIDTH || y - 3 < 0 || y + 3 >= HEIGHT)
+                continue;
 
-        // for (int u = 0; u < g->n; u++)
-        // {
-        //     pixels[(int)(fl->Y[u]) * WIDTH + (int)(fl->X[u])] = 0x0000ff;
-        // }
+            draw_circle(x, y, 3, 0, pixels);
+
+            for (int i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                int v = g->E[i];
+
+                int x_v = fl->X[v], y_v = fl->Y[v];
+
+                if (x_v < 0 || x_v >= WIDTH || y_v < 0 || y_v >= HEIGHT)
+                    continue;
+
+                if (u < v)
+                    draw_line(x, y, x_v, y_v, 0, pixels);
+            }
+        }
 
         SDL_UpdateTexture(tex, NULL, pixels, WIDTH * sizeof(uint32_t));
         SDL_RenderClear(ren);
