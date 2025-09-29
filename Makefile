@@ -8,7 +8,7 @@ OBJ = graph.o
 OBJ_VIS = $(OBJ) main_vis.o force_layout.o screen.o
 OBJ_CONVERT = $(OBJ) main_convert.o
 OBJ_EVAL = $(OBJ) main_eval.o
-OBJ_CLUSTER = $(OBJ) main_cluster.o difference_core.o local_search.o clustering.o
+OBJ_CLUSTER = $(OBJ) main_cluster.o local_search.o clustering.o
 
 OBJ_VIS := $(addprefix bin/, $(OBJ_VIS))
 OBJ_CONVERT := $(addprefix bin/, $(OBJ_CONVERT))

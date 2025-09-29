@@ -8,20 +8,14 @@ clustering *clustering_init(graph *g)
 {
     clustering *c = malloc(sizeof(clustering));
 
-    c->cluster_count = 1;
+    c->cluster_count = g->n;
     c->modularity = 0;
     c->edge_weight_sum = 0;
 
     c->Cluster = malloc(sizeof(int) * g->n);
     c->Cluster_degree = malloc(sizeof(long long) * g->n);
 
-    c->Temp = malloc(sizeof(long long) * g->n);
-
-    c->Ci = malloc(sizeof(int) * g->V[g->n]);
-    c->Cc = malloc(sizeof(int) * g->V[g->n]);
-
-    c->Cs = malloc(sizeof(int) * g->n);
-    c->Ct = malloc(sizeof(int) * g->n);
+    c->Temp = malloc(sizeof(int) * g->n);
 
     long long ci = 0;
 
@@ -29,36 +23,19 @@ clustering *clustering_init(graph *g)
     {
         long long degree = g->V[u + 1] - g->V[u];
 
-        c->Cluster[u] = 0;
-        c->Cluster_degree[u] = 0;
-        c->Cluster_degree[0] += degree;
+        c->Cluster[u] = u;
+        c->Cluster_degree[u] = degree;
         c->Temp[u] = 0;
-
-        c->Cs[u] = ci;
-        c->Ci[ci] = 0;
-        c->Cc[ci] = degree;
-        c->Ct[u] = ci + 1;
-        ci += degree;
 
         for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
-            // c->Ci[ci] = g->E[i];
-            // c->Cc[ci] = 1;
-            // ci++;
-
             c->edge_weight_sum += g->EW[i];
         }
 
-        // c->Ct[u] = ci;
-
-        // c->modularity -= degree * degree;
+        c->modularity -= degree * degree;
     }
 
     c->edge_weight_sum /= 2ll;
-
-    c->modularity = (4ll * c->edge_weight_sum * c->edge_weight_sum) - (c->Cluster_degree[0] * c->Cluster_degree[0]);
-
-    printf("%lld %lld\n", c->Cluster_degree[0], c->modularity);
 
     return c;
 }
@@ -68,44 +45,12 @@ void clustering_free(clustering *c)
     free(c->Cluster);
     free(c->Cluster_degree);
 
-    free(c->Ci);
-    free(c->Cc);
-    free(c->Cs);
-    free(c->Ct);
-
     free(c);
 }
 
 double clustering_get_modularity(clustering *c)
 {
     return (double)c->modularity / (double)(4ll * c->edge_weight_sum * c->edge_weight_sum);
-}
-
-void clustering_move_vertex_old(clustering *c, graph *g, int u, int c_new)
-{
-    int c_old = c->Cluster[u];
-    if (c_old == c_new)
-        return;
-
-    long long degree = g->V[u + 1] - g->V[u];
-    long long internal_old = 0, internal_new = 0;
-
-    for (long long i = g->V[u]; i < g->V[u + 1]; i++)
-    {
-        int v = g->E[i];
-
-        if (c->Cluster[v] == c_old)
-            internal_old++;
-        else if (c->Cluster[v] == c_new)
-            internal_new++;
-    }
-
-    c->modularity += 4ll * c->edge_weight_sum * (internal_new - internal_old) +
-                     2ll * degree * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - degree);
-
-    c->Cluster[u] = c_new;
-    c->Cluster_degree[c_old] -= degree;
-    c->Cluster_degree[c_new] += degree;
 }
 
 void clustering_move_vertex(clustering *c, graph *g, int u, int c_new)
@@ -121,21 +66,22 @@ void clustering_move_vertex(clustering *c, graph *g, int u, int c_new)
     {
         int v = g->E[i];
 
-        if (c->Cluster[v] == c_old)
-            internal_old++;
-        else if (c->Cluster[v] == c_new)
-            internal_new++;
+        internal_old += (c->Cluster[v] == c_old);
+        internal_new += (c->Cluster[v] == c_new);
     }
 
     c->modularity += 4ll * c->edge_weight_sum * (internal_new - internal_old) +
                      2ll * degree * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - degree);
+
+    c->cluster_count -= (c->Cluster_degree[c_old] == degree);
+    c->cluster_count += (c->Cluster_degree[c_new] == 0);
 
     c->Cluster[u] = c_new;
     c->Cluster_degree[c_old] -= degree;
     c->Cluster_degree[c_new] += degree;
 }
 
-int clustering_best_move_old(clustering *c, graph *g, int u)
+int clustering_best_move(clustering *c, graph *g, int u)
 {
     int c_old = c->Cluster[u];
     int c_best = -1;
@@ -146,7 +92,6 @@ int clustering_best_move_old(clustering *c, graph *g, int u)
     for (long long i = g->V[u]; i < g->V[u + 1]; i++)
     {
         int v = g->E[i];
-
         c->Temp[c->Cluster[v]]++;
     }
 
@@ -167,7 +112,7 @@ int clustering_best_move_old(clustering *c, graph *g, int u)
         long long delta = 4ll * c->edge_weight_sum * (internal_new - internal_old) +
                           2ll * degree * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - degree);
 
-        if (delta > delta_best)
+        if (delta > delta_best || (delta == delta_best && c_new < c_best))
         {
             delta_best = delta;
             c_best = c_new;
@@ -192,6 +137,9 @@ int clustering_best_move_old(clustering *c, graph *g, int u)
 
     c->modularity += delta_best;
 
+    c->cluster_count -= (c->Cluster_degree[c_old] == degree);
+    c->cluster_count += (c->Cluster_degree[c_best] == 0);
+
     c->Cluster[u] = c_best;
     c->Cluster_degree[c_old] -= degree;
     c->Cluster_degree[c_best] += degree;
@@ -199,7 +147,135 @@ int clustering_best_move_old(clustering *c, graph *g, int u)
     return 1;
 }
 
-int clustering_best_move(clustering *c, graph *g, int u)
+/* Clustering Graph Structure */
+
+clustering_graph *clustering_graph_init(clustering *c, graph *g)
+{
+    clustering_graph *cg = malloc(sizeof(clustering_graph));
+
+    cg->V_end = malloc(sizeof(long long) * g->n);
+
+    cg->E_cluster = malloc(sizeof(int) * g->V[g->n]);
+    cg->E_count = malloc(sizeof(int) * g->V[g->n]);
+
+    for (int i = 0; i < g->n; i++)
+        cg->V_end[i] = 0;
+
+    for (long long i = 0; i < g->V[g->n]; i++)
+        cg->E_cluster[i] = 0;
+
+    for (long long i = 0; i < g->V[g->n]; i++)
+        cg->E_count[i] = 0;
+
+    return cg;
+}
+
+void clustering_graph_free(clustering_graph *cg)
+{
+    free(cg->V_end);
+    free(cg->E_cluster);
+    free(cg->E_count);
+
+    free(cg);
+}
+
+void clustering_graph_populate(clustering_graph *cg, clustering *c, graph *g)
+{
+    for (int u = 0; u < g->n; u++)
+    {
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+            cg->E_cluster[i] = c->Cluster[v];
+        }
+
+        qsort(cg->E_cluster + g->V[u], g->V[u + 1] - g->V[u], sizeof(int), util_compare);
+
+        long long i = g->V[u], j = g->V[u];
+        while (j < g->V[u + 1])
+        {
+            cg->E_cluster[i] = cg->E_cluster[j++];
+            cg->E_count[i] = 1;
+            while (j < g->V[u + 1] && cg->E_cluster[j] == cg->E_cluster[i])
+            {
+                cg->E_count[i]++;
+                j++;
+            }
+            i++;
+        }
+        cg->V_end[u] = i;
+    }
+}
+
+/*  Decrease the counter for c_dec and increase the counter for c_inc. */
+void clustering_graph_update_vertex(clustering_graph *cg, graph *g, int u, int c_dec, int c_inc)
+{
+    int p_dec = g->V[u] + lower_bound(cg->E_cluster + g->V[u], cg->V_end[u] - g->V[u], c_dec);
+
+    assert(p_dec < cg->V_end[u] && cg->E_cluster[p_dec] == c_dec);
+
+    cg->E_count[p_dec]--;
+
+    // Fill gap left after c_dec
+    if (cg->E_count[p_dec] == 0)
+    {
+        for (long long j = p_dec + 1; j < cg->V_end[u]; j++)
+        {
+            cg->E_cluster[j - 1] = cg->E_cluster[j];
+            cg->E_count[j - 1] = cg->E_count[j];
+        }
+        cg->V_end[u]--;
+    }
+
+    int p_new = g->V[u] + lower_bound(cg->E_cluster + g->V[u], cg->V_end[u] - g->V[u], c_inc);
+
+    // Make space for c_inc
+    if (p_new >= cg->V_end[u] || cg->E_cluster[p_new] != c_inc)
+    {
+        for (long long j = cg->V_end[u]; j > p_new; j--)
+        {
+            cg->E_cluster[j] = cg->E_cluster[j - 1];
+            cg->E_count[j] = cg->E_count[j - 1];
+        }
+        cg->V_end[u]++;
+
+        cg->E_cluster[p_new] = c_inc;
+        cg->E_count[p_new] = 0;
+    }
+    cg->E_count[p_new]++;
+}
+
+void clustering_graph_move_vertex(clustering_graph *cg, clustering *c, graph *g, int u, int c_new)
+{
+    int c_old = c->Cluster[u];
+    if (c_old == c_new)
+        return;
+
+    long long degree = g->V[u + 1] - g->V[u];
+    long long internal_old = 0, internal_new = 0;
+
+    for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+    {
+        int v = g->E[i];
+
+        clustering_graph_update_vertex(cg, g, v, c_old, c_new);
+
+        internal_old += (c->Cluster[v] == c_old);
+        internal_new += (c->Cluster[v] == c_new);
+    }
+
+    c->modularity += 4ll * c->edge_weight_sum * (internal_new - internal_old) +
+                     2ll * degree * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - degree);
+
+    c->cluster_count -= (c->Cluster_degree[c_old] == degree);
+    c->cluster_count += (c->Cluster_degree[c_new] == 0);
+
+    c->Cluster[u] = c_new;
+    c->Cluster_degree[c_old] -= degree;
+    c->Cluster_degree[c_new] += degree;
+}
+
+int clustering_graph_best_move(clustering_graph *cg, clustering *c, graph *g, int u)
 {
     int c_old = c->Cluster[u];
     int c_best = -1;
@@ -207,21 +283,19 @@ int clustering_best_move(clustering *c, graph *g, int u)
     long long degree = g->V[u + 1] - g->V[u];
     long long delta_best = 0;
 
-    long long p_old = c->Cs[u] + lower_bound(c->Ci + c->Cs[u], c->Ct[u] - c->Cs[u], c_old);
+    long long p_old = g->V[u] + lower_bound(cg->E_cluster + g->V[u], cg->V_end[u] - g->V[u], c_old);
     long long internal_old = 0;
-    if (p_old < c->Ct[u] && c->Ci[p_old] == c_old)
-        internal_old = c->Cc[p_old];
+    if (p_old < cg->V_end[u] && cg->E_cluster[p_old] == c_old)
+        internal_old = cg->E_count[p_old];
 
     long long internal_best = 0;
-
-    for (long long i = c->Cs[u]; i < c->Ct[u]; i++)
+    for (long long i = g->V[u]; i < cg->V_end[u]; i++)
     {
-        int c_new = c->Ci[i];
-
+        int c_new = cg->E_cluster[i];
         if (c_new == c_old)
             continue;
 
-        long long internal_new = c->Cc[i];
+        long long internal_new = cg->E_count[i];
 
         long long delta = 4ll * c->edge_weight_sum * (internal_new - internal_old) +
                           2ll * degree * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - degree);
@@ -253,6 +327,9 @@ int clustering_best_move(clustering *c, graph *g, int u)
 
     c->modularity += delta_best;
 
+    c->cluster_count -= (c->Cluster_degree[c_old] == degree);
+    c->cluster_count += (c->Cluster_degree[c_best] == 0);
+
     c->Cluster[u] = c_best;
     c->Cluster_degree[c_old] -= degree;
     c->Cluster_degree[c_best] += degree;
@@ -261,45 +338,7 @@ int clustering_best_move(clustering *c, graph *g, int u)
     {
         int v = g->E[i];
 
-        int pv_old = c->Cs[v] + lower_bound(c->Ci + c->Cs[v], c->Ct[v] - c->Cs[v], c_old);
-
-        if (!(pv_old < c->Ct[v] && c->Ci[pv_old] == c_old))
-        {
-            printf("%d %d %d %lld\n", v, c->Cluster[v], c_old, g->V[v + 1] - g->V[v]);
-            for (long long j = c->Cs[v]; j < c->Ct[v]; j++)
-            {
-                printf("(%d %d), ", c->Ci[j], c->Cc[j]);
-            }
-            printf("\n");
-        }
-
-        assert(pv_old < c->Ct[v] && c->Ci[pv_old] == c_old);
-
-        c->Cc[pv_old]--; // Assert
-        if (c->Cc[pv_old] == 0)
-        {
-            for (long long j = pv_old + 1; j < c->Ct[v]; j++)
-            {
-                c->Ci[j - 1] = c->Ci[j];
-                c->Cc[j - 1] = c->Cc[j];
-            }
-            c->Ct[v]--;
-        }
-
-        int pv_new = c->Cs[v] + lower_bound(c->Ci + c->Cs[v], c->Ct[v] - c->Cs[v], c_best);
-        if (pv_new >= c->Ct[v] || c->Ci[pv_new] != c_best)
-        {
-            for (long long j = c->Ct[v]; j > pv_new; j--)
-            {
-                c->Ci[j] = c->Ci[j - 1];
-                c->Cc[j] = c->Cc[j - 1];
-            }
-            c->Ct[v]++;
-
-            c->Ci[pv_new] = c_best;
-            c->Cc[pv_new] = 0;
-        }
-        c->Cc[pv_new]++;
+        clustering_graph_update_vertex(cg, g, v, c_old, c_best);
     }
 
     return 1;

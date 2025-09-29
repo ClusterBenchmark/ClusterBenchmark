@@ -1,5 +1,5 @@
 #include "graph.h"
-#include "difference_core.h"
+// #include "difference_core.h"
 #include "local_search.h"
 #include "util.h"
 #include "clustering.h"
@@ -26,23 +26,29 @@ int main(int argc, char **argv)
 
     printf("%lld %lld\n", g->n, g->m);
 
+    int *O = malloc(sizeof(int) * g->n);
+    for (int u = 0; u < g->n; u++)
+        O[u] = u;
+
     clustering *c = clustering_init(g);
 
-    printf("%lld %lf\n", c->modularity, clustering_get_modularity(c));
-
-    double t0 = omp_get_wtime();
-
-    for (int i = 0; i < g->n * 300; i++)
+    for (int k = 0; k < 2; k++)
     {
-        int u = i % g->n;
-        clustering_best_move(c, g, u);
+        for (int u = 0; u < g->n; u++)
+        {
+            clustering_best_move(c, g, u);
+        }
     }
 
-    double t1 = omp_get_wtime();
-    printf("%lf\n", t1 - t0);
+    clustering_graph *cg = clustering_graph_init(c, g);
+    clustering_graph_populate(cg, c, g);
 
-    printf("%lld %lf\n", c->modularity, clustering_get_modularity(c));
+    local_search *ls = local_search_init(g, 0);
 
+    local_search_explore(ls, cg, c, g, 60.0, 1);
+
+    local_search_free(ls);
+    clustering_graph_free(cg);
     clustering_free(c);
 
     return 0;
