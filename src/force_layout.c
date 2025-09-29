@@ -9,8 +9,8 @@ const float EPS = 0.0001f;
 const float MAX_FORCE = 10.0f;
 
 // --- Parameters (tune) ---
-const float REST_L = 50.0f;
-const float K_SPRING = 0.15f;
+const float REST_L = 10.0f;
+const float K_SPRING = 1.0f;
 const float K_REPEL = 0.1f;
 const float K_GRAVITY = 0.1f;
 const float SOFTEN_EPS = 0.01f;
@@ -81,8 +81,8 @@ void force_layout_forces_repel_cell(force_layout *fl, int u, graph *g, int cx, i
         float dy = fl->Y[u] - fl->Y[v];
 
         float d = sqrtf(dx * dx + dy * dy + EPS);
-        if (d > 10.0f + EPS)
-            d -= 10.0f;
+        if (d > 5.0f + EPS)
+            d -= 5.0f;
 
         fl->fX[u] += K_REPEL * (dx / (d * d)) * (float)g->VW[v];
         fl->fY[u] += K_REPEL * (dy / (d * d)) * (float)g->VW[v];
@@ -91,7 +91,20 @@ void force_layout_forces_repel_cell(force_layout *fl, int u, graph *g, int cx, i
 
 void force_layout_forces_repel(force_layout *fl, graph *g)
 {
-    memset(fl->Grid, 0, sizeof(cell) * INNER_WIDTH * INNER_WIDTH);
+
+#pragma omp for
+    for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
+    {
+        cell *c = fl->Grid + i;
+
+        c->mass = 0.0f;
+        c->cx = 0.0f;
+        c->cy = 0.0f;
+        c->fx = 0.0f;
+        c->fy = 0.0f;
+        c->n = 0;
+    }
+    // memset(fl->Grid, 0, sizeof(cell) * INNER_WIDTH * INNER_WIDTH);
 
     for (int u = 0; u < g->n; u++)
     {
@@ -107,6 +120,7 @@ void force_layout_forces_repel(force_layout *fl, graph *g)
         }
     }
 
+#pragma omp for
     for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
     {
         cell *c = fl->Grid + i;
@@ -126,16 +140,25 @@ void force_layout_forces_repel(force_layout *fl, graph *g)
         }
     }
 
+#pragma omp for
     for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
     {
         cell *c = fl->Grid + i;
+        if (c->n == 0)
+            continue;
+
+        int cx = i / INNER_WIDTH,
+            cy = i % INNER_WIDTH;
 
         for (int j = 0; j < INNER_WIDTH * INNER_WIDTH; j++)
         {
-            if (i == j)
-                continue;
-
             cell *x = fl->Grid + j;
+
+            int xx = j / INNER_WIDTH,
+                xy = j % INNER_WIDTH;
+
+            if (i == j || x->n == 0 || abs(cx - xx) <= 1 || abs(cy - xy) <= 1)
+                continue;
 
             float dx = c->cx - x->cx;
             float dy = c->cy - x->cy;
@@ -147,6 +170,7 @@ void force_layout_forces_repel(force_layout *fl, graph *g)
         }
     }
 
+#pragma omp for
     for (int u = 0; u < g->n; u++)
     {
         int gx = fl->X[u] / CELL_WIDTH,
@@ -154,7 +178,6 @@ void force_layout_forces_repel(force_layout *fl, graph *g)
 
         cell *c = fl->Grid + gx * INNER_WIDTH + gy;
 
-        // TODO, adjust so adjacent cells remain unchanged
         fl->fX[u] += c->fx;
         fl->fY[u] += c->fy;
 
@@ -174,6 +197,7 @@ void force_layout_forces_spring(force_layout *fl, graph *g)
 {
     float gx = OUTER_WIDTH / 2, gy = OUTER_WIDTH / 2;
 
+#pragma omp for
     for (int u = 0; u < g->n; u++)
     {
         float x = fl->X[u], y = fl->Y[u];
@@ -181,9 +205,9 @@ void force_layout_forces_spring(force_layout *fl, graph *g)
         float dx_g = gx - x,
               dy_g = gy - y;
 
-        float d_g = sqrtf(dx_g * dx_g + dy_g * dy_g);
+        float d_g = sqrtf(sqrtf(dx_g * dx_g + dy_g * dy_g));
 
-        if (d_g > 50.0f)
+        if (d_g > 1.0f)
         {
             fl->fX[u] += (dx_g / d_g) * K_GRAVITY;
             fl->fY[u] += (dy_g / d_g) * K_GRAVITY;
@@ -207,39 +231,44 @@ void force_layout_forces_spring(force_layout *fl, graph *g)
 
 void force_layout_step(force_layout *fl, graph *g)
 {
-    for (int u = 0; u < g->n; u++)
+#pragma omp parallel
     {
-        fl->fX[u] = 0.0f;
-        fl->fY[u] = 0.0f;
-    }
+#pragma omp for
+        for (int u = 0; u < g->n; u++)
+        {
+            fl->fX[u] = 0.0f;
+            fl->fY[u] = 0.0f;
+        }
 
-    force_layout_forces_spring(fl, g);
-    force_layout_forces_repel(fl, g);
+        force_layout_forces_spring(fl, g);
+        force_layout_forces_repel(fl, g);
 
-    for (int u = 0; u < g->n; u++)
-    {
-        fl->fX[u] = fl->fX[u] != fl->fX[u] ? 0.0f : fl->fX[u];
-        fl->fY[u] = fl->fY[u] != fl->fY[u] ? 0.0f : fl->fY[u];
+#pragma omp for
+        for (int u = 0; u < g->n; u++)
+        {
+            fl->fX[u] = fl->fX[u] != fl->fX[u] ? 0.0f : fl->fX[u];
+            fl->fY[u] = fl->fY[u] != fl->fY[u] ? 0.0f : fl->fY[u];
 
-        fl->fX[u] = fl->fX[u] > MAX_FORCE ? MAX_FORCE : fl->fX[u];
-        fl->fX[u] = fl->fX[u] < -MAX_FORCE ? -MAX_FORCE : fl->fX[u];
+            fl->fX[u] = fl->fX[u] > MAX_FORCE ? MAX_FORCE : fl->fX[u];
+            fl->fX[u] = fl->fX[u] < -MAX_FORCE ? -MAX_FORCE : fl->fX[u];
 
-        fl->fY[u] = fl->fY[u] > MAX_FORCE ? MAX_FORCE : fl->fY[u];
-        fl->fY[u] = fl->fY[u] < -MAX_FORCE ? -MAX_FORCE : fl->fY[u];
+            fl->fY[u] = fl->fY[u] > MAX_FORCE ? MAX_FORCE : fl->fY[u];
+            fl->fY[u] = fl->fY[u] < -MAX_FORCE ? -MAX_FORCE : fl->fY[u];
 
-        fl->vX[u] = fl->vX[u] * (1.0f - SOFTEN_EPS) + fl->fX[u] * SOFTEN_EPS;
-        fl->vY[u] = fl->vY[u] * (1.0f - SOFTEN_EPS) + fl->fY[u] * SOFTEN_EPS;
+            fl->vX[u] = fl->vX[u] * (1.0f - SOFTEN_EPS) + fl->fX[u] * SOFTEN_EPS;
+            fl->vY[u] = fl->vY[u] * (1.0f - SOFTEN_EPS) + fl->fY[u] * SOFTEN_EPS;
 
-        fl->vX[u] *= DECAY;
-        fl->vY[u] *= DECAY;
+            fl->vX[u] *= DECAY;
+            fl->vY[u] *= DECAY;
 
-        fl->X[u] += fl->vX[u];
-        fl->Y[u] += fl->vY[u];
+            fl->X[u] += fl->vX[u];
+            fl->Y[u] += fl->vY[u];
 
-        fl->X[u] = fl->X[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->X[u];
-        fl->X[u] = fl->X[u] < 0.0f ? 0.0f : fl->X[u];
+            fl->X[u] = fl->X[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->X[u];
+            fl->X[u] = fl->X[u] < 0.0f ? 0.0f : fl->X[u];
 
-        fl->Y[u] = fl->Y[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->Y[u];
-        fl->Y[u] = fl->Y[u] < 0.0f ? 0.0f : fl->Y[u];
+            fl->Y[u] = fl->Y[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->Y[u];
+            fl->Y[u] = fl->Y[u] < 0.0f ? 0.0f : fl->Y[u];
+        }
     }
 }

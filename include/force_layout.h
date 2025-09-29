@@ -2,10 +2,17 @@
 
 #include "graph.h"
 
+/*
+
+TODO:
+    * Combination of quadtree and grid based approach
+
+*/
+
 #define CELL_WIDTH 32
-#define CELL_MAX 1024
-#define OUTER_WIDTH 1024
-#define INNER_WIDTH 32
+#define CELL_MAX 128
+#define OUTER_WIDTH 2048
+#define INNER_WIDTH 64
 
 typedef struct
 {

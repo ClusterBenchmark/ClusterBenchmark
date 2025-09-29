@@ -66,3 +66,16 @@ static inline void util_skip_line(char *Data, size_t *p)
         (*p)++;
     (*p)++;
 }
+
+static inline int lower_bound(const int *A, int n, int x)
+{
+    const int *s = A;
+    while (n > 1)
+    {
+        int h = n / 2;
+        s += (s[h - 1] < x) * h;
+        n -= h;
+    }
+    s += (n == 1 && s[0] < x);
+    return s - A;
+}
