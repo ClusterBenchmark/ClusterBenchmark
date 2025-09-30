@@ -20,6 +20,9 @@ clustering *clustering_init(graph *g);
 /*  Release memory allocated for the clustering struct, including the *c pointer. */
 void clustering_free(clustering *c);
 
+/*  Reset clustering for the given graph. */
+void clustering_reset(clustering *c, graph *g);
+
 /*  Returns the modularity score for the current clustering. */
 double clustering_get_modularity(clustering *c);
 

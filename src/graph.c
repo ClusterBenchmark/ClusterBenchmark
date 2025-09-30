@@ -24,29 +24,30 @@ graph *graph_parse(FILE *f)
     util_parse_id(Data, &p, &m);
     util_parse_id(Data, &p, &t);
 
+    m *= 2;
+
     util_skip_line(Data, &p);
 
     long long *V = malloc(sizeof(long long) * (n + 1));
-    int *E = malloc(sizeof(int) * (m * 2));
+    int *E = malloc(sizeof(int) * m);
 
-    long long *EW = NULL, *VW = NULL;
+    long long *VW = malloc(sizeof(long long) * n);
+    long long *EW = malloc(sizeof(long long) * m);
 
-    if (t == 10 || t == 11)
-        VW = malloc(sizeof(long long) * n);
-    if (t == 1 || t == 11)
-        EW = malloc(sizeof(long long) * (m * 2));
+    int vertex_weights = (t == 10 || t == 11);
+    int edge_weights = (t == 1 || t == 11);
 
-    int ei = 0;
+    long long ei = 0;
     for (int u = 0; u < n; u++)
     {
         while (Data[p] == '%')
             util_skip_line(Data, &p);
 
-        if (VW != NULL)
+        if (vertex_weights)
             util_parse_id(Data, &p, VW + u);
 
         V[u] = ei;
-        while (ei < m * 2)
+        while (ei < m)
         {
             while (Data[p] == ' ')
                 p++;
@@ -57,12 +58,14 @@ graph *graph_parse(FILE *f)
             util_parse_id(Data, &p, &e);
             E[ei] = e - 1;
 
-            if (EW != NULL)
+            EW[ei] = 1;
+            if (edge_weights)
                 util_parse_id(Data, &p, EW + ei);
 
             ei++;
         }
         p++;
+        VW[u] = ei - V[u];
     }
     V[n] = ei;
 
@@ -82,30 +85,22 @@ graph *graph_copy(graph *g)
     gc->m = g->m;
 
     gc->V = malloc(sizeof(long long) * (g->n + 1));
-    gc->E = malloc(sizeof(int) * g->m * 2);
+    gc->E = malloc(sizeof(int) * g->m);
+
+    gc->VW = malloc(sizeof(long long) * g->n);
+    gc->EW = malloc(sizeof(long long) * g->m);
 
     for (int i = 0; i <= g->n; i++)
         gc->V[i] = g->V[i];
 
-    for (int i = 0; i < g->m * 2; i++)
+    for (long long i = 0; i < g->m; i++)
         gc->E[i] = g->E[i];
 
-    gc->VW = NULL;
-    gc->EW = NULL;
+    for (int i = 0; i < g->n; i++)
+        gc->VW[i] = g->VW[i];
 
-    if (g->VW != NULL)
-    {
-        gc->VW = malloc(sizeof(long long) * g->n);
-        for (int i = 0; i < g->n; i++)
-            gc->VW[i] = g->VW[i];
-    }
-
-    if (g->EW != NULL)
-    {
-        gc->EW = malloc(sizeof(long long) * g->m * 2);
-        for (int i = 0; i < g->m * 2; i++)
-            gc->EW[i] = g->EW[i];
-    }
+    for (long long i = 0; i < g->m; i++)
+        gc->EW[i] = g->EW[i];
 
     return gc;
 }
@@ -117,6 +112,7 @@ void graph_free(graph *g)
 
     free(g->V);
     free(g->E);
+
     free(g->VW);
     free(g->EW);
 
@@ -125,32 +121,49 @@ void graph_free(graph *g)
 
 void graph_sort_edges(graph *g)
 {
-    int *order = malloc(sizeof(int) * g->m * 2);
-    int *buff1 = malloc(sizeof(int) * g->m * 2);
-    long long *buff2 = malloc(sizeof(long long) * g->m * 2);
+    int *order = malloc(sizeof(int) * g->m);
+    int *buff1 = malloc(sizeof(int) * g->m);
+    long long *buff2 = malloc(sizeof(long long) * g->m);
 
+    g->m = 0;
+
+    long long s = 0, t = 0;
     for (int u = 0; u < g->n; u++)
     {
-        int d = g->V[u + 1] - g->V[u];
+        t = g->V[u + 1];
+        int d = t - s;
         for (int i = 0; i < d; i++)
             order[i] = i;
 
         for (int i = 0; i < d; i++)
-            buff1[i] = g->E[g->V[u] + i];
+            buff1[i] = g->E[s + i];
 
-        qsort_r(order, d, sizeof(int), util_compare_r, g->E + g->V[u]);
-
-        for (int i = 0; i < d; i++)
-            g->E[g->V[u] + i] = buff1[order[i]];
-
-        if (g->EW == NULL)
-            continue;
+        qsort_r(order, d, sizeof(int), util_compare_r, g->E + s);
 
         for (int i = 0; i < d; i++)
-            buff2[i] = g->EW[g->V[u] + i];
+            g->E[s + i] = buff1[order[i]];
 
         for (int i = 0; i < d; i++)
-            g->EW[g->V[u] + i] = buff2[order[i]];
+            buff2[i] = g->EW[s + i];
+
+        for (int i = 0; i < d; i++)
+            g->EW[s + i] = buff2[order[i]];
+
+        for (int i = 0; i < d; i++)
+        {
+            if (i == 0 || g->E[s + i] != g->E[g->m - 1])
+            {
+                g->E[g->m] = g->E[s + i];
+                g->EW[g->m] = g->EW[s + i];
+                g->m++;
+            }
+            else
+            {
+                g->EW[g->m - 1] += g->EW[s + i];
+            }
+        }
+        s = g->V[u + 1];
+        g->V[u + 1] = g->m;
     }
 
     free(order);
@@ -158,122 +171,116 @@ void graph_sort_edges(graph *g)
     free(buff2);
 }
 
-void graph_contract_bfs(graph *g, graph *gc, int *A, int *FM, int s, int *R, int *W)
+int graph_contract_find(int *P, int x)
 {
-    int r = 1, w = 0;
-    R[0] = s;
+    int root = x;
+    while (P[root] != root)
+        root = P[root];
 
-    FM[s] = gc->n;
-    gc->VW[gc->n] = g->VW[s];
-    gc->V[gc->n] = gc->m;
-
-    while (r > 0)
+    while (P[x] != root)
     {
-        for (int i = 0; i < r; i++)
-        {
-            int u = R[i];
-            for (int j = g->V[u]; j < g->V[u + 1]; j++)
-            {
-                int v = g->E[j];
-                gc->E[gc->m] = v;
-                gc->EW[gc->m] = g->EW[j];
-                gc->m++;
+        int next = P[x];
+        P[x] = root;
+        x = next;
+    }
+    return root;
+}
 
-                if (FM[v] != gc->n && A[j])
-                {
-                    assert(FM[v] < 0);
+void graph_contract_union(int *P, int *S, int x, int y)
+{
+    x = graph_contract_find(P, x);
+    y = graph_contract_find(P, y);
 
-                    FM[v] = gc->n;
-                    gc->VW[gc->n] += g->VW[v];
+    if (x == y)
+        return;
 
-                    W[w++] = v;
-                }
-            }
-        }
-
-        r = w;
-        w = 0;
-
-        util_swap_int(&R, &W);
+    if (S[x] < S[y])
+    {
+        int t = x;
+        x = y;
+        y = t;
     }
 
-    gc->n++;
-    gc->V[gc->n] = gc->m;
+    P[y] = x;
+    S[x] += S[y];
 }
 
 void graph_contract(graph *g, graph *gc, int *A, int *FM)
 {
-    int *R = malloc(sizeof(int) * g->n);
-    int *W = malloc(sizeof(int) * g->n);
-
-    gc->n = 0;
-    gc->m = 0;
-
-    for (int i = 0; i < g->n; i++)
-        FM[i] = -1;
+    int *P = malloc(sizeof(int) * g->n);
+    int *S = malloc(sizeof(int) * g->n);
+    long long *D = malloc(sizeof(long long) * g->n);
 
     for (int u = 0; u < g->n; u++)
     {
-        if (FM[u] >= 0)
-            continue;
-
-        graph_contract_bfs(g, gc, A, FM, u, R, W);
+        P[u] = u;
+        S[u] = 1;
+        D[u] = 0;
     }
 
-    for (long long i = 0; i < gc->m; i++)
+    gc->n = 0;
+    gc->m = g->m;
+
+    // Discover the new vertices
+    for (int u = 0; u < g->n; u++)
     {
-        gc->E[i] = FM[gc->E[i]];
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            if (A[i])
+                graph_contract_union(P, S, u, g->E[i]);
+        }
     }
 
-    gc->m /= 2;
+    // Create new labels
+    for (int u = 0; u < g->n; u++)
+    {
+        int root = graph_contract_find(P, u);
+        if (u == root)
+        {
+            gc->VW[gc->n] = 0;
+            FM[u] = gc->n;
+            gc->n++;
+        }
+    }
 
-    graph_sort_edges(gc);
+    // Count degrees
+    for (int u = 0; u < g->n; u++)
+    {
+        int root = graph_contract_find(P, u);
+        FM[u] = FM[root];
+        gc->VW[FM[root]] += g->VW[u];
 
-    gc->m = 0;
+        D[FM[root]] += g->V[u + 1] - g->V[u];
+    }
+
+    // Prefix sum
+    long long ps = 0;
+    gc->V[0] = 0;
     for (int u = 0; u < gc->n; u++)
     {
-        long long s = gc->V[u];
-        gc->V[u] = gc->m;
-        for (long long i = s; i < gc->V[u + 1]; i++)
+        ps += D[u];
+        gc->V[u + 1] = ps;
+        D[u] = 0;
+    }
+
+    // Move edges
+    for (int u = 0; u < g->n; u++)
+    {
+        int v = FM[u];
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
-            if (i == s || gc->E[i] > gc->E[gc->m - 1])
-            {
-                gc->E[gc->m] = gc->E[i];
-                gc->EW[gc->m] = gc->EW[i];
-                gc->m++;
-            }
-            else
-            {
-                gc->EW[gc->m - 1] += gc->EW[i];
-            }
-        }
-        for (long long i = gc->V[u]; i < gc->m; i++)
-        {
-            if (gc->E[i] == u)
-                gc->EW[i] /= 2;
+            gc->E[gc->V[v] + D[v]] = FM[g->E[i]];
+            gc->EW[gc->V[v] + D[v]] = g->EW[i];
+            D[v]++;
         }
     }
-    gc->V[gc->n] = gc->m;
-    gc->m = g->m; // Should probably not be like this!!
 
-    free(R);
-    free(W);
-}
+    // Sort neigborhoods
+    graph_sort_edges(gc);
 
-void graph_default_weights(graph *g)
-{
-    if (g->EW == NULL)
-    {
-        g->EW = malloc(sizeof(long long) * g->m * 2);
-        for (int i = 0; i < g->m * 2; i++)
-            g->EW[i] = 1;
-    }
-    if (g->VW == NULL)
-    {
-        g->VW = malloc(sizeof(long long) * g->n);
-        for (int u = 0; u < g->n; u++)
-            g->VW[u] = g->V[u + 1] - g->V[u];
-    }
+    free(P);
+    free(S);
+    free(D);
 }
 
 int graph_validate(graph *g)
@@ -297,7 +304,7 @@ int graph_validate(graph *g)
         }
     }
 
-    if (m != g->V[g->n] || m / 2 != g->m)
+    if (m != g->V[g->n] || m != g->m)
         return 0;
 
     return 1;

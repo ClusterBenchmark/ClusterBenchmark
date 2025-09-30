@@ -2,10 +2,10 @@
 #include "util.h"
 
 #include <stdlib.h>
-#include <assert.h>
+#include <omp.h>
 
-#define MAX_QUEUE (1 << 5)
-#define TIME_INTERVAL (1 << 7)
+#define MAX_QUEUE (1 << 6)
+#define TIME_INTERVAL (1 << 8)
 
 local_search *local_search_init(graph *g, unsigned int seed)
 {
@@ -28,6 +28,9 @@ local_search *local_search_init(graph *g, unsigned int seed)
     ls->Log_community = malloc(sizeof(int) * ls->log_alloc);
 
     local_search_queue_all(ls, g);
+
+    ls->time = 0.0;
+    ls->time_ref = omp_get_wtime();
 
     return ls;
 }
@@ -62,16 +65,15 @@ void local_search_queue_all(local_search *ls, graph *g)
         ls->In_queue_old[i] = 0;
 
     ls->log_count = 0;
-
-    ls->time = 0.0;
-    ls->time_ref = util_get_wtime();
 }
 
-void local_search_move_vertex(local_search *ls, clustering_graph *cg, clustering *c, graph *g, int u, int c_new, int log, int queue)
+void local_search_move_vertex(local_search *ls, clustering *c, graph *g, int u, int c_new, int log, int queue)
 {
     int c_old = c->Cluster[u];
+    if (c_old == c_new)
+        return;
 
-    clustering_graph_move_vertex(cg, c, g, u, c_new);
+    clustering_move_vertex(c, g, u, c_new);
 
     if (log)
     {
@@ -100,11 +102,11 @@ void local_search_move_vertex(local_search *ls, clustering_graph *cg, clustering
     }
 }
 
-static inline void local_search_best_move(local_search *ls, clustering_graph *cg, clustering *c, graph *g, int u, int log)
+static inline void local_search_best_move(local_search *ls, clustering *c, graph *g, int u, int log)
 {
     int c_old = c->Cluster[u];
 
-    if (clustering_graph_best_move(cg, c, g, u))
+    if (clustering_best_move(c, g, u))
     {
         if (log)
         {
@@ -131,7 +133,7 @@ static inline void local_search_best_move(local_search *ls, clustering_graph *cg
     }
 }
 
-void local_search_greedy(local_search *ls, clustering_graph *cg, clustering *c, graph *g, int log)
+void local_search_greedy(local_search *ls, clustering *c, graph *g, int log)
 {
     while (ls->queue_count > 0)
     {
@@ -148,23 +150,21 @@ void local_search_greedy(local_search *ls, clustering_graph *cg, clustering *c, 
             int u = ls->Queue_old[i];
             ls->In_queue_old[u] = 0;
 
-            local_search_best_move(ls, cg, c, g, u, log);
+            local_search_best_move(ls, c, g, u, log);
         }
     }
 }
 
-void local_search_perturbe(local_search *ls, clustering_graph *cg, clustering *c, graph *g, int log)
+void local_search_perturbe(local_search *ls, clustering *c, graph *g, int log)
 {
     int u = rand_r(&ls->seed) % g->n;
 
-    int it = 0;
-    while (it < 32 && (cg->V_end[u] - g->V[u]) == 1)
-        u = rand_r(&ls->seed) % g->n;
+    int c_old = c->Cluster[u];
+
+    long long degree = g->V[u + 1] - g->V[u];
 
     long long best = c->modularity;
 
-    long long degree = g->V[u + 1] - g->V[u];
-    long long cluster_degree = cg->V_end[u] - g->V[u];
     int c_new;
 
     if (degree == 0)
@@ -173,9 +173,12 @@ void local_search_perturbe(local_search *ls, clustering_graph *cg, clustering *c
     if ((rand_r(&ls->seed) & 63) == 0)
         c_new = rand_r(&ls->seed) % g->n;
     else
-        c_new = cg->E_cluster[g->V[u] + (rand_r(&ls->seed) % cluster_degree)];
+        c_new = c->Cluster[g->E[g->V[u] + (rand_r(&ls->seed) % degree)]];
 
-    local_search_move_vertex(ls, cg, c, g, u, c_new, log, 1);
+    if (c_new == c_old)
+        return;
+
+    local_search_move_vertex(ls, c, g, u, c_new, log, 1);
 
     int size = rand_r(&ls->seed) % ls->max_queue;
 
@@ -187,11 +190,11 @@ void local_search_perturbe(local_search *ls, clustering_graph *cg, clustering *c
     {
         int v = ls->Queue[rand_r(&ls->seed) % ls->queue_count];
 
-        local_search_move_vertex(ls, cg, c, g, v, c_new, log, 1);
+        local_search_move_vertex(ls, c, g, v, c_new, log, 1);
     }
 }
 
-void local_search_unwind(local_search *ls, clustering_graph *cg, clustering *c, graph *g, int t)
+void local_search_unwind(local_search *ls, clustering *c, graph *g, int t)
 {
     while (ls->log_count > t)
     {
@@ -199,7 +202,7 @@ void local_search_unwind(local_search *ls, clustering_graph *cg, clustering *c, 
         int u = ls->Log_vertex[ls->log_count];
         int c_old = ls->Log_community[ls->log_count];
 
-        local_search_move_vertex(ls, cg, c, g, u, c_old, 0, 0);
+        local_search_move_vertex(ls, c, g, u, c_old, 0, 0);
     }
 }
 
@@ -217,20 +220,20 @@ void local_search_print_header(local_search *ls, clustering *c, double tl)
     local_search_report(ls, c, 0);
 }
 
-void local_search_explore(local_search *ls, clustering_graph *cg, clustering *c, graph *g, double time_limit, int verbose)
+void local_search_explore(local_search *ls, clustering *c, graph *g, double time_limit, int verbose)
 {
     long long best = c->modularity, it = 0;
-    double start = util_get_wtime();
+    double start = omp_get_wtime();
 
     if (verbose)
         local_search_print_header(ls, c, time_limit);
 
-    local_search_greedy(ls, cg, c, g, 0);
+    local_search_greedy(ls, c, g, 0);
 
     if (c->modularity > best)
     {
         best = c->modularity;
-        ls->time = util_get_wtime() - ls->time_ref;
+        ls->time = omp_get_wtime() - ls->time_ref;
         if (verbose)
             local_search_report(ls, c, 0);
     }
@@ -239,7 +242,7 @@ void local_search_explore(local_search *ls, clustering_graph *cg, clustering *c,
     {
         if ((it++ & (TIME_INTERVAL - 1)) == 0)
         {
-            if (util_get_wtime() - start > time_limit)
+            if (omp_get_wtime() - start > time_limit)
                 break;
 
             if (verbose)
@@ -248,21 +251,21 @@ void local_search_explore(local_search *ls, clustering_graph *cg, clustering *c,
 
         ls->log_count = 0;
 
-        local_search_perturbe(ls, cg, c, g, 1);
+        local_search_perturbe(ls, c, g, 1);
 
-        local_search_greedy(ls, cg, c, g, 1);
+        local_search_greedy(ls, c, g, 1);
 
         if (c->modularity > best)
         {
             best = c->modularity;
-            ls->time = util_get_wtime() - ls->time_ref;
+            ls->time = omp_get_wtime() - ls->time_ref;
             ls->log_count = 0;
             if (verbose)
                 local_search_report(ls, c, it);
         }
         if (c->modularity < best)
         {
-            local_search_unwind(ls, cg, c, g, 0);
+            local_search_unwind(ls, c, g, 0);
         }
     }
     if (verbose)

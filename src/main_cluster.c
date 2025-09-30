@@ -1,8 +1,7 @@
 #include "graph.h"
-// #include "difference_core.h"
 #include "local_search.h"
 #include "util.h"
-#include "clustering.h"
+#include "dynamic_clustering.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -16,7 +15,6 @@ int main(int argc, char **argv)
     fclose(f);
 
     graph_sort_edges(g);
-    graph_default_weights(g);
 
     if (!graph_validate(g))
     {
@@ -24,31 +22,37 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    printf("%lld %lld\n", g->n, g->m);
-
-    int *O = malloc(sizeof(int) * g->n);
-    for (int u = 0; u < g->n; u++)
-        O[u] = u;
+    printf("%lld %lld\n", g->n, g->m / 2);
 
     clustering *c = clustering_init(g);
 
-    for (int k = 0; k < 2; k++)
-    {
-        for (int u = 0; u < g->n; u++)
-        {
-            clustering_best_move(c, g, u);
-        }
-    }
-
-    clustering_graph *cg = clustering_graph_init(c, g);
-    clustering_graph_populate(cg, c, g);
+    printf("%lld %lf\n", c->modularity, clustering_get_modularity(c));
 
     local_search *ls = local_search_init(g, 0);
 
-    local_search_explore(ls, cg, c, g, 60.0, 1);
+    local_search_explore(ls, c, g, 2.0, 1);
+
+    graph *gc = graph_copy(g);
+    int *FM = malloc(sizeof(int) * g->n);
+    int *A = malloc(sizeof(int) * g->m);
+    for (int u = 0; u < g->n; u++)
+    {
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+            A[i] = c->Cluster[u] == c->Cluster[v];
+        }
+    }
+
+    graph_contract(g, gc, A, FM);
+
+    clustering *cc = clustering_init(gc);
+
+    local_search *lsc = local_search_init(gc, 0);
+
+    local_search_explore(lsc, cc, gc, 30.0, 1);
 
     local_search_free(ls);
-    clustering_graph_free(cg);
     clustering_free(c);
 
     return 0;

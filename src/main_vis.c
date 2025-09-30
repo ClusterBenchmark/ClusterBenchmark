@@ -26,7 +26,6 @@ int main(int argc, char **argv)
     fclose(f);
 
     graph_sort_edges(g);
-    graph_default_weights(g);
     for (int u = 0; u < g->n; u++)
         g->VW[u] = 1;
 

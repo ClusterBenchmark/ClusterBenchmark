@@ -117,7 +117,6 @@ int main(int argc, char **argv)
     fclose(f);
 
     graph_sort_edges(g);
-    graph_default_weights(g);
 
     if (!graph_validate(g))
     {

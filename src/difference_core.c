@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#define STEP_TIME 5.0
+#define STEP_TIME 10.0
 
 d_core *d_core_init(graph *g, int p, unsigned int seed)
 {
@@ -14,6 +14,12 @@ d_core *d_core_init(graph *g, int p, unsigned int seed)
     c->step_time = STEP_TIME;
 
     c->time = 0.0;
+
+    c->C = malloc(sizeof(clustering *) * p);
+    c->C_core = malloc(sizeof(clustering *) * p);
+
+    c->Cg = malloc(sizeof(clustering_graph *) * p);
+    c->Cg_core = malloc(sizeof(clustering_graph *) * p);
 
     c->LS = malloc(sizeof(local_search *) * p);
     c->LS_core = malloc(sizeof(local_search *) * p);
@@ -34,6 +40,18 @@ d_core *d_core_init(graph *g, int p, unsigned int seed)
 
 #pragma omp parallel
     {
+#pragma omp for
+        for (int i = 0; i < p; i++)
+        {
+            c->C[i] = clustering_init(g);
+            c->C_core[i] = clustering_init(g);
+        }
+#pragma omp for
+        for (int i = 0; i < p; i++)
+        {
+            c->LS[i] = local_search_init(g, seed + i);
+            c->LS_core[i] = local_search_init(g, seed + p + i);
+        }
 #pragma omp for
         for (int i = 0; i < p; i++)
         {

@@ -8,16 +8,29 @@ clustering *clustering_init(graph *g)
 {
     clustering *c = malloc(sizeof(clustering));
 
-    c->cluster_count = g->n;
-    c->modularity = 0;
-    c->edge_weight_sum = 0;
-
     c->Cluster = malloc(sizeof(int) * g->n);
     c->Cluster_degree = malloc(sizeof(long long) * g->n);
 
     c->Temp = malloc(sizeof(int) * g->n);
 
-    long long ci = 0;
+    clustering_reset(c, g);
+
+    return c;
+}
+
+void clustering_free(clustering *c)
+{
+    free(c->Cluster);
+    free(c->Cluster_degree);
+
+    free(c);
+}
+
+void clustering_reset(clustering *c, graph *g)
+{
+    c->cluster_count = g->n;
+    c->modularity = 0;
+    c->edge_weight_sum = 0;
 
     for (int u = 0; u < g->n; u++)
     {
@@ -30,22 +43,14 @@ clustering *clustering_init(graph *g)
         for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
             c->edge_weight_sum += g->EW[i];
+            if (g->E[i] == u)
+                c->edge_weight_sum += g->EW[i];
         }
 
         c->modularity -= degree * degree;
     }
 
     c->edge_weight_sum /= 2ll;
-
-    return c;
-}
-
-void clustering_free(clustering *c)
-{
-    free(c->Cluster);
-    free(c->Cluster_degree);
-
-    free(c);
 }
 
 double clustering_get_modularity(clustering *c)

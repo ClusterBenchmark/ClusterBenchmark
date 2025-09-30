@@ -10,6 +10,8 @@ typedef struct
     long long best_n;
     double time;
 
+    clustering **C, **C_core;
+    clustering_graph **Cg, **Cg_core;
     local_search **LS, **LS_core;
 
     graph *d_core;

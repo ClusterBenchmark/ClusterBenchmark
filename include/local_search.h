@@ -1,7 +1,7 @@
 #pragma once
 
-#include <graph.h>
-#include <clustering.h>
+#include "graph.h"
+#include "dynamic_clustering.h"
 
 typedef struct
 {
@@ -24,4 +24,6 @@ void local_search_free(local_search *ls);
 
 void local_search_queue_all(local_search *ls, graph *g);
 
-void local_search_explore(local_search *ls, clustering_graph *cg, clustering *c, graph *g, double time_limit, int verbose);
+void local_search_move_vertex(local_search *ls, clustering *c, graph *g, int u, int c_new, int log, int queue);
+
+void local_search_explore(local_search *ls, clustering *c, graph *g, double time_limit, int verbose);
