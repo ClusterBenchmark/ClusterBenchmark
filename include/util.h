@@ -14,7 +14,21 @@ static inline int util_compare_r(const void *a, const void *b, void *c)
     return ID[*(int *)a] - ID[*(int *)b];
 }
 
-static inline void util_swap_int(int **a, int **b)
+static inline void util_swap(int *a, int *b)
+{
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+
+static inline void util_swap_ll(long long *a, long long *b)
+{
+    long long t = *a;
+    *a = *b;
+    *b = t;
+}
+
+static inline void util_swap_p(int **a, int **b)
 {
     int *t = *a;
     *a = *b;

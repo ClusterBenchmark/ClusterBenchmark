@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define MAX_CLUSTER_DEGREE 64
+#define MAX_CLUSTER_DEGREE 256
 
 clustering *clustering_init(graph *g)
 {
@@ -74,7 +74,7 @@ void clustering_reset(clustering *c, graph *g)
         for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
             if (g->E[i] == u)
-                c->modularity += 4ll * c->edge_weight_sum * g->EW[i];
+                c->modularity += 2ll * c->edge_weight_sum * g->EW[i];
         }
     }
 }

@@ -119,56 +119,67 @@ void graph_free(graph *g)
     free(g);
 }
 
+int partition(int *E, long long *EW, int left, int right, int bit)
+{
+    int i = left, j = right;
+    while (i <= j)
+    {
+        while (i <= j && ((E[i] >> bit) & 1) == 0)
+            i++;
+        while (i <= j && ((E[j] >> bit) & 1) == 1)
+            j--;
+        if (i < j)
+        {
+            util_swap(E + i, E + j);
+            util_swap_ll(EW + i, EW + j);
+            i++;
+            j--;
+        }
+    }
+    return i;
+}
+
+void radix_sort_msd(int *E, long long *EW, int left, int right, int bit)
+{
+    if (left >= right || bit < 0)
+        return;
+
+    int mid = partition(E, EW, left, right, bit);
+
+    // Recurse on 0-bucket and 1-bucket
+    radix_sort_msd(E, EW, left, mid - 1, bit - 1);
+    radix_sort_msd(E, EW, mid, right, bit - 1);
+}
+
 void graph_sort_edges(graph *g)
 {
-    int *order = malloc(sizeof(int) * g->m);
-    int *buff1 = malloc(sizeof(int) * g->m);
-    long long *buff2 = malloc(sizeof(long long) * g->m);
-
     g->m = 0;
-
-    long long s = 0, t = 0;
+    long long s = 0;
     for (int u = 0; u < g->n; u++)
     {
-        t = g->V[u + 1];
-        int d = t - s;
-        for (int i = 0; i < d; i++)
-            order[i] = i;
+        radix_sort_msd(g->E + s, g->EW + s, 0, g->V[u + 1] - s - 1, 31);
 
-        for (int i = 0; i < d; i++)
-            buff1[i] = g->E[s + i];
-
-        qsort_r(order, d, sizeof(int), util_compare_r, g->E + s);
-
-        for (int i = 0; i < d; i++)
-            g->E[s + i] = buff1[order[i]];
-
-        for (int i = 0; i < d; i++)
-            buff2[i] = g->EW[s + i];
-
-        for (int i = 0; i < d; i++)
-            g->EW[s + i] = buff2[order[i]];
-
-        for (int i = 0; i < d; i++)
+        for (long long i = s; i < g->V[u + 1]; i++)
         {
-            if (i == 0 || g->E[s + i] != g->E[g->m - 1])
+            int v = g->E[i];
+            if (i == s || v > g->E[g->m - 1])
             {
-                g->E[g->m] = g->E[s + i];
-                g->EW[g->m] = g->EW[s + i];
+                g->E[g->m] = g->E[i];
+                g->EW[g->m] = g->EW[i];
                 g->m++;
             }
             else
             {
-                g->EW[g->m - 1] += g->EW[s + i];
+                g->EW[g->m - 1] += g->EW[i];
             }
         }
         s = g->V[u + 1];
         g->V[u + 1] = g->m;
     }
+}
 
-    free(order);
-    free(buff1);
-    free(buff2);
+void graph_contract_new(graph *g, graph *gc, int *A, int *FM)
+{
 }
 
 int graph_contract_find(int *P, int x)

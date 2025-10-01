@@ -140,8 +140,8 @@ void local_search_greedy(local_search *ls, clustering *c, graph *g, int log)
         int count = ls->queue_count;
         ls->queue_count = 0;
 
-        util_swap_int(&ls->Queue, &ls->Queue_old);
-        util_swap_int(&ls->In_queue, &ls->In_queue_old);
+        util_swap_p(&ls->Queue, &ls->Queue_old);
+        util_swap_p(&ls->In_queue, &ls->In_queue_old);
 
         util_shuffle(ls->Queue_old, count, &ls->seed);
 
@@ -170,10 +170,12 @@ void local_search_perturbe(local_search *ls, clustering *c, graph *g, int log)
     if (degree == 0)
         return;
 
-    if ((rand_r(&ls->seed) & 63) == 0)
-        c_new = rand_r(&ls->seed) % g->n;
-    else
-        c_new = c->Cluster[g->E[g->V[u] + (rand_r(&ls->seed) % degree)]];
+    c_new = c->Cluster[g->E[g->V[u] + (rand_r(&ls->seed) % degree)]];
+
+    // if ((rand_r(&ls->seed) & 63) == 0)
+    //     c_new = rand_r(&ls->seed) % g->n;
+    // else
+    //     c_new = c->Cluster[g->E[g->V[u] + (rand_r(&ls->seed) % degree)]];
 
     if (c_new == c_old)
         return;
@@ -208,15 +210,15 @@ void local_search_unwind(local_search *ls, clustering *c, graph *g, int t)
 
 void local_search_report(local_search *ls, clustering *c, long long it)
 {
-    printf("\r%10lld: %12.8lf %8.2lf", it,
-           clustering_get_modularity(c), ls->time);
+    printf("\r%10lld: %12.8lf %10d %8.2lf", it,
+           clustering_get_modularity(c), c->cluster_count, ls->time);
     fflush(stdout);
 }
 
 void local_search_print_header(local_search *ls, clustering *c, double tl)
 {
     printf("Running baseline local search for %.2lf seconds\n", tl);
-    printf("%11s %12s %8s\n", "It.", "Q", "Time");
+    printf("%11s %12s %10s %8s\n", "It.", "Q", "Nc", "Time");
     local_search_report(ls, c, 0);
 }
 

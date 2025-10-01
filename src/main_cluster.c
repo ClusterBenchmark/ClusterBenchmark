@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
     local_search *ls = local_search_init(g, 0);
 
-    local_search_explore(ls, c, g, 2.0, 1);
+    local_search_explore(ls, c, g, 300.0, 1);
 
     graph *gc = graph_copy(g);
     int *FM = malloc(sizeof(int) * g->n);
@@ -46,11 +46,13 @@ int main(int argc, char **argv)
 
     graph_contract(g, gc, A, FM);
 
+    printf("%lld %lld\n", gc->n, gc->m / 2);
+
     clustering *cc = clustering_init(gc);
 
     local_search *lsc = local_search_init(gc, 0);
 
-    local_search_explore(lsc, cc, gc, 30.0, 1);
+    local_search_explore(lsc, cc, gc, 300.0, 1);
 
     local_search_free(ls);
     clustering_free(c);
