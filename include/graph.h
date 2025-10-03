@@ -16,10 +16,17 @@ graph *graph_copy(graph *g);
 
 void graph_free(graph *g);
 
-// TODO, fix allocation (need to know max degree)
-
 void graph_sort_edges(graph *g);
+
+int graph_validate(graph *g);
 
 void graph_contract(graph *g, graph *gc, int *A, int *FM);
 
-int graph_validate(graph *g);
+void graph_contract_par(graph *g, graph *gc, int *A, int *FM);
+
+/*  V, E, and S must be at least n long.
+    C must be at least nt long.
+    Dt must be nt x n.
+    T must hold at least 3 elements. */
+void graph_contract_par_internal(graph *g, graph *gc, int *A, int *FM,
+                                 int *V, int *E, long long *S, long long **Dt, int *C, int *T);

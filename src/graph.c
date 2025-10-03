@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <omp.h>
 
 graph *graph_parse(FILE *f)
 {
@@ -178,122 +179,6 @@ void graph_sort_edges(graph *g)
     }
 }
 
-void graph_contract_new(graph *g, graph *gc, int *A, int *FM)
-{
-}
-
-int graph_contract_find(int *P, int x)
-{
-    int root = x;
-    while (P[root] != root)
-        root = P[root];
-
-    while (P[x] != root)
-    {
-        int next = P[x];
-        P[x] = root;
-        x = next;
-    }
-    return root;
-}
-
-void graph_contract_union(int *P, int *S, int x, int y)
-{
-    x = graph_contract_find(P, x);
-    y = graph_contract_find(P, y);
-
-    if (x == y)
-        return;
-
-    if (S[x] < S[y])
-    {
-        int t = x;
-        x = y;
-        y = t;
-    }
-
-    P[y] = x;
-    S[x] += S[y];
-}
-
-void graph_contract(graph *g, graph *gc, int *A, int *FM)
-{
-    int *P = malloc(sizeof(int) * g->n);
-    int *S = malloc(sizeof(int) * g->n);
-    long long *D = malloc(sizeof(long long) * g->n);
-
-    for (int u = 0; u < g->n; u++)
-    {
-        P[u] = u;
-        S[u] = 1;
-        D[u] = 0;
-    }
-
-    gc->n = 0;
-    gc->m = g->m;
-
-    // Discover the new vertices
-    for (int u = 0; u < g->n; u++)
-    {
-        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
-        {
-            if (A[i])
-                graph_contract_union(P, S, u, g->E[i]);
-        }
-    }
-
-    // Create new labels
-    for (int u = 0; u < g->n; u++)
-    {
-        int root = graph_contract_find(P, u);
-        if (u == root)
-        {
-            gc->VW[gc->n] = 0;
-            FM[u] = gc->n;
-            gc->n++;
-        }
-    }
-
-    // Count degrees
-    for (int u = 0; u < g->n; u++)
-    {
-        int root = graph_contract_find(P, u);
-        FM[u] = FM[root];
-        gc->VW[FM[root]] += g->VW[u];
-
-        D[FM[root]] += g->V[u + 1] - g->V[u];
-    }
-
-    // Prefix sum
-    long long ps = 0;
-    gc->V[0] = 0;
-    for (int u = 0; u < gc->n; u++)
-    {
-        ps += D[u];
-        gc->V[u + 1] = ps;
-        D[u] = 0;
-    }
-
-    // Move edges
-    for (int u = 0; u < g->n; u++)
-    {
-        int v = FM[u];
-        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
-        {
-            gc->E[gc->V[v] + D[v]] = FM[g->E[i]];
-            gc->EW[gc->V[v] + D[v]] = g->EW[i];
-            D[v]++;
-        }
-    }
-
-    // Sort neigborhoods
-    graph_sort_edges(gc);
-
-    free(P);
-    free(S);
-    free(D);
-}
-
 int graph_validate(graph *g)
 {
     int m = 0;
@@ -319,4 +204,471 @@ int graph_validate(graph *g)
         return 0;
 
     return 1;
+}
+
+void graph_contract(graph *g, graph *gc, int *A, int *FM)
+{
+    int *Temp_FM = malloc(sizeof(int) * g->n);
+
+    // Step 1. Label propagation
+    for (int u = 0; u < g->n; u++)
+        Temp_FM[u] = u;
+
+    int change = 1;
+    while (change)
+    {
+        change = 0;
+        for (int u = 0; u < g->n; u++)
+        {
+            int min = Temp_FM[u];
+            for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                int v = g->E[i];
+                if (A[i] && Temp_FM[v] < min)
+                    min = Temp_FM[v];
+            }
+            if (min != Temp_FM[u])
+            {
+                Temp_FM[u] = min;
+                change = 1;
+            }
+        }
+    }
+
+    // Step 2. Compact labels
+    gc->n = 0;
+    for (int u = 0; u < g->n; u++)
+    {
+        if (Temp_FM[u] == u)
+            FM[u] = gc->n++;
+    }
+    for (int u = 0; u < g->n; u++)
+    {
+        if (Temp_FM[u] != u)
+            FM[u] = FM[Temp_FM[u]];
+    }
+
+    free(Temp_FM);
+
+    // Step 3. Combine CSR
+    long long *D = malloc(sizeof(long long) * gc->n);
+    for (int i = 0; i < gc->n; i++)
+        D[i] = 0;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        D[FM[u]] += g->V[u + 1] - g->V[u];
+    }
+
+    for (int u = 0; u < gc->n; u++)
+    {
+        gc->VW[u] = 0;
+    }
+
+    long long ps = 0;
+    for (int u = 0; u < gc->n; u++)
+    {
+        gc->V[u] = ps;
+        ps += D[u];
+        D[u] = 0;
+    }
+    gc->V[gc->n] = ps;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        int uc = FM[u];
+        gc->VW[uc] += g->VW[u];
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            gc->E[gc->V[uc] + D[uc]] = FM[g->E[i]];
+            gc->EW[gc->V[uc] + D[uc]] = g->EW[i];
+            D[uc]++;
+        }
+    }
+
+    free(D);
+
+    // Step 4. Contract edges
+    long long *Count = malloc(sizeof(long long) * gc->n);
+    for (int u = 0; u < gc->n; u++)
+    {
+        Count[u] = 0;
+    }
+
+    gc->m = 0;
+    long long s = 0;
+    for (int u = 0; u < gc->n; u++)
+    {
+        for (long long i = s; i < gc->V[u + 1]; i++)
+        {
+            Count[gc->E[i]] += gc->EW[i];
+        }
+        for (long long i = s; i < gc->V[u + 1]; i++)
+        {
+            if (Count[gc->E[i]] == 0)
+                continue;
+
+            gc->E[gc->m] = gc->E[i];
+            gc->EW[gc->m] = Count[gc->E[i]];
+            gc->m++;
+
+            Count[gc->E[i]] = 0;
+        }
+        s = gc->V[u + 1];
+        gc->V[u + 1] = gc->m;
+    }
+
+    free(Count);
+}
+
+/*  Compute a common new label for all vertices in each component in parallel using label propagation.
+    Assums it was called inside a parallel region.
+    Shared_tmp needs at least 3 elements. */
+void graph_contract_label_propagation(graph *g, int *A, int *FM, int *Shared_tmp)
+{
+    // Roatate over three shared changed ints.
+
+    int p = 0;
+    Shared_tmp[p] = 1;
+    Shared_tmp[p + 1] = 0;
+
+    // Reset forward mapping.
+
+#pragma omp for
+    for (int u = 0; u < g->n; u++)
+    {
+        FM[u] = u;
+    }
+
+    // While some vertex changed label.
+
+    while (Shared_tmp[p])
+    {
+
+        // Rotate to next changed int.
+
+        p = (p + 1) % 3;
+#pragma omp single nowait
+        {
+            // Reset next changed int.
+
+            Shared_tmp[(p + 1) % 3] = 0;
+        }
+
+        // Update labels to min in neighborhood.
+
+#pragma omp for schedule(dynamic, 256)
+        for (int u = 0; u < g->n; u++)
+        {
+            int min = FM[u];
+            for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                int v = g->E[i];
+                if (A[i] && FM[v] < min)
+                    min = FM[v];
+            }
+            if (min != FM[u])
+            {
+                FM[u] = min;
+                Shared_tmp[p] = 1;
+            }
+        }
+    }
+}
+
+/*  Computes compact labels from 0 to n - 1 given the old forward mapping in parallel.
+    Assums it was called inside a parallel region.
+    Returns the number of labels. */
+int graph_contract_compact_labels(graph *g, int *FM_old, int *FM_new, int *Shared_nt)
+{
+    int tid = omp_get_thread_num();
+    int nt = omp_get_num_threads();
+
+    // Count number of new labels in local area.
+
+    int n = 0;
+#pragma omp for nowait
+    for (int u = 0; u < g->n; u++)
+    {
+        n += (FM_old[u] == u);
+    }
+    Shared_nt[tid] = n;
+
+#pragma omp barrier
+
+    // Compute offset for this thread.
+
+    int ps = 0;
+    for (int i = 0; i < tid; i++)
+        ps += Shared_nt[i];
+
+    n = 0;
+
+    // Assign final label for the representative in each label group.
+
+#pragma omp for
+    for (int u = 0; u < g->n; u++)
+    {
+        if (FM_old[u] == u)
+            FM_new[u] = ps + n++;
+    }
+
+    // Assign final label to all vertices.
+
+#pragma omp for nowait
+    for (int u = 0; u < g->n; u++)
+    {
+        FM_new[u] = FM_new[FM_old[u]];
+    }
+
+    // Compute return value.
+
+    n = 0;
+    for (int i = 0; i < nt; i++)
+        n += Shared_nt[i];
+
+#pragma omp barrier
+
+    return n;
+}
+
+/*  Computes a graph structure for the new supernodes in standard CSR format.
+    The neighborhood of each supernode is the set of old vertices that make up this supernode.
+    Assums it was called inside a parallel region.
+    Dt must be nt x n. */
+void graph_contract_group_supernodes(graph *g, int n, int *FM, int *V, int *E, long long **Dt, int *Shared_nt)
+{
+    int tid = omp_get_thread_num();
+    int nt = omp_get_num_threads();
+
+    long long *D = Dt[tid];
+
+    // Reset local counters.
+
+    for (int u = 0; u < n; u++)
+    {
+        D[u] = 0;
+    }
+
+    // Count vertices in each supernode.
+
+#pragma omp for
+    for (int u = 0; u < g->n; u++)
+    {
+        D[FM[u]]++;
+    }
+
+    // Combine counts from each thread.
+
+    int sum = 0;
+
+#pragma omp for nowait
+    for (int u = 0; u < n; u++)
+    {
+        for (int t = 0; t < nt; t++)
+        {
+            sum += Dt[t][u];
+        }
+    }
+
+    // Communicate sums.
+
+    Shared_nt[tid] = sum;
+
+#pragma omp barrier
+
+    // Prefix sum.
+
+    int offset = 0;
+    for (int i = 0; i < tid; i++)
+        offset += Shared_nt[i];
+
+    // Compute final edgelist offsets.
+
+    V[0] = 0;
+
+#pragma omp for
+    for (int u = 0; u < n; u++)
+    {
+        for (int t = 0; t < nt; t++)
+        {
+            offset += Dt[t][u];
+            Dt[t][u] = offset - Dt[t][u];
+        }
+        V[u + 1] = offset;
+    }
+
+    // Populate edgelist.
+
+#pragma omp for
+    for (int u = 0; u < g->n; u++)
+    {
+        E[D[FM[u]]++] = u;
+    }
+}
+
+/*  Computes the contracted graph structure in CSR format.
+    Assums it was called inside a parallel region.
+    V and E must hold the list of vertices in each supernode.
+    Dt must be nt x n_c. */
+void graph_contract_construct_contracted(graph *g, graph *gc, int *FM, int *V, int *E, long long *S, long long **Dt, int *Shared_nt)
+{
+    int tid = omp_get_thread_num();
+    int nt = omp_get_num_threads();
+
+    long long *D = Dt[tid];
+
+    // Reset local counters
+
+    for (int u = 0; u < gc->n; u++)
+    {
+        D[u] = 0;
+    }
+
+    // Compute the degree for each supernode
+
+#pragma omp for schedule(dynamic, 4)
+    for (int u = 0; u < gc->n; u++)
+    {
+        int count = 0;
+        gc->VW[u] = 0;
+        for (int i = V[u]; i < V[u + 1]; i++)
+        {
+            int v = E[i];
+            gc->VW[u] += g->VW[v];
+            for (long long j = g->V[v]; j < g->V[v + 1]; j++)
+            {
+                int w = FM[g->E[j]];
+                if (D[w] == 0)
+                    count++;
+                D[w] = 1;
+            }
+        }
+        S[u] = count;
+        for (int i = V[u]; i < V[u + 1]; i++)
+        {
+            int v = E[i];
+            for (long long j = g->V[v]; j < g->V[v + 1]; j++)
+            {
+                int w = FM[g->E[j]];
+                D[w] = 0;
+            }
+        }
+    }
+
+    gc->V[0] = 0;
+
+    // Sync up and count
+
+#pragma omp barrier
+
+    int m = 0;
+
+#pragma omp for
+    for (int u = 0; u < gc->n; u++)
+    {
+        m += S[u];
+    }
+
+    Shared_nt[tid] = m;
+
+    // Prefix sum
+
+#pragma omp barrier
+
+    int ps = 0;
+
+    for (int i = 0; i < tid; i++)
+        ps += Shared_nt[i];
+
+#pragma omp for
+    for (int u = 0; u < gc->n; u++)
+    {
+        ps += S[u];
+        S[u] = ps - S[u];
+    }
+
+    // Populate the contracted graph
+
+#pragma omp for schedule(dynamic, 4)
+    for (int u = 0; u < gc->n; u++)
+    {
+        for (int i = V[u]; i < V[u + 1]; i++)
+        {
+            int v = E[i];
+            for (long long j = g->V[v]; j < g->V[v + 1]; j++)
+            {
+                int w = FM[g->E[j]];
+                D[w] += g->EW[j];
+            }
+        }
+        for (int i = V[u]; i < V[u + 1]; i++)
+        {
+            int v = E[i];
+            for (long long j = g->V[v]; j < g->V[v + 1]; j++)
+            {
+                int w = FM[g->E[j]];
+                if (D[w] == 0)
+                    continue;
+
+                gc->E[S[u]] = w;
+                gc->EW[S[u]] = D[w];
+                S[u]++;
+                D[w] = 0;
+            }
+        }
+        gc->V[u + 1] = S[u];
+    }
+
+    gc->m = S[gc->n - 1];
+}
+
+void graph_contract_par(graph *g, graph *gc, int *A, int *FM)
+{
+    int T[3] = {0, 0, 0};
+    int *C = NULL;
+    long long **Dt = NULL;
+    int *V = malloc(sizeof(int) * (g->n + 1));
+    int *E = malloc(sizeof(int) * g->n);
+    long long *S = malloc(sizeof(long long) * g->n);
+
+#pragma omp parallel
+    {
+        int nt = omp_get_num_threads();
+        int tid = omp_get_thread_num();
+
+#pragma omp single
+        {
+            C = malloc(sizeof(int) * nt);
+            Dt = malloc(sizeof(long long *) * nt);
+        }
+
+        Dt[tid] = malloc(sizeof(long long) * g->n);
+
+        graph_contract_par_internal(g, gc, A, FM, V, E, S, Dt, C, T);
+
+        free(Dt[tid]);
+
+#pragma omp barrier
+
+#pragma omp single
+        {
+            free(C);
+            free(Dt);
+        }
+    }
+
+    free(V);
+    free(E);
+    free(S);
+}
+
+void graph_contract_par_internal(graph *g, graph *gc, int *A, int *FM,
+                                 int *V, int *E, long long *S, long long **Dt, int *C, int *T)
+{
+    graph_contract_label_propagation(g, A, V, T);
+    int n = graph_contract_compact_labels(g, V, FM, C);
+    gc->n = n;
+    graph_contract_group_supernodes(g, n, FM, V, E, Dt, C);
+    graph_contract_construct_contracted(g, gc, FM, V, E, S, Dt, C);
 }

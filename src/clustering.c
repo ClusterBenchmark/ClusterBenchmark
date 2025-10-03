@@ -23,6 +23,8 @@ void clustering_free(clustering *c)
     free(c->Cluster);
     free(c->Cluster_degree);
 
+    free(c->Temp);
+
     free(c);
 }
 

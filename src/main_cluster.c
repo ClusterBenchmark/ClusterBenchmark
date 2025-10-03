@@ -2,6 +2,7 @@
 #include "local_search.h"
 #include "util.h"
 #include "dynamic_clustering.h"
+#include "difference_core.h"
 
 #include <stdlib.h>
 #include <time.h>
@@ -24,40 +25,61 @@ int main(int argc, char **argv)
 
     printf("%lld %lld\n", g->n, g->m / 2);
 
-    clustering *c = clustering_init(g);
+    d_core *d = d_core_init(g, 8, 0);
+    d->step_time = 10.0;
+    d_core_run(d, g, 3000, 1);
 
-    printf("%lld %lf\n", c->modularity, clustering_get_modularity(c));
-
-    local_search *ls = local_search_init(g, 0);
-
-    local_search_explore(ls, c, g, 300.0, 1);
-
-    graph *gc = graph_copy(g);
-    int *FM = malloc(sizeof(int) * g->n);
-    int *A = malloc(sizeof(int) * g->m);
-    for (int u = 0; u < g->n; u++)
-    {
-        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
-        {
-            int v = g->E[i];
-            A[i] = c->Cluster[u] == c->Cluster[v];
-        }
-    }
-
-    graph_contract(g, gc, A, FM);
-
-    printf("%lld %lld\n", gc->n, gc->m / 2);
-
-    clustering *cc = clustering_init(gc);
-
-    local_search *lsc = local_search_init(gc, 0);
-
-    local_search_explore(lsc, cc, gc, 300.0, 1);
-
-    local_search_free(ls);
-    clustering_free(c);
+    d_core_free(d);
+    graph_free(g);
 
     return 0;
+
+    // clustering *c = clustering_init(g);
+
+    // printf("%lld %lf\n", c->modularity, clustering_get_modularity(c));
+
+    // local_search *ls = local_search_init(g, 0);
+
+    // local_search_explore(ls, c, g, 5.0, 1);
+
+    // graph *gc = graph_copy(g);
+    // int *FM = malloc(sizeof(int) * g->n);
+    // int *A = malloc(sizeof(int) * g->m);
+    // for (int u = 0; u < g->n; u++)
+    // {
+    //     for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+    //     {
+    //         int v = g->E[i];
+    //         A[i] = c->Cluster[u] == c->Cluster[v];
+    //     }
+    // }
+
+    // double t0 = omp_get_wtime();
+    // graph_contract_par(g, gc, A, FM);
+    // double t1 = omp_get_wtime();
+
+    // free(FM);
+    // free(A);
+
+    // printf("Contracting took %lf\n", t1 - t0);
+
+    // printf("%lld %lld\n", gc->n, gc->m / 2);
+
+    // clustering *cc = clustering_init(gc);
+
+    // local_search *lsc = local_search_init(gc, 0);
+
+    // local_search_explore(lsc, cc, gc, 30.0, 1);
+
+    // local_search_free(lsc);
+    // clustering_free(cc);
+    // graph_free(gc);
+
+    // local_search_free(ls);
+    // clustering_free(c);
+    // graph_free(g);
+
+    // return 0;
 
     // local_search *ls = local_search_init(g, 0);
     // local_search_explore(ls, g, 30.0, 1);

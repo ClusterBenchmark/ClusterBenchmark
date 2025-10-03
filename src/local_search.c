@@ -133,8 +133,23 @@ static inline void local_search_best_move(local_search *ls, clustering *c, graph
     }
 }
 
-void local_search_greedy(local_search *ls, clustering *c, graph *g, int log)
+void local_search_report(local_search *ls, clustering *c, long long it)
 {
+    printf("\r%10lld: %12.8lf %10d %8.2lf", it,
+           clustering_get_modularity(c), c->cluster_count, ls->time);
+    fflush(stdout);
+}
+
+void local_search_print_header(local_search *ls, clustering *c, double tl)
+{
+    printf("Running baseline local search for %.2lf seconds\n", tl);
+    printf("%11s %12s %10s %8s\n", "It.", "Q", "Nc", "Time");
+    local_search_report(ls, c, 0);
+}
+
+void local_search_greedy(local_search *ls, clustering *c, graph *g, int log, double start, double time_limit)
+{
+    long long it = 0;
     while (ls->queue_count > 0)
     {
         int count = ls->queue_count;
@@ -151,6 +166,12 @@ void local_search_greedy(local_search *ls, clustering *c, graph *g, int log)
             ls->In_queue_old[u] = 0;
 
             local_search_best_move(ls, c, g, u, log);
+
+            if ((it++ & ((1 << 14) - 1)) == 0)
+            {
+                if (omp_get_wtime() - start > time_limit)
+                    break;
+            }
         }
     }
 }
@@ -208,20 +229,6 @@ void local_search_unwind(local_search *ls, clustering *c, graph *g, int t)
     }
 }
 
-void local_search_report(local_search *ls, clustering *c, long long it)
-{
-    printf("\r%10lld: %12.8lf %10d %8.2lf", it,
-           clustering_get_modularity(c), c->cluster_count, ls->time);
-    fflush(stdout);
-}
-
-void local_search_print_header(local_search *ls, clustering *c, double tl)
-{
-    printf("Running baseline local search for %.2lf seconds\n", tl);
-    printf("%11s %12s %10s %8s\n", "It.", "Q", "Nc", "Time");
-    local_search_report(ls, c, 0);
-}
-
 void local_search_explore(local_search *ls, clustering *c, graph *g, double time_limit, int verbose)
 {
     long long best = c->modularity, it = 0;
@@ -230,7 +237,7 @@ void local_search_explore(local_search *ls, clustering *c, graph *g, double time
     if (verbose)
         local_search_print_header(ls, c, time_limit);
 
-    local_search_greedy(ls, c, g, 0);
+    local_search_greedy(ls, c, g, 0, start, time_limit);
 
     if (c->modularity > best)
     {
@@ -255,7 +262,7 @@ void local_search_explore(local_search *ls, clustering *c, graph *g, double time
 
         local_search_perturbe(ls, c, g, 1);
 
-        local_search_greedy(ls, c, g, 1);
+        local_search_greedy(ls, c, g, 1, start, time_limit);
 
         if (c->modularity > best)
         {

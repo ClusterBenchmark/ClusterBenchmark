@@ -2,8 +2,6 @@
 
 #include "graph.h"
 
-// TODO, make E_count long long
-
 typedef struct
 {
     int cluster_count;         // Number of clusters
@@ -12,9 +10,10 @@ typedef struct
     int *Cluster;              // Cluster assignment
     long long *Cluster_degree; // Sum of degrees in each cluster
 
-    long long *V_end;         // End pointer for each neighborhood in clustering graph
-    int *E_cluster, *E_count; // Cluster id and count for clustering graph
-    int *Valid;               // Valid flag for clustering graph structure
+    long long *V_end;   // End pointer for each neighborhood in clustering graph
+    int *E_cluster;     // Cluster id for clustering graph
+    long long *E_count; // Cluster count for clustering graph
+    int *Valid;         // Valid flag for clustering graph structure
 
     long long *Temp_counter; // Temporary counter for best move computation
 } clustering;

@@ -18,9 +18,6 @@ d_core *d_core_init(graph *g, int p, unsigned int seed)
     c->C = malloc(sizeof(clustering *) * p);
     c->C_core = malloc(sizeof(clustering *) * p);
 
-    c->Cg = malloc(sizeof(clustering_graph *) * p);
-    c->Cg_core = malloc(sizeof(clustering_graph *) * p);
-
     c->LS = malloc(sizeof(local_search *) * p);
     c->LS_core = malloc(sizeof(local_search *) * p);
 
@@ -29,28 +26,31 @@ d_core *d_core_init(graph *g, int p, unsigned int seed)
     c->FM = malloc(sizeof(int) * g->n);
     c->A = malloc(sizeof(int) * g->m * 2);
 
-    int nt;
-#pragma omp parallel
-    {
-#pragma omp master
-        {
-            nt = omp_get_num_threads();
-        }
-    }
+    c->V = malloc(sizeof(int) * g->n);
+    c->E = malloc(sizeof(int) * g->n);
+    c->T = malloc(sizeof(int) * 3);
+    c->S = malloc(sizeof(long long) * g->n);
 
 #pragma omp parallel
     {
+        int nt = omp_get_num_threads();
+        int tid = omp_get_thread_num();
+
+#pragma omp single
+        {
+            c->Dt = malloc(sizeof(long long *) * nt);
+            c->Comm = malloc(sizeof(int) * nt);
+        }
+
+        c->Dt[tid] = malloc(sizeof(long long) * g->n);
+        for (int u = 0; u < g->n; u++)
+            c->Dt[tid][u] = 0;
+
 #pragma omp for
         for (int i = 0; i < p; i++)
         {
             c->C[i] = clustering_init(g);
             c->C_core[i] = clustering_init(g);
-        }
-#pragma omp for
-        for (int i = 0; i < p; i++)
-        {
-            c->LS[i] = local_search_init(g, seed + i);
-            c->LS_core[i] = local_search_init(g, seed + p + i);
         }
 #pragma omp for
         for (int i = 0; i < p; i++)
@@ -66,7 +66,7 @@ d_core *d_core_init(graph *g, int p, unsigned int seed)
         }
     }
 
-    c->best_n = c->LS[0]->n;
+    c->best_modularity = c->C[0]->modularity;
     c->time = 0.0;
 
     return c;
@@ -85,11 +85,24 @@ void d_core_free(d_core *c)
         local_search_free(c->LS_core[i]);
     }
 
+#pragma omp parallel
+    {
+        int tid = omp_get_thread_num();
+        free(c->Dt[tid]);
+    }
+
     free(c->LS);
     free(c->LS_core);
 
     free(c->FM);
     free(c->A);
+
+    free(c->V);
+    free(c->E);
+    free(c->Comm);
+    free(c->T);
+    free(c->S);
+    free(c->Dt);
 
     free(c);
 }
@@ -98,8 +111,8 @@ static inline int d_core_find_overall_best(d_core *c)
 {
     int best = 0;
     for (int i = 1; i < c->p; i++)
-        if (c->LS[i]->n > c->LS[best]->n ||
-            (c->LS[i]->n == c->LS[best]->n && c->LS[i]->time < c->LS[best]->time))
+        if (c->C[i]->modularity > c->C[best]->modularity ||
+            (c->C[i]->modularity == c->C[best]->modularity && c->LS[i]->time < c->LS[best]->time))
             best = i;
     return best;
 }
@@ -108,7 +121,7 @@ static inline int d_core_find_first_best(d_core *c)
 {
     int best = 0;
     for (int i = 1; i < c->p; i++)
-        if (c->LS[i]->n > c->LS[best]->n)
+        if (c->C[i]->modularity > c->C[best]->modularity)
             best = i;
     return best;
 }
@@ -117,7 +130,7 @@ static inline int d_core_find_first_worst(d_core *c)
 {
     int worst = 0;
     for (int i = 1; i < c->p; i++)
-        if (c->LS[i]->n < c->LS[worst]->n)
+        if (c->C[i]->modularity < c->C[worst]->modularity)
             worst = i;
     return worst;
 }
@@ -126,8 +139,8 @@ void d_core_print(d_core *c, graph *g, long long it, double elapsed)
 {
     int best = d_core_find_overall_best(c), worst = d_core_find_first_worst(c);
     printf("\r%6lld: %12.8lf (%3d %8.2lf) %12.8lf (%3d %8.2lf) %8.2lf %9lld %9lld",
-           it, local_search_get_modularity_score(c->LS[best], g), best, c->LS[best]->time,
-           local_search_get_modularity_score(c->LS[worst], g), worst, c->LS[worst]->time,
+           it, clustering_get_modularity(c->C[best]), best, c->LS[best]->time,
+           clustering_get_modularity(c->C[worst]), worst, c->LS[worst]->time,
            elapsed, c->d_core->n, c->d_core->V[c->d_core->n]);
     fflush(stdout);
 }
@@ -135,7 +148,7 @@ void d_core_print(d_core *c, graph *g, long long it, double elapsed)
 void d_core_update_best(d_core *c)
 {
     int best = d_core_find_overall_best(c);
-    c->best_n = c->LS[best]->n;
+    c->best_modularity = c->C[best]->modularity;
     c->time = c->LS[best]->time;
 }
 
@@ -147,7 +160,7 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
 
     if (verbose)
     {
-        printf("Running chils for %.2lf seconds\n", tl);
+        printf("Running D-core for %.2lf seconds\n", tl);
         printf("%7s %12s (%3s %8s) %12s (%3s %8s) %8s %9s %9s\n", "It.",
                "Best Q", "id", "time",
                "Worst Q", "id", "time",
@@ -157,21 +170,6 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
 
 #pragma omp parallel
     {
-#pragma omp for
-        for (int i = 0; i < c->p; i++)
-        {
-            local_search_explore(c->LS[i], g, 1.0, 0);
-        }
-
-#pragma omp single
-        {
-            end = omp_get_wtime();
-            elapsed = end - start;
-            d_core_update_best(c);
-            if (verbose)
-                d_core_print(c, g, 0, elapsed);
-        }
-
         long long ci = 0;
         while (elapsed < tl)
         {
@@ -184,7 +182,7 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                 if (remaining_time < duration)
                     duration = remaining_time;
                 if (duration > 0.0)
-                    local_search_explore(c->LS[i], g, duration, 0);
+                    local_search_explore(c->LS[i], c->C[i], g, duration, 0);
             }
 
             /* Mark the D-core */
@@ -196,18 +194,18 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                     int v = g->E[i];
                     int t = 0;
                     for (int j = 0; j < c->p; j++)
-                        t += c->LS[j]->Community[u] == c->LS[j]->Community[v];
+                        t += c->C[j]->Cluster[u] == c->C[j]->Cluster[v];
 
                     c->A[i] = t == c->p;
                 }
             }
 
             /* Construct the D-core */
+            graph_contract_par_internal(g, c->d_core, c->A, c->FM, c->V, c->E, c->S, c->Dt, c->Comm, c->T);
+
 #pragma omp single
             {
                 d_core_update_best(c);
-                graph_contract(g, c->d_core, c->A, c->FM);
-
                 if (verbose)
                     d_core_print(c, g, ci, elapsed);
             }
@@ -227,21 +225,25 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                 if (duration < 0.0)
                     continue;
 
-                long long ref = c->LS[i]->n;
+                long long ref = c->C[i]->modularity;
+                clustering_reset(c->C_core[i], c->d_core);
+                local_search_queue_all(c->LS_core[i], c->d_core);
 
-                local_search_reset(c->LS_core[i], c->d_core);
                 c->LS_core[i]->time_ref = c->LS[i]->time_ref;
 
-                local_search_explore(c->LS_core[i], c->d_core, duration, 0);
+                local_search_explore(c->LS_core[i], c->C_core[i], c->d_core, duration, 0);
 
-                if (ref < c->LS_core[i]->n)
-                {
-                    for (int u = 0; u < g->n; u++)
-                        local_search_move_vertex(c->LS[i], g, u, c->LS_core[i]->Community[c->FM[u]], 0, 1);
-                }
+                // TODO, use the V and E structure to only change the cluster of some vertices
+                // 
 
-                if (ref < c->LS_core[i]->n)
-                    c->LS[i]->time = c->LS_core[i]->time;
+                // if (ref < c->C_core[i]->modularity)
+                // {
+                //     for (int u = 0; u < g->n; u++)
+                //         local_search_move_vertex(c->LS[i], c->C[i], g, u, c->C_core[i]->Cluster[c->FM[u]], 0, 1);
+                // }
+
+                // if (ref < c->C_core[i]->modularity)
+                //     c->LS[i]->time = c->LS_core[i]->time;
             }
 
 #pragma omp single
@@ -263,5 +265,5 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
 int *d_core_get_best_clustering(d_core *d)
 {
     int best = d_core_find_overall_best(d);
-    return d->LS[best]->Community;
+    return d->C[best]->Cluster;
 }

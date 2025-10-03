@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define MAX_CLUSTER_DEGREE 256
+#define CLUSTER_RATIO 10
 
 clustering *clustering_init(graph *g)
 {
@@ -13,15 +13,15 @@ clustering *clustering_init(graph *g)
     c->Cluster_degree = malloc(sizeof(long long) * g->n);
 
     c->V_end = malloc(sizeof(long long) * g->n);
-    c->E_cluster = malloc(sizeof(int) * g->V[g->n]);
-    c->E_count = malloc(sizeof(int) * g->V[g->n]);
+    c->E_cluster = malloc(sizeof(int) * g->m);
+    c->E_count = malloc(sizeof(long long) * g->m);
     c->Valid = malloc(sizeof(int) * g->n);
 
     c->Temp_counter = malloc(sizeof(long long) * g->n);
 
-    for (long long i = 0; i < g->V[g->n]; i++)
+    for (long long i = 0; i < g->m; i++)
         c->E_cluster[i] = 0;
-    for (long long i = 0; i < g->V[g->n]; i++)
+    for (long long i = 0; i < g->m; i++)
         c->E_count[i] = 0;
 
     clustering_reset(c, g);
@@ -85,20 +85,20 @@ double clustering_get_modularity(clustering *c)
 }
 
 /*  Decrease the counter for c_dec and increase the counter for c_inc. */
-void clustering_update_vertex(clustering *c, graph *g, int u, int c_dec, int c_inc, int amount)
+void clustering_update_vertex(clustering *c, graph *g, int u, int c_dec, int c_inc, long long amount)
 {
     long long p_dec = g->V[u];
     while (p_dec < c->V_end[u] && c->E_cluster[p_dec] != c_dec)
         p_dec++;
 
-    static int t = 0;
-    t++;
+    // static int t = 0;
+    // t++;
 
-    if (p_dec == c->V_end[u])
-    {
-        printf("\n%d\n", t);
-        exit(0);
-    }
+    // if (p_dec == c->V_end[u])
+    // {
+    //     printf("\n%d\n", t);
+    //     exit(0);
+    // }
 
     assert(p_dec < c->V_end[u]);
 
@@ -141,7 +141,7 @@ void clustering_move_vertex(clustering *c, graph *g, int u, int c_new)
         if (v == u)
             continue;
 
-        if (c->Valid[v] && (c->V_end[v] - g->V[v]) < MAX_CLUSTER_DEGREE)
+        if (c->Valid[v] && (c->V_end[v] - g->V[v]) <= (g->V[v + 1] - g->V[v]) / CLUSTER_RATIO)
             clustering_update_vertex(c, g, v, c_old, c_new, g->EW[i]);
         else
             c->Valid[v] = 0;
@@ -280,7 +280,7 @@ int clustering_best_move(clustering *c, graph *g, int u)
         if (v == u)
             continue;
 
-        if (c->Valid[v] && (c->V_end[v] - g->V[v]) < MAX_CLUSTER_DEGREE)
+        if (c->Valid[v] && (c->V_end[v] - g->V[v]) <= (g->V[v + 1] - g->V[v]) / CLUSTER_RATIO)
             clustering_update_vertex(c, g, v, c_old, c_best, g->EW[i]);
         else
             c->Valid[v] = 0;
