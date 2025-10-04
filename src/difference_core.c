@@ -138,11 +138,11 @@ static inline int d_core_find_first_worst(d_core *c)
 void d_core_print(d_core *c, graph *g, long long it, double elapsed)
 {
     int best = d_core_find_overall_best(c), worst = d_core_find_first_worst(c);
-    printf("\r%6lld: %12.8lf (%3d %8.2lf) %12.8lf (%3d %8.2lf) %8.2lf %9lld %9lld",
+    printf("%6lld: %12.8lf (%3d %8.2lf) %12.8lf (%3d %8.2lf) %8.2lf %9lld %9lld\n",
            it, clustering_get_modularity(c->C[best]), best, c->LS[best]->time,
            clustering_get_modularity(c->C[worst]), worst, c->LS[worst]->time,
            elapsed, c->d_core->n, c->d_core->V[c->d_core->n]);
-    fflush(stdout);
+    // fflush(stdout);
 }
 
 void d_core_update_best(d_core *c)
@@ -170,6 +170,8 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
 
 #pragma omp parallel
     {
+        int tid = omp_get_thread_num();
+
         long long ci = 0;
         while (elapsed < tl)
         {
@@ -200,11 +202,22 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                 }
             }
 
+#pragma omp single
+            {
+                end = omp_get_wtime();
+                elapsed = end - start;
+                d_core_update_best(c);
+                if (verbose)
+                    d_core_print(c, g, ci, elapsed);
+            }
+
             /* Construct the D-core */
             graph_contract_par_internal(g, c->d_core, c->A, c->FM, c->V, c->E, c->S, c->Dt, c->Comm, c->T);
 
 #pragma omp single
             {
+                end = omp_get_wtime();
+                elapsed = end - start;
                 d_core_update_best(c);
                 if (verbose)
                     d_core_print(c, g, ci, elapsed);
@@ -218,7 +231,7 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                     continue;
 
                 double remaining_time = tl - (omp_get_wtime() - start);
-                double duration = c->step_time * 0.2;
+                double duration = c->step_time * 0.1;
                 if (remaining_time < duration)
                     duration = remaining_time;
 
@@ -234,16 +247,23 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                 local_search_explore(c->LS_core[i], c->C_core[i], c->d_core, duration, 0);
 
                 // TODO, use the V and E structure to only change the cluster of some vertices
-                // 
 
-                // if (ref < c->C_core[i]->modularity)
-                // {
-                //     for (int u = 0; u < g->n; u++)
-                //         local_search_move_vertex(c->LS[i], c->C[i], g, u, c->C_core[i]->Cluster[c->FM[u]], 0, 1);
-                // }
+                if (ref < c->C_core[i]->modularity)
+                {
+                    clustering_update(c->C[i], g, c->C_core[i], c->FM);
+                    local_search_queue_all(c->LS[i], g);
+                    // for (int u = 0; u < g->n; u++)
+                    //     local_search_move_vertex(c->LS[i], c->C[i], g, u, c->C_core[i]->Cluster[c->FM[u]], 0, 1); // c->C_core[i]->Cluster[c->FM[u]]
 
-                // if (ref < c->C_core[i]->modularity)
-                //     c->LS[i]->time = c->LS_core[i]->time;
+                    if (c->C[i]->modularity != c->C_core[i]->modularity)
+                    {
+                        printf("%lf %lf\n", clustering_get_modularity(c->C[i]), clustering_get_modularity(c->C_core[i]));
+                        exit(0);
+                    }
+                }
+
+                if (ref < c->C_core[i]->modularity)
+                    c->LS[i]->time = c->LS_core[i]->time;
             }
 
 #pragma omp single

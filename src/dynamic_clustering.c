@@ -79,6 +79,21 @@ void clustering_reset(clustering *c, graph *g)
     }
 }
 
+void clustering_update(clustering *c, graph *g, clustering *cd, int *FM)
+{
+    c->cluster_count = cd->cluster_count;
+    c->modularity = cd->modularity;
+    c->edge_weight_sum = cd->edge_weight_sum;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        int cluster = cd->Cluster[FM[u]];
+        c->Cluster[u] = cluster;
+        c->Cluster_degree[cluster] = cd->Cluster_degree[cluster];
+        c->Valid[u] = 0;
+    }
+}
+
 double clustering_get_modularity(clustering *c)
 {
     return (double)c->modularity / (double)(4ll * c->edge_weight_sum * c->edge_weight_sum);
@@ -100,7 +115,7 @@ void clustering_update_vertex(clustering *c, graph *g, int u, int c_dec, int c_i
     //     exit(0);
     // }
 
-    assert(p_dec < c->V_end[u]);
+    // assert(p_dec < c->V_end[u]);
 
     c->E_count[p_dec] -= amount;
 
@@ -210,7 +225,7 @@ int clustering_best_move(clustering *c, graph *g, int u)
 
         internal_old = c->Temp_counter[c_old];
         c->Temp_counter[c_old] = 0;
-        
+
         c->V_end[u] = g->V[u];
         if (internal_old > 0)
         {

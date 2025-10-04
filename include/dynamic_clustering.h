@@ -27,6 +27,9 @@ void clustering_free(clustering *c);
 /*  Reset clustering for the given graph. */
 void clustering_reset(clustering *c, graph *g);
 
+/*  Update clusterig after d-core. */
+void clustering_update(clustering *c, graph *g, clustering *cd, int *FM);
+
 /*  Returns the modularity score for the current clustering. */
 double clustering_get_modularity(clustering *c);
 

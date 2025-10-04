@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 
     printf("%lld %lld\n", g->n, g->m / 2);
 
-    d_core *d = d_core_init(g, 8, 0);
-    d->step_time = 10.0;
+    d_core *d = d_core_init(g, 4, 0);
+    d->step_time = 30.0;
     d_core_run(d, g, 3000, 1);
 
     d_core_free(d);
