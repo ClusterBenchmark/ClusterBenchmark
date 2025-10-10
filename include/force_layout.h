@@ -2,17 +2,15 @@
 
 #include "graph.h"
 
-/*
+#include <omp.h>
 
-TODO:
-    * Combination of quadtree and grid based approach
-
-*/
-
-#define CELL_WIDTH 32
-#define CELL_MAX 128
-#define OUTER_WIDTH 2048
 #define INNER_WIDTH 64
+#define INNER_MAX 64
+#define OUTER_WIDTH 256
+#define GRID_WIDTH 16384
+
+#define INNER_SIZE (GRID_WIDTH / INNER_WIDTH)
+#define OUTER_SIZE (GRID_WIDTH / OUTER_WIDTH)
 
 typedef struct
 {
@@ -21,8 +19,17 @@ typedef struct
     float fx, fy;
 
     int n;
-    int V[CELL_MAX];
-} cell;
+    float _Alignas(32) Vx[INNER_MAX];
+    float _Alignas(32) Vy[INNER_MAX];
+    float _Alignas(32) Vw[INNER_MAX];
+} cell_inner;
+
+typedef struct
+{
+    float mass;
+    float cx, cy;
+    float fx, fy;
+} cell_outer;
 
 typedef struct
 {
@@ -30,7 +37,11 @@ typedef struct
     float *X, *Y;
     float *fX, *fY, *vX, *vY;
 
-    cell *Grid;
+    cell_inner *Grid_inner;
+    cell_outer *Grid_outer;
+
+    omp_lock_t *Cell_lock_inner;
+    omp_lock_t *Cell_lock_outer;
 } force_layout;
 
 force_layout *force_layout_init(graph *g);

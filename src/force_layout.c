@@ -4,16 +4,17 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <immintrin.h>
 
 const float EPS = 0.0001f;
-const float MAX_FORCE = 10.0f;
+const float MAX_FORCE = 1000.0f;
 
-// --- Parameters (tune) ---
-const float REST_L = 10.0f;
-const float K_SPRING = 1.0f;
+// --- Parameters ---
+const float REST_L = 25.0f;
+const float K_SPRING = 0.1f;
 const float K_REPEL = 0.1f;
 const float K_GRAVITY = 0.1f;
-const float SOFTEN_EPS = 0.01f;
+const float SOFTEN_EPS = 0.1f;
 const float DECAY = 0.999f;
 
 force_layout *force_layout_init(graph *g)
@@ -31,12 +32,25 @@ force_layout *force_layout_init(graph *g)
     fl->vX = calloc(g->n, sizeof(float));
     fl->vY = calloc(g->n, sizeof(float));
 
-    fl->Grid = calloc(INNER_WIDTH * INNER_WIDTH, sizeof(cell));
+    fl->Grid_inner = calloc(INNER_SIZE * INNER_SIZE, sizeof(cell_inner));
+    fl->Grid_outer = calloc(OUTER_SIZE * OUTER_SIZE, sizeof(cell_outer));
+
+    fl->Cell_lock_inner = malloc(sizeof(omp_lock_t) * INNER_SIZE * INNER_SIZE);
+    fl->Cell_lock_outer = malloc(sizeof(omp_lock_t) * OUTER_SIZE * OUTER_SIZE);
+
+    for (int i = 0; i < INNER_SIZE * INNER_SIZE; i++)
+    {
+        omp_init_lock(fl->Cell_lock_inner + i);
+    }
+    for (int i = 0; i < OUTER_SIZE * OUTER_SIZE; i++)
+    {
+        omp_init_lock(fl->Cell_lock_outer + i);
+    }
 
     for (int i = 0; i < g->n; i++)
     {
-        fl->X[i] = (rand() % OUTER_WIDTH);
-        fl->Y[i] = (rand() % OUTER_WIDTH);
+        fl->X[i] = (rand() % GRID_WIDTH);
+        fl->Y[i] = (rand() % GRID_WIDTH);
 
         fl->fX[i] = 0.0f;
         fl->fY[i] = 0.0f;
@@ -59,33 +73,82 @@ void force_layout_free(force_layout *fl)
     free(fl->vX);
     free(fl->vY);
 
-    free(fl->Grid);
+    free(fl->Grid_inner);
+    free(fl->Grid_outer);
+
+    for (int i = 0; i < INNER_SIZE * INNER_SIZE; i++)
+    {
+        omp_destroy_lock(fl->Cell_lock_inner + i);
+    }
+    for (int i = 0; i < OUTER_SIZE * OUTER_SIZE; i++)
+    {
+        omp_destroy_lock(fl->Cell_lock_outer + i);
+    }
+
+    free(fl->Cell_lock_inner);
+    free(fl->Cell_lock_outer);
 
     free(fl);
 }
 
-void force_layout_forces_repel_cell(force_layout *fl, int u, graph *g, int cx, int cy)
+void force_layout_forces_repel_individual(force_layout *fl, int u, graph *g, int cx, int cy)
 {
-    if (cx < 0 || cx >= INNER_WIDTH || cy < 0 || cy >= INNER_WIDTH)
+    if (cx < 0 || cx >= INNER_SIZE || cy < 0 || cy >= INNER_SIZE)
         return;
 
-    cell *c = fl->Grid + cx * INNER_WIDTH + cy;
+    cell_inner *c = fl->Grid_inner + cx * INNER_SIZE + cy;
 
+// #pragma omp simd
     for (int i = 0; i < c->n; i++)
     {
-        int v = c->V[i];
-        if (v == u)
-            continue;
+        float dx = fl->X[u] - c->Vx[i];
+        float dy = fl->Y[u] - c->Vy[i];
 
-        float dx = fl->X[u] - fl->X[v];
-        float dy = fl->Y[u] - fl->Y[v];
+        float _d = dx * dx + dy * dy + EPS;
 
-        float d = sqrtf(dx * dx + dy * dy + EPS);
-        if (d > 5.0f + EPS)
-            d -= 5.0f;
+        fl->fX[u] += K_REPEL * (dx / _d) * c->Vw[i];
+        fl->fY[u] += K_REPEL * (dy / _d) * c->Vw[i];
+    }
+}
 
-        fl->fX[u] += K_REPEL * (dx / (d * d)) * (float)g->VW[v];
-        fl->fY[u] += K_REPEL * (dy / (d * d)) * (float)g->VW[v];
+void force_layout_forces_repel_cell_inner(force_layout *fl, int cx, int cy)
+{
+    cell_inner *c = fl->Grid_inner + cx * INNER_SIZE + cy;
+
+    const int between_width = OUTER_WIDTH / INNER_WIDTH;
+
+    int sx = (cx & (~(between_width - 1)));
+    sx = sx > 0 ? sx - between_width : sx;
+
+    int tx = (cx & (~(between_width - 1))) + between_width;
+    tx = tx < INNER_SIZE ? tx + between_width : tx;
+
+    int sy = (cy & (~(between_width - 1)));
+    sy = sy > 0 ? sy - between_width : sy;
+
+    int ty = (cy & (~(between_width - 1))) + between_width;
+    ty = ty < INNER_SIZE ? ty + between_width : ty;
+
+    for (int x = sx; x < tx; x++)
+    {
+        for (int y = sy; y < ty; y++)
+        {
+            if (abs(cx - x) <= 1 && abs(cy - y) <= 1)
+                continue;
+
+            cell_inner *ci = fl->Grid_inner + x * INNER_SIZE + y;
+
+            if (ci->n == 0)
+                continue;
+
+            float dx = c->cx - ci->cx;
+            float dy = c->cy - ci->cy;
+
+            float _d = dx * dx + dy * dy + EPS;
+
+            c->fx += K_REPEL * (dx / _d) * ci->mass;
+            c->fy += K_REPEL * (dy / _d) * ci->mass;
+        }
     }
 }
 
@@ -93,9 +156,9 @@ void force_layout_forces_repel(force_layout *fl, graph *g)
 {
 
 #pragma omp for
-    for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
+    for (int i = 0; i < INNER_SIZE * INNER_SIZE; i++)
     {
-        cell *c = fl->Grid + i;
+        cell_inner *c = fl->Grid_inner + i;
 
         c->mass = 0.0f;
         c->cx = 0.0f;
@@ -104,36 +167,67 @@ void force_layout_forces_repel(force_layout *fl, graph *g)
         c->fy = 0.0f;
         c->n = 0;
     }
-    // memset(fl->Grid, 0, sizeof(cell) * INNER_WIDTH * INNER_WIDTH);
 
-    for (int u = 0; u < g->n; u++)
+#pragma omp for
+    for (int i = 0; i < OUTER_SIZE * OUTER_SIZE; i++)
     {
-        int gx = fl->X[u] / CELL_WIDTH,
-            gy = fl->Y[u] / CELL_WIDTH;
+        cell_outer *c = fl->Grid_outer + i;
 
-        cell *c = fl->Grid + gx * INNER_WIDTH + gy;
-
-        if (c->n < CELL_MAX)
-        {
-            c->V[c->n++] = u;
-            c->mass += g->VW[u];
-        }
+        c->mass = 0.0f;
+        c->cx = 0.0f;
+        c->cy = 0.0f;
+        c->fx = 0.0f;
+        c->fy = 0.0f;
     }
 
 #pragma omp for
-    for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
+    for (int u = 0; u < g->n; u++)
     {
-        cell *c = fl->Grid + i;
+        int cx = fl->X[u] / INNER_WIDTH,
+            cy = fl->Y[u] / INNER_WIDTH;
 
-        for (int j = 0; j < c->n; j++)
+        cell_inner *c = fl->Grid_inner + cx * INNER_SIZE + cy;
+
+        omp_set_lock(fl->Cell_lock_inner + cx * INNER_SIZE + cy);
+
+        if (c->n < INNER_MAX)
         {
-            int u = c->V[j];
-
-            c->cx += fl->X[u] * (float)g->VW[u];
-            c->cy += fl->Y[u] * (float)g->VW[u];
+            c->Vx[c->n] = fl->X[u];
+            c->Vy[c->n] = fl->Y[u];
+            c->Vw[c->n] = g->VW[u];
+            c->n++;
         }
 
-        if (c->n > 0)
+        c->mass += g->VW[u];
+        c->cx += fl->X[u] * (float)g->VW[u];
+        c->cy += fl->Y[u] * (float)g->VW[u];
+
+        omp_unset_lock(fl->Cell_lock_inner + cx * INNER_SIZE + cy);
+    }
+
+#pragma omp for
+    for (int u = 0; u < g->n; u++)
+    {
+        int cx = fl->X[u] / OUTER_WIDTH,
+            cy = fl->Y[u] / OUTER_WIDTH;
+
+        cell_outer *c = fl->Grid_outer + cx * OUTER_SIZE + cy;
+
+        omp_set_lock(fl->Cell_lock_outer + cx * OUTER_SIZE + cy);
+
+        c->mass += g->VW[u];
+        c->cx += fl->X[u] * (float)g->VW[u];
+        c->cy += fl->Y[u] * (float)g->VW[u];
+
+        omp_unset_lock(fl->Cell_lock_outer + cx * OUTER_SIZE + cy);
+    }
+
+#pragma omp for
+    for (int i = 0; i < INNER_SIZE * INNER_SIZE; i++)
+    {
+        cell_inner *c = fl->Grid_inner + i;
+
+        if (c->mass > 0.0f)
         {
             c->cx /= c->mass;
             c->cy /= c->mass;
@@ -141,61 +235,94 @@ void force_layout_forces_repel(force_layout *fl, graph *g)
     }
 
 #pragma omp for
-    for (int i = 0; i < INNER_WIDTH * INNER_WIDTH; i++)
+    for (int i = 0; i < OUTER_SIZE * OUTER_SIZE; i++)
     {
-        cell *c = fl->Grid + i;
-        if (c->n == 0)
-            continue;
+        cell_outer *c = fl->Grid_outer + i;
 
-        int cx = i / INNER_WIDTH,
-            cy = i % INNER_WIDTH;
-
-        for (int j = 0; j < INNER_WIDTH * INNER_WIDTH; j++)
+        if (c->mass > 0.0f)
         {
-            cell *x = fl->Grid + j;
-
-            int xx = j / INNER_WIDTH,
-                xy = j % INNER_WIDTH;
-
-            if (i == j || x->n == 0 || abs(cx - xx) <= 1 || abs(cy - xy) <= 1)
-                continue;
-
-            float dx = c->cx - x->cx;
-            float dy = c->cy - x->cy;
-
-            float _d = dx * dx + dy * dy + EPS;
-
-            c->fx += K_REPEL * (dx / _d) * x->mass;
-            c->fy += K_REPEL * (dy / _d) * x->mass;
+            c->cx /= c->mass;
+            c->cy /= c->mass;
         }
     }
 
+#pragma omp for schedule(dynamic, 32)
+    for (int i = 0; i < INNER_SIZE * INNER_SIZE; i++)
+    {
+        cell_inner *c = fl->Grid_inner + i;
+        if (c->n == 0)
+            continue;
+
+        int cx = i / INNER_SIZE,
+            cy = i % INNER_SIZE;
+
+        force_layout_forces_repel_cell_inner(fl, cx, cy);
+    }
+
 #pragma omp for
+    for (int i = 0; i < OUTER_SIZE * OUTER_SIZE; i++)
+    {
+        cell_outer *c = fl->Grid_outer + i;
+        if (c->mass == 0.0f)
+            continue;
+
+        int cx = i / OUTER_SIZE,
+            cy = i % OUTER_SIZE;
+
+        for (int j = 0; j < OUTER_SIZE * OUTER_SIZE; j++)
+        {
+            int _cx = j / OUTER_SIZE,
+                _cy = j % OUTER_SIZE;
+
+            if (abs(cx - _cx) <= 1 && abs(cy - _cy) <= 1)
+                continue;
+
+            cell_outer *_c = fl->Grid_outer + j;
+
+            float dx = c->cx - _c->cx;
+            float dy = c->cy - _c->cy;
+
+            float _d = dx * dx + dy * dy + EPS;
+
+            c->fx += K_REPEL * (dx / _d) * _c->mass;
+            c->fy += K_REPEL * (dy / _d) * _c->mass;
+        }
+    }
+
+#pragma omp for schedule(dynamic, 32)
     for (int u = 0; u < g->n; u++)
     {
-        int gx = fl->X[u] / CELL_WIDTH,
-            gy = fl->Y[u] / CELL_WIDTH;
+        int ci_x = fl->X[u] / INNER_WIDTH,
+            ci_y = fl->Y[u] / INNER_WIDTH;
 
-        cell *c = fl->Grid + gx * INNER_WIDTH + gy;
+        force_layout_forces_repel_individual(fl, u, g, ci_x - 1, ci_y - 1);
+        force_layout_forces_repel_individual(fl, u, g, ci_x - 1, ci_y);
+        force_layout_forces_repel_individual(fl, u, g, ci_x - 1, ci_y + 1);
+        force_layout_forces_repel_individual(fl, u, g, ci_x, ci_y - 1);
+        force_layout_forces_repel_individual(fl, u, g, ci_x, ci_y);
+        force_layout_forces_repel_individual(fl, u, g, ci_x, ci_y + 1);
+        force_layout_forces_repel_individual(fl, u, g, ci_x + 1, ci_y - 1);
+        force_layout_forces_repel_individual(fl, u, g, ci_x + 1, ci_y);
+        force_layout_forces_repel_individual(fl, u, g, ci_x + 1, ci_y + 1);
 
-        fl->fX[u] += c->fx;
-        fl->fY[u] += c->fy;
+        cell_inner *ci = fl->Grid_inner + ci_x * INNER_SIZE + ci_y;
 
-        force_layout_forces_repel_cell(fl, u, g, gx - 1, gy - 1);
-        force_layout_forces_repel_cell(fl, u, g, gx - 1, gy);
-        force_layout_forces_repel_cell(fl, u, g, gx - 1, gy + 1);
-        force_layout_forces_repel_cell(fl, u, g, gx, gy - 1);
-        force_layout_forces_repel_cell(fl, u, g, gx, gy);
-        force_layout_forces_repel_cell(fl, u, g, gx, gy + 1);
-        force_layout_forces_repel_cell(fl, u, g, gx + 1, gy - 1);
-        force_layout_forces_repel_cell(fl, u, g, gx + 1, gy);
-        force_layout_forces_repel_cell(fl, u, g, gx + 1, gy + 1);
+        fl->fX[u] += ci->fx;
+        fl->fY[u] += ci->fy;
+
+        int co_x = fl->X[u] / OUTER_WIDTH,
+            co_y = fl->Y[u] / OUTER_WIDTH;
+
+        cell_outer *co = fl->Grid_outer + co_x * OUTER_SIZE + co_y;
+
+        fl->fX[u] += co->fx;
+        fl->fY[u] += co->fy;
     }
 }
 
 void force_layout_forces_spring(force_layout *fl, graph *g)
 {
-    float gx = OUTER_WIDTH / 2, gy = OUTER_WIDTH / 2;
+    float gx = GRID_WIDTH / 2, gy = GRID_WIDTH / 2;
 
 #pragma omp for
     for (int u = 0; u < g->n; u++)
@@ -264,10 +391,10 @@ void force_layout_step(force_layout *fl, graph *g)
             fl->X[u] += fl->vX[u];
             fl->Y[u] += fl->vY[u];
 
-            fl->X[u] = fl->X[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->X[u];
+            fl->X[u] = fl->X[u] >= GRID_WIDTH - 1 ? GRID_WIDTH - 1 : fl->X[u];
             fl->X[u] = fl->X[u] < 0.0f ? 0.0f : fl->X[u];
 
-            fl->Y[u] = fl->Y[u] >= OUTER_WIDTH - 1 ? OUTER_WIDTH - 1 : fl->Y[u];
+            fl->Y[u] = fl->Y[u] >= GRID_WIDTH - 1 ? GRID_WIDTH - 1 : fl->Y[u];
             fl->Y[u] = fl->Y[u] < 0.0f ? 0.0f : fl->Y[u];
         }
     }

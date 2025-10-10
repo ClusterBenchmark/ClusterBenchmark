@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <omp.h>
 
-#define MAX_QUEUE (1 << 6)
+#define MAX_QUEUE (1 << 7)
 #define TIME_INTERVAL (1 << 8)
 
 local_search *local_search_init(graph *g, unsigned int seed)
@@ -166,13 +166,10 @@ void local_search_greedy(local_search *ls, clustering *c, graph *g, int log, dou
             ls->In_queue_old[u] = 0;
 
             local_search_best_move(ls, c, g, u, log);
-
-            if ((it++ & ((1 << 14) - 1)) == 0)
-            {
-                if (omp_get_wtime() - start > time_limit)
-                    break;
-            }
         }
+
+        if (omp_get_wtime() - start > time_limit)
+            break;
     }
 }
 
@@ -186,18 +183,27 @@ void local_search_perturbe(local_search *ls, clustering *c, graph *g, int log)
 
     long long best = c->modularity;
 
-    int c_new;
-
     if (degree == 0)
         return;
 
-    c_new = c->Cluster[g->E[g->V[u] + (rand_r(&ls->seed) % degree)]];
+    if ((rand_r(&ls->seed) & 7) == 0)
+    {
+        int c_new = rand_r(&ls->seed) % g->n;
+        if (c_new == c_old)
+            return;
 
-    // if ((rand_r(&ls->seed) & 63) == 0)
-    //     c_new = rand_r(&ls->seed) % g->n;
-    // else
-    //     c_new = c->Cluster[g->E[g->V[u] + (rand_r(&ls->seed) % degree)]];
+        local_search_move_vertex(ls, c, g, u, c_new, log, 1);
 
+        for (long long i = g->V[u]; i < g->V[u + 1] && c->modularity <= best; i++)
+        {
+            int v = g->E[i];
+            local_search_move_vertex(ls, c, g, v, c_new, log, 1);
+        }
+
+        return;
+    }
+
+    int c_new = c->Cluster[g->E[g->V[u] + (rand_r(&ls->seed) % degree)]];
     if (c_new == c_old)
         return;
 

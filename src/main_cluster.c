@@ -1,7 +1,7 @@
 #include "graph.h"
 #include "local_search.h"
 #include "util.h"
-#include "dynamic_clustering.h"
+#include "clustering.h"
 #include "difference_core.h"
 
 #include <stdlib.h>

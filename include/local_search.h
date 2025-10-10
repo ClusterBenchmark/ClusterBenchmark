@@ -1,7 +1,7 @@
 #pragma once
 
 #include "graph.h"
-#include "dynamic_clustering.h"
+#include "clustering.h"
 
 typedef struct
 {

@@ -246,14 +246,10 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
 
                 local_search_explore(c->LS_core[i], c->C_core[i], c->d_core, duration, 0);
 
-                // TODO, use the V and E structure to only change the cluster of some vertices
-
                 if (ref < c->C_core[i]->modularity)
                 {
                     clustering_update(c->C[i], g, c->C_core[i], c->FM);
                     local_search_queue_all(c->LS[i], g);
-                    // for (int u = 0; u < g->n; u++)
-                    //     local_search_move_vertex(c->LS[i], c->C[i], g, u, c->C_core[i]->Cluster[c->FM[u]], 0, 1); // c->C_core[i]->Cluster[c->FM[u]]
 
                     if (c->C[i]->modularity != c->C_core[i]->modularity)
                     {

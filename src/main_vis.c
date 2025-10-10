@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <omp.h>
 
-#define WIDTH 1200
-#define HEIGHT 1200
+#define WIDTH 1500
+#define HEIGHT 900
 
 int main(int argc, char **argv)
 {
@@ -35,6 +35,7 @@ int main(int argc, char **argv)
     force_layout *fl = force_layout_init(g);
 
     int mbd = 0;
+    int draw_edges = 0;
 
     while (running)
     {
@@ -57,8 +58,12 @@ int main(int argc, char **argv)
             {
                 if (e.wheel.y > 0 && s->zoom < 10.0f)
                     s->zoom *= 1.1;
-                else if (e.wheel.y < 0 && s->zoom > 0.1f)
+                else if (e.wheel.y < 0 && s->zoom > 0.01f)
                     s->zoom *= 0.9;
+            }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_e)
+            {
+                draw_edges = !draw_edges;
             }
             else if (e.type == SDL_QUIT)
             {
@@ -69,13 +74,13 @@ int main(int argc, char **argv)
         double t0 = omp_get_wtime();
         force_layout_step(fl, g);
         double t1 = omp_get_wtime();
-        screen_render_frame(s, g, fl);
+        screen_render_frame(s, g, fl, draw_edges);
         double t2 = omp_get_wtime();
 
-        s->Pixels[50 * WIDTH + 50] = 0xff;
+        // s->Pixels[50 * WIDTH + 50] = 0xff;
 
-        // printf("\r%5.3lf %5.3lf", t1 - t0, t2 - t1);
-        // fflush(stdout);
+        printf("\r%5.3lf %5.3lf", t1 - t0, t2 - t1);
+        fflush(stdout);
 
         SDL_UpdateTexture(tex, NULL, s->Pixels, WIDTH * sizeof(uint32_t));
         SDL_RenderClear(ren);

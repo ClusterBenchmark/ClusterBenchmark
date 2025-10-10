@@ -15,7 +15,7 @@ screen *screen_init(int height, int width)
     for (int i = 0; i < height * width; i++)
         s->Pixels[i] = 0;
 
-    s->zoom = 1.0f;
+    s->zoom = 0.5f;
     s->root_x = 0;
     s->root_y = 0;
 
@@ -93,7 +93,7 @@ void screen_draw_circle_filled(screen *s, int xm, int ym, int r, uint32_t draw_c
 {
 }
 
-void screen_render_frame(screen *s, graph *g, force_layout *fl)
+void screen_render_frame(screen *s, graph *g, force_layout *fl, int draw_edges)
 {
 #pragma omp parallel
     {
@@ -103,11 +103,33 @@ void screen_render_frame(screen *s, graph *g, force_layout *fl)
             s->Pixels[i] = 0xffffff;
         }
 
-        // memset(s->Pixels, 0xff, sizeof(uint32_t) * s->height * s->width);
-
-        // for (int i = 0; i < INNER_WIDTH; i++)
+        // for (int i = 0; i < INNER_SIZE; i++)
         // {
-        //     draw_line(i * CELL_WIDTH, 0, i * CELL_WIDTH, HEIGHT, color, pixels);
+        //     int vx = ((float)(i * INNER_WIDTH) + s->root_x) * s->zoom;
+        //     screen_draw_line(s, vx, 0, vx, s->height - 1, 0xff0000);
+        // }
+        // for (int i = 0; i < INNER_SIZE; i++)
+        // {
+        //     int vy = ((float)(i * INNER_WIDTH) + s->root_y) * s->zoom;
+        //     screen_draw_line(s, 0, vy, s->width - 1, vy, 0xff0000);
+        // }
+
+        // for (int i = 0; i < OUTER_SIZE; i++)
+        // {
+        //     int vx = ((float)(i * OUTER_WIDTH) + s->root_x) * s->zoom;
+        //     screen_draw_line(s, vx, 0, vx, s->height - 1, 0x00ff00);
+        // }
+        // for (int i = 0; i < OUTER_SIZE; i++)
+        // {
+        //     int vy = ((float)(i * OUTER_WIDTH) + s->root_y) * s->zoom;
+        //     screen_draw_line(s, 0, vy, s->width - 1, vy, 0x00ff00);
+        // }
+
+        // screen_draw_line(s, 100, 0, 100, s->height - 1, 0x00);
+
+        // for (int i = 0; i < OUTER_SIZE; i++)
+        // {
+        //     draw_line(i * OUTER_WIDTH, 0, i * OUTER_SIZE, HEIGHT, color, pixels);
         // }
         // for (int i = 0; i < INNER_WIDTH; i++)
         // {
@@ -120,6 +142,9 @@ void screen_render_frame(screen *s, graph *g, force_layout *fl)
             int ux = (fl->X[u] + s->root_x) * s->zoom, uy = (fl->Y[u] + s->root_y) * s->zoom;
 
             screen_draw_circle(s, ux, uy, s->zoom * 3.0f, 0x00);
+
+            if (!draw_edges)
+                continue;
 
             for (int i = g->V[u]; i < g->V[u + 1]; i++)
             {
