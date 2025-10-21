@@ -138,11 +138,11 @@ static inline int d_core_find_first_worst(d_core *c)
 void d_core_print(d_core *c, graph *g, long long it, double elapsed)
 {
     int best = d_core_find_overall_best(c), worst = d_core_find_first_worst(c);
-    printf("%6lld: %12.8lf (%3d %8.2lf) %12.8lf (%3d %8.2lf) %8.2lf %9lld %9lld\n",
+    printf("\r%6lld: %12.8lf (%3d %8.2lf) %12.8lf (%3d %8.2lf) %8.2lf %9lld %9lld",
            it, clustering_get_modularity(c->C[best]), best, c->LS[best]->time,
            clustering_get_modularity(c->C[worst]), worst, c->LS[worst]->time,
            elapsed, c->d_core->n, c->d_core->V[c->d_core->n]);
-    // fflush(stdout);
+    fflush(stdout);
 }
 
 void d_core_update_best(d_core *c)
@@ -250,12 +250,6 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                 {
                     clustering_update(c->C[i], g, c->C_core[i], c->FM);
                     local_search_queue_all(c->LS[i], g);
-
-                    if (c->C[i]->modularity != c->C_core[i]->modularity)
-                    {
-                        printf("%lf %lf\n", clustering_get_modularity(c->C[i]), clustering_get_modularity(c->C_core[i]));
-                        exit(0);
-                    }
                 }
 
                 if (ref < c->C_core[i]->modularity)

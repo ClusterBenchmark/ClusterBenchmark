@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define CLUSTER_RATIO 10
-
 clustering *clustering_init(graph *g)
 {
     clustering *c = malloc(sizeof(clustering));
@@ -16,6 +14,8 @@ clustering *clustering_init(graph *g)
     c->E_cluster = malloc(sizeof(int) * g->m);
     c->E_count = malloc(sizeof(long long) * g->m);
     c->Valid = malloc(sizeof(int) * g->n);
+    c->update_threshold = 10;
+    c->update_max = 64;
 
     c->Temp_counter = malloc(sizeof(long long) * g->n);
 
@@ -106,17 +106,6 @@ void clustering_update_vertex(clustering *c, graph *g, int u, int c_dec, int c_i
     while (p_dec < c->V_end[u] && c->E_cluster[p_dec] != c_dec)
         p_dec++;
 
-    // static int t = 0;
-    // t++;
-
-    // if (p_dec == c->V_end[u])
-    // {
-    //     printf("\n%d\n", t);
-    //     exit(0);
-    // }
-
-    // assert(p_dec < c->V_end[u]);
-
     c->E_count[p_dec] -= amount;
 
     // Fill gap left after c_dec
@@ -156,7 +145,9 @@ void clustering_move_vertex(clustering *c, graph *g, int u, int c_new)
         if (v == u)
             continue;
 
-        if (c->Valid[v] && (c->V_end[v] - g->V[v]) <= (g->V[v + 1] - g->V[v]) / CLUSTER_RATIO)
+        int d = g->V[v + 1] - g->V[v], dc = c->V_end[v] - g->V[v];
+
+        if (c->Valid[v] && dc <= d / c->update_threshold && dc <= c->update_max)
             clustering_update_vertex(c, g, v, c_old, c_new, g->EW[i]);
         else
             c->Valid[v] = 0;
@@ -295,7 +286,9 @@ int clustering_best_move(clustering *c, graph *g, int u)
         if (v == u)
             continue;
 
-        if (c->Valid[v] && (c->V_end[v] - g->V[v]) <= (g->V[v + 1] - g->V[v]) / CLUSTER_RATIO)
+        int d = g->V[v + 1] - g->V[v], dc = c->V_end[v] - g->V[v];
+
+        if (c->Valid[v] && dc <= d / c->update_threshold && dc <= c->update_max)
             clustering_update_vertex(c, g, v, c_old, c_best, g->EW[i]);
         else
             c->Valid[v] = 0;

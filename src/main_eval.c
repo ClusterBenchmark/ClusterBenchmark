@@ -16,15 +16,12 @@ int *clustering_parse(FILE *f, long long n)
     char *Data = mmap(0, size, PROT_READ, MAP_PRIVATE, fileno_unlocked(f), 0);
     size_t p = 0;
 
-    util_skip_line(Data, &p);
-
-    long long id, c;
+    long long c;
     for (int u = 0; u < n; u++)
     {
-        util_parse_id(Data, &p, &id);
         util_parse_id(Data, &p, &c);
         util_skip_line(Data, &p);
-        cluster[id] = c;
+        cluster[u] = c;
     }
 
     munmap(Data, size);
@@ -34,12 +31,18 @@ int *clustering_parse(FILE *f, long long n)
 
 void compute_modularity(graph *g, int *cluster, long long *n, double *q, int *n_clusters)
 {
+    long long edge_weight_sum = 0;
     *n_clusters = 0;
     for (int u = 0; u < g->n; u++)
     {
         if (cluster[u] + 1 > *n_clusters)
             *n_clusters = cluster[u] + 1;
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            edge_weight_sum += g->EW[i];
     }
+
+    edge_weight_sum /= 2ll;
 
     long long *community_weight = calloc(*n_clusters, sizeof(long long));
     long long *community_edges = calloc(*n_clusters, sizeof(long long));
@@ -58,14 +61,21 @@ void compute_modularity(graph *g, int *cluster, long long *n, double *q, int *n_
 
     long long s = 0, l_sum = 0;
 
+    int count = 0;
+
     for (int i = 0; i < *n_clusters; i++)
     {
         s += community_weight[i] * community_weight[i];
         l_sum += community_edges[i];
+
+        if (community_weight[i] > 0)
+            count++;
     }
 
-    *n = 2ll * g->m * l_sum - s;
-    *q = (double)*n / (4.0 * g->m * g->m);
+    *n_clusters = count;
+
+    *n = 2ll * edge_weight_sum * l_sum - s;
+    *q = (double)*n / (4.0 * edge_weight_sum * edge_weight_sum);
 
     free(community_weight);
     free(community_edges);
@@ -106,7 +116,7 @@ int main(int argc, char **argv)
 {
     if (argc != 3 && argc != 4)
     {
-        fprintf(stderr, "Usage: %s <metis_graph> <clustering_csv> {<ground_truth_csv>}\n", argv[0]);
+        fprintf(stderr, "Usage: %s <metis_graph> <clustering> {<ground_truth_csv>}\n", argv[0]);
         return 1;
     }
 
@@ -149,7 +159,7 @@ int main(int argc, char **argv)
     long long n;
     int n_clusters;
     compute_modularity(g, cluster, &n, &q, &n_clusters);
-    printf(",%.8lf,%lld,%d", q, n, n_clusters);
+    printf(",%.10lf,%lld,%d", q, n, n_clusters);
 
     if (truth != NULL)
     {
@@ -160,7 +170,7 @@ int main(int argc, char **argv)
         printf(",%.8lf", (double)(tp + tn) / (double)g->V[g->n]);
     }
 
-    // printf("\n");
+    printf("\n");
 
     graph_free(g);
     free(cluster);
