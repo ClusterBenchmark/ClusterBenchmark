@@ -1,6 +1,9 @@
 #include "graph.h"
-#include "force_layout.h"
+// #include "force_layout.h"
+#include "barnes_hut.h"
 #include "screen.h"
+#include "clustering.h"
+#include "difference_core.h"
 
 #include <SDL2/SDL.h>
 #include <stdint.h>
@@ -31,8 +34,50 @@ int main(int argc, char **argv)
 
     printf("%lld %lld\n", g->n, g->m);
 
+    // d_core *dc = d_core_init(g, 4, 0);
+    // d_core_run(dc, g, 60.0, 1);
+    // clustering *c = d_core_get_best_clustering(dc);
+
+    // graph *gc = graph_copy(g);
+    // int *A = malloc(sizeof(int) * g->m);
+    // for (int u = 0; u < g->n; u++)
+    // {
+    //     for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+    //     {
+    //         int v = g->E[i];
+    //         A[i] = c->Cluster[u] == c->Cluster[v];
+    //     }
+    // }
+
+    // int *FM = malloc(sizeof(int) * g->n);
+    // graph_contract(g, gc, A, FM);
+    // graph_sort_edges(gc);
+
+    // g = gc;
+    // for (int u = 0; u < g->n; u++)
+    //     g->VW[u] = 1;
+
+    // f = fopen("test.graph", "w");
+
+    // fprintf(f, "%lld %lld 10\n", g->n, (g->m - 1) / 2);
+
+    // for (int u = 0; u < g->n; u++)
+    // {
+    //     fprintf(f, "%lld ", g->VW[u]);
+    //     for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+    //     {
+    //         int v = g->E[i];
+    //         if (v == u)
+    //             continue;
+    //         fprintf(f, "%d ", v + 1);
+    //     }
+    //     fprintf(f, "\n");
+    // }
+    // fclose(f);
+
     screen *s = screen_init(HEIGHT, WIDTH);
-    force_layout *fl = force_layout_init(g);
+    barnes_hut *bh = barnes_hut_init(g);
+    // force_layout *fl = force_layout_init(g);
 
     int mbd = 0;
     int draw_edges = 0;
@@ -65,6 +110,10 @@ int main(int argc, char **argv)
             {
                 draw_edges = !draw_edges;
             }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q)
+            {
+                running = 0;
+            }
             else if (e.type == SDL_QUIT)
             {
                 running = 0;
@@ -72,9 +121,10 @@ int main(int argc, char **argv)
         }
 
         double t0 = omp_get_wtime();
-        force_layout_step(fl, g);
+        barnes_hut_step(bh, g);
+        // force_layout_step(fl, g);
         double t1 = omp_get_wtime();
-        screen_render_frame(s, g, fl, draw_edges);
+        screen_render_frame(s, g, bh->X, bh->Y, draw_edges);
         double t2 = omp_get_wtime();
 
         // s->Pixels[50 * WIDTH + 50] = 0xff;
@@ -91,7 +141,8 @@ int main(int argc, char **argv)
     printf("\n");
 
     graph_free(g);
-    force_layout_free(fl);
+    barnes_hut_free(bh);
+    // force_layout_free(fl);
     screen_free(s);
 
     SDL_DestroyTexture(tex);

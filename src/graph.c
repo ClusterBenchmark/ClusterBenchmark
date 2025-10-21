@@ -297,6 +297,7 @@ void graph_contract(graph *g, graph *gc, int *A, int *FM)
 
     gc->m = 0;
     long long s = 0;
+    gc->V[0] = 0;
     for (int u = 0; u < gc->n; u++)
     {
         for (long long i = s; i < gc->V[u + 1]; i++)

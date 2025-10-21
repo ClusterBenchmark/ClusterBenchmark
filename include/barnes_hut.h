@@ -1,0 +1,23 @@
+#pragma once
+
+#include "graph.h"
+
+#define INNER_WIDTH 16
+#define GRID_WIDTH 16384
+
+typedef struct  
+{
+    int m, l;
+    double *CX, *CY, *Mass, *S;
+    int **Queue, **Queue_mark;
+
+    int n;
+    float *X, *Y;
+    float *fX, *fY, *vX, *vY;
+} barnes_hut;
+
+barnes_hut *barnes_hut_init(graph *g);
+
+void barnes_hut_free(barnes_hut *bh);
+
+void barnes_hut_step(barnes_hut *bh, graph *g);

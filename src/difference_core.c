@@ -278,8 +278,8 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
         printf("\n");
 }
 
-int *d_core_get_best_clustering(d_core *d)
+clustering *d_core_get_best_clustering(d_core *d)
 {
     int best = d_core_find_overall_best(d);
-    return d->C[best]->Cluster;
+    return d->C[best];
 }

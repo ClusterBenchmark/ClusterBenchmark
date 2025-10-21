@@ -1,7 +1,6 @@
 #pragma once
 
 #include <graph.h>
-#include <force_layout.h>
 #include <stdint.h>
 
 typedef struct
@@ -23,4 +22,4 @@ void screen_draw_circle(screen *s, int xm, int ym, int r, uint32_t color);
 
 void screen_draw_circle_filled(screen *s, int xm, int ym, int r, uint32_t draw_color, uint32_t fill_color);
 
-void screen_render_frame(screen *s, graph *g, force_layout *fl, int draw_edges);
+void screen_render_frame(screen *s, graph *g, float *X, float *Y, int draw_edges);

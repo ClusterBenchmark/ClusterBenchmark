@@ -27,4 +27,4 @@ void d_core_free(d_core *d);
 
 void d_core_run(d_core *d, graph *g, double tl, int verbose);
 
-int *d_core_get_best_clustering(d_core *d);
+clustering *d_core_get_best_clustering(d_core *d);
