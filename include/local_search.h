@@ -26,4 +26,6 @@ void local_search_queue_all(local_search *ls, graph *g);
 
 void local_search_move_vertex(local_search *ls, clustering *c, graph *g, int u, int c_new, int log, int queue);
 
+void local_search_perturbe(local_search *ls, clustering *c, graph *g, int log);
+
 void local_search_explore(local_search *ls, clustering *c, graph *g, double time_limit, int verbose);

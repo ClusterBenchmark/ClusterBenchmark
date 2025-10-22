@@ -20,9 +20,23 @@ int main(int argc, char **argv)
 
     // printf("%lld %lld\n", g->n, g->m / 2);
 
+    // for (int i = 3; i < 11; i++)
+    // {
+    //     local_search *ls = local_search_init(g, 0);
+    //     clustering *c = clustering_init(g);
+
+    //     c->update_max = (1 << i);
+    //     c->update_threshold = 2;
+
+    //     local_search_explore(ls, c, g, 30.0, 1);
+
+    //     clustering_free(c);
+    //     local_search_free(ls);
+    // }
+
     d_core *d = d_core_init(g, 16, 0);
-    d->step_time = 15.0;
-    d_core_run(d, g, 60, 0);
+    d->step_time = 30.0;
+    d_core_run(d, g, 600, 0);
 
     clustering *res = d_core_get_best_clustering(d);
 

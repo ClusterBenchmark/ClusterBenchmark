@@ -14,8 +14,8 @@ clustering *clustering_init(graph *g)
     c->E_cluster = malloc(sizeof(int) * g->m);
     c->E_count = malloc(sizeof(long long) * g->m);
     c->Valid = malloc(sizeof(int) * g->n);
-    c->update_threshold = 10;
-    c->update_max = 64;
+    c->update_threshold = 2;
+    c->update_max = 256;
 
     c->Temp_counter = malloc(sizeof(long long) * g->n);
 

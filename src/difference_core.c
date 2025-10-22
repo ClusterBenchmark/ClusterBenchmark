@@ -256,6 +256,8 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                     c->LS[i]->time = c->LS_core[i]->time;
             }
 
+            int best = d_core_find_overall_best(c);
+
 #pragma omp single
             {
                 end = omp_get_wtime();
@@ -265,6 +267,17 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
                     d_core_print(c, g, ci, elapsed);
             }
             ci++;
+
+// #pragma omp for
+//             for (int i = 0; i < c->p; i++)
+//             {
+//                 double remaining_time = tl - (omp_get_wtime() - start);
+//                 if (remaining_time < 0.0 || i == best)
+//                     continue;
+
+//                 for (int j = 0; j < 100; j++)
+//                     local_search_perturbe(c->LS[i], c->C[i], g, 0);
+//             }
         }
     }
 

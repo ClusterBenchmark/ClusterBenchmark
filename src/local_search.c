@@ -186,7 +186,7 @@ void local_search_perturbe(local_search *ls, clustering *c, graph *g, int log)
     if (degree == 0)
         return;
 
-    if ((rand_r(&ls->seed) & 7) == 0)
+    if ((rand_r(&ls->seed) & 127) == 0)
     {
         int c_new = rand_r(&ls->seed) % g->n;
         if (c_new == c_old)
