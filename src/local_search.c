@@ -155,11 +155,13 @@ void local_search_greedy(local_search *ls, clustering *c, graph *g, int log)
     util_swap_p(&ls->Queue, &ls->Queue_old);
     util_swap_p(&ls->In_queue, &ls->In_queue_old);
 
-    util_shuffle(ls->Queue_old, count, &ls->seed);
+    // util_shuffle(ls->Queue_old, count, &ls->seed);
+
+    int p = rand_r(&ls->seed) % count;
 
     for (int i = 0; i < count; i++)
     {
-        int u = ls->Queue_old[i];
+        int u = ls->Queue_old[(p + i) % count];
         ls->In_queue_old[u] = 0;
 
         local_search_best_move(ls, c, g, u, log);

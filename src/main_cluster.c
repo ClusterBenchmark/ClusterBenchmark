@@ -28,21 +28,21 @@ int main(int argc, char **argv)
     //     c->update_max = (1 << i);
     //     c->update_threshold = 2;
 
-    //     local_search_explore(ls, c, g, 30.0, 1);
+    //     local_search_explore(ls, c, g, 300.0, 1);
 
     //     clustering_free(c);
     //     local_search_free(ls);
     // }
 
-    d_core *d = d_core_init(g, 16, 0);
-    d->step_time = 30.0;
+    d_core *d = d_core_init(g, 4, 0);
+    d->step_time = 60.0;
     d_core_run(d, g, 600, 0);
 
     clustering *res = d_core_get_best_clustering(d);
 
     int offset = util_path_name_offset(argv[1]);
 
-    printf("%s,%lld,%lld,%lld,%.10lf,%.3lf\n", argv[1] + offset, g->n, g->m / 2, d->best_modularity, clustering_get_modularity(res), d->time);
+    // printf("%s,%lld,%lld,%lld,%.10lf,%.3lf\n", argv[1] + offset, g->n, g->m / 2, d->best_modularity, clustering_get_modularity(res), d->time);
 
     // f = fopen("clustering.txt", "w");
     // for (int u = 0; u < g->n; u++)

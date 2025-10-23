@@ -268,16 +268,15 @@ void d_core_run(d_core *c, graph *g, double tl, int verbose)
             }
             ci++;
 
-// #pragma omp for
-//             for (int i = 0; i < c->p; i++)
-//             {
-//                 double remaining_time = tl - (omp_get_wtime() - start);
-//                 if (remaining_time < 0.0 || i == best)
-//                     continue;
+#pragma omp for
+            for (int i = 0; i < c->p; i++)
+            {
+                if (omp_get_wtime() - start > tl || i == best)
+                    continue;
 
-//                 for (int j = 0; j < 100; j++)
-//                     local_search_perturbe(c->LS[i], c->C[i], g, 0);
-//             }
+                for (int j = 0; j < 100; j++)
+                    local_search_perturbe(c->LS[i], c->C[i], g, 0);
+            }
         }
     }
 
