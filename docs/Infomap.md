@@ -1,5 +1,7 @@
 # Infomap (2007)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Department of Biology, University of Washington, US
 * **Authors** Martin Rosvall, Carl T. Bergstrom
