@@ -48,6 +48,7 @@ graph *graph_parse(FILE *f)
             util_parse_id(Data, &p, VW + u);
 
         V[u] = ei;
+        VW[u] = 0;
         while (ei < m)
         {
             while (Data[p] == ' ')
@@ -63,10 +64,10 @@ graph *graph_parse(FILE *f)
             if (edge_weights)
                 util_parse_id(Data, &p, EW + ei);
 
+            VW[u] += EW[ei];
             ei++;
         }
         p++;
-        VW[u] = ei - V[u];
     }
     V[n] = ei;
 
