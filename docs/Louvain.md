@@ -1,8 +1,10 @@
 # Louvain (2008)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Department of Mathematical Engineering, Universié Catholique de Louvain, Belgium
-* **Authors** Vincent D Blondel, Jean-Loup Guillaume,
+* **Authors** Vincent D. Blondel, Jean-Loup Guillaume,
 Renaud Lambiotte, Etienne Lefebvre1
 * **Type** Algorithm Engineering
 * **Strategy** Local moving nodes, and aggregate the network
