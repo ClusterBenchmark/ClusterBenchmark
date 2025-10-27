@@ -105,6 +105,7 @@ def main():
             print(f"Writing cluster assignments to {output_file} ...")
         else:
             print(f"{elapsed:.4f},{modularity:.10f},", end="")
+            sys.stdout.flush()
 
         with open(output_file + str(i) + ".txt", "w") as out:
             out.write("\n".join(map(str, membership)))

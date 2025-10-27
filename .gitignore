@@ -2,6 +2,8 @@
 bin/*
 !bin/.gitignore
 
+external/*/.venv
+
 .vscode/*
 .gitignore
 

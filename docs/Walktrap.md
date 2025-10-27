@@ -1,5 +1,7 @@
 # Walktrap (2005)
 
+[Return to main page](../README.md).
+
 Short recap:
 * **Place** Laboratoire d'Informatique Algorithmique, University Paris
 * **Authors** Pascal Pons, Matthieu Latapy
