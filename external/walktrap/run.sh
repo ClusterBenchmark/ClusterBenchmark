@@ -19,17 +19,17 @@ fi
 
 source .venv/bin/activate
 
-timeout -s SIGTERM 10s python3 walktrap.py "$INPUT_FILE" clustering 0 "$K" > tmp_out.txt
+timeout -s SIGTERM 3600s python3 run_walktrap.py "$INPUT_FILE" "$BASENAME""_walktrap_" 0 "$K" > "$BASENAME"_walktrap_out.txt
 
-PYTHON_OUT=$(cat tmp_out.txt)
+PYTHON_OUT=$(cat "$BASENAME"_walktrap_out.txt)
 
-rm tmp_out.txt
+rm "$BASENAME"_walktrap_out.txt
 
 echo -n "$BASENAME"
 
 for i in $(seq 1 $K);
 do
-    FILE="clustering$((i - 1)).txt"
+    FILE="$BASENAME"_walktrap_$((i - 1)).txt
     if [ -f $FILE ]; then
         TIME=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2 - 1))" '{print $var}')
         MOD=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2))" '{print $var}')
@@ -47,4 +47,4 @@ done
 echo ""
 
 # echo "5. Cleaning up..."
-rm -rf clustering*.txt
+rm -rf "$BASENAME"_walktrap_*.txt
