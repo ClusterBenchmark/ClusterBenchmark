@@ -1,5 +1,7 @@
 # InfoFlow (2019)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Department of Ophthalmology, State University of New York, US
 * **Authors** Park K. Fung

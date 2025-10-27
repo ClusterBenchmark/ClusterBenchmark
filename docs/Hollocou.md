@@ -1,5 +1,7 @@
 # Hollocou (2017)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** National Institute for Research in Digital Science and Technology, France
 * **Authors** Alexandre Hollocou, Julien Maudet, Thomas Bonald, Marc Lelarge
@@ -12,4 +14,4 @@ Short recap:
 
 ## Code
 
-The code is available at [GitHub](https://github.com/ahollocou/graph-streaming). Fairly easy to use, but it is unclear to to get best performance. The numbers included here are with $v_{max-start}$ and $v_{max-end}$ set to 10\,000.
+The code is available at [GitHub](https://github.com/ahollocou/graph-streaming). Fairly easy to use, but it is unclear how to to get best performance. The numbers included here are with $v_{max-start}$ and $v_{max-end}$ set to 10\,000.

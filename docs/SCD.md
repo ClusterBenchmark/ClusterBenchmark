@@ -1,5 +1,7 @@
 # SCD (2014)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Universitat Politècnica de Catalunya (UPC), Barcelona
 * **Authors** Arnau Prat-Pérez, David Dominguez-Sal, Josep-LLuis Larriba-Pey

@@ -1,5 +1,7 @@
 # VieClus (2018)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** University of Vienna
 * **Authors** Sonja Biedermann, Monika Henzinger, Christian Schulz, Bernhard Schuster

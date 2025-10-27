@@ -1,5 +1,7 @@
 # DMoN (2020)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Google Research and TU Dortmund, Germany
 * **Authors** Anton Tsitsulin, John Palowitch, Bryan Perozzi, Emmanuel Müller

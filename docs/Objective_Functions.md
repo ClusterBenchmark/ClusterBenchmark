@@ -1,6 +1,6 @@
 # Objective Functions
 
-Here is a list of commonly used objective functions used for graph clustering.
+Here is a list of commonly used objective functions used for graph clustering. [Return to main page](../README.md).
 
 ## Modularity ($Q$)
 

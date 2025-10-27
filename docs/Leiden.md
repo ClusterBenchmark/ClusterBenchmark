@@ -1,5 +1,7 @@
 # Leiden (2019)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Centre for Science and Technology Studies, Leiden University, Netherlands
 * **Authors** Vincent A. Traag, Ludo Waltman, and Nees Jan van Eck

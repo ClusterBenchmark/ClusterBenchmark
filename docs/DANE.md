@@ -1,5 +1,7 @@
 # DANE (2018)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Department of Electrical and Computer Engineering
 University of Pittsburgh, US

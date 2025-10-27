@@ -1,5 +1,7 @@
 # CommDGI (2018)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Shanghai Key Laboratory of Data Science, School of Computer Science, Fudan University, China
 * **Authors** Tianqi Zhang, Yun Xiong, Jiawei Zhang, Yao Zhang, Yizhu Jiao, Yangyong Zhu

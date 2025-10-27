@@ -1,5 +1,7 @@
 # VNS (2012)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Dept. of Computer Engineering and Automation, Universidade Federal do Rio Grande do Norte, Brazil
 * **Authors** Daniel Aloise, Gilles Caporossi, Pierre Hansen, Leo Liberti, Sylvain Perron, Manuel Ruiz

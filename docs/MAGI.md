@@ -1,5 +1,7 @@
 # MAGI (2024) 
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Ant Group (Chinese financial technology company)
 * **Authors** Yunfei Liu + 11 others

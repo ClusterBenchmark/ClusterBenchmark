@@ -1,5 +1,7 @@
 # CluStRE (2025)
 
+[Return to main page](../README.md)
+
 Short recap:
 * **Place** Heidelberg University
 * **Authors** Adil Chhabra, Shai Dorian Peretz, Christian Schulz
