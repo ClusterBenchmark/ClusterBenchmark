@@ -17,28 +17,28 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 
 ## Solvers
 
-| Solver | Year | Place | #Cited | AE | ML | $Q$ | F1 | WCC | ME | Link | Code |
-| :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
-| [Walktrap](docs/Walktrap.md) | 2005 | Paris | 2860 | &#x2705; | | &#x2705; | | | | [Link](https://arxiv.org/abs/physics/0512106v1) | |
-| [Infomap](docs/Infomap.md) | 2007 | US | 5356 | &#x2705; | | &#x2705; | | | &#x2705; | [Link](https://www.pnas.org/doi/abs/10.1073/pnas.0706851105) | [GitHub](https://github.com/mapequation/infomap) |
-| [Louvain](docs/Louvain.md) | 2008 | Belgium | 26291 | &#x2705; | | &#x2705; | | | | [Link](https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008/meta) | [SourceForge](https://sourceforge.net/projects/louvain/) |
-| [VNS](docs/VNS.md) | 2012 | Brazil | 65 | &#x2705; | | &#x2705; | | | | [Link](https://web.archive.org/web/20170810064738id_/http://www.lix.polytechnique.fr/Labo/Leo.Liberti/dimacs10.pdf) | &#x274C; |
-| [SCD](docs/SCD.md) | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | &#x274C; |
-| [Hollocou](docs/Hollocou.md) | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | [GitHub](https://github.com/ahollocou/graph-streaming)
-| [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](http://vieclus.taa.univie.ac.at/) | [GitHub](https://github.com/VieClus/VieClus) |
-| [DANE](docs/DANE.md) | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) | &#x274C; |
-| [InfoFlow](docs/InfoFlow.md) | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) | [GitHub](https://github.com/felixfung/InfoFlow)
-| [Leiden](docs/Leiden.md) | 2019 | Netherlands | 5057 | &#x2705; | | &#x2705; | | | | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC6435756/) | [GitHub](https://github.com/vtraag/leidenalg) |
-| [CommDGI](docs/CommDGI.md) | 2020 | China | 74 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3340531.3412042) | &#x274C; |
-| [DMoN](docs/DMoN.md) | 2020 | Germany | 438 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://www.jmlr.org/papers/v24/20-998.html) | [GitHub](https://github.com/google-research/google-research/tree/master/graph_embedding/dmon) |
-| [GNNS](docs/GNNS.md) | 2022 | US | 24 | | &#x2705; | &#x2705; |  | | | [Link](https://appliednetsci.springeropen.com/articles/10.1007/s41109-022-00500-z) | [GitHub](https://github.com/Alexander-Belyi/GNNS) |
-| Ucode | 2023 | Denmark | 18 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://link.springer.com/article/10.1007/s10994-023-06402-0) |
-| DGCluster | 2023 | US | 10 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://ojs.aaai.org/index.php/AAAI/article/view/28983) |
-| [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
-| Bayan | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.110.044315) |
-| Neuromap | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://arxiv.org/abs/2310.01144) |
-| [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2502.06879) | [GitHub](https://github.com/KaHIP/CluStRE) |
-| LIM | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2501.12946) | [GitHub](https://github.com/wuanghoong/Less-is-More)
+| Ready | Solver | Year | Place | #Cited | AE | ML | $Q$ | F1 | WCC | ME | Link | Code |
+| :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
+| &#x2705; | [Walktrap](docs/Walktrap.md) | 2005 | Paris | 2860 | &#x2705; | | &#x2705; | | | | [Link](https://arxiv.org/abs/physics/0512106v1) | |
+| &#x2705; | [Infomap](docs/Infomap.md) | 2007 | US | 5356 | &#x2705; | | &#x2705; | | | &#x2705; | [Link](https://www.pnas.org/doi/abs/10.1073/pnas.0706851105) | [GitHub](https://github.com/mapequation/infomap) |
+|  &#x2705; | [Louvain](docs/Louvain.md) | 2008 | Belgium | 26291 | &#x2705; | | &#x2705; | | | | [Link](https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008/meta) | [SourceForge](https://sourceforge.net/projects/louvain/) |
+| &#x274C; | [VNS](docs/VNS.md) | 2012 | Brazil | 65 | &#x2705; | | &#x2705; | | | | [Link](https://web.archive.org/web/20170810064738id_/http://www.lix.polytechnique.fr/Labo/Leo.Liberti/dimacs10.pdf) | &#x274C; |
+| &#x274C; | [SCD](docs/SCD.md) | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | &#x274C; |
+| &#x2705; | [Hollocou](docs/Hollocou.md) | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | [GitHub](https://github.com/ahollocou/graph-streaming)
+| | [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](http://vieclus.taa.univie.ac.at/) | [GitHub](https://github.com/VieClus/VieClus) |
+| | [DANE](docs/DANE.md) | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) | &#x274C; |
+| | [InfoFlow](docs/InfoFlow.md) | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) | [GitHub](https://github.com/felixfung/InfoFlow)
+| | [Leiden](docs/Leiden.md) | 2019 | Netherlands | 5057 | &#x2705; | | &#x2705; | | | | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC6435756/) | [GitHub](https://github.com/vtraag/leidenalg) |
+| &#x2705; | [CommDGI](docs/CommDGI.md) | 2020 | China | 74 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3340531.3412042) | &#x274C; |
+| &#x2705; | [DMoN](docs/DMoN.md) | 2020 | Germany | 438 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://www.jmlr.org/papers/v24/20-998.html) | [GitHub](https://github.com/google-research/google-research/tree/master/graph_embedding/dmon) |
+| | [GNNS](docs/GNNS.md) | 2022 | US | 24 | | &#x2705; | &#x2705; |  | | | [Link](https://appliednetsci.springeropen.com/articles/10.1007/s41109-022-00500-z) | [GitHub](https://github.com/Alexander-Belyi/GNNS) |
+| | Ucode | 2023 | Denmark | 18 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://link.springer.com/article/10.1007/s10994-023-06402-0) |
+| | DGCluster | 2023 | US | 10 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://ojs.aaai.org/index.php/AAAI/article/view/28983) |
+| | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
+| | Bayan | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.110.044315) |
+| | Neuromap | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://arxiv.org/abs/2310.01144) |
+| | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2502.06879) | [GitHub](https://github.com/KaHIP/CluStRE) |
+| | LIM | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2501.12946) | [GitHub](https://github.com/wuanghoong/Less-is-More)
 
 ## Results
 

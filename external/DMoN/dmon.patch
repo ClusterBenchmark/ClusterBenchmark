@@ -1,0 +1,34 @@
+diff --git a/graph_embedding/dmon/gcn.py b/graph_embedding/dmon/gcn.py
+index 2a4554a29..f4c48d036 100644
+--- a/graph_embedding/dmon/gcn.py
++++ b/graph_embedding/dmon/gcn.py
+@@ -51,12 +51,12 @@ class GCN(tf.keras.layers.Layer):
+   def build(self, input_shape):
+     """Builds the Keras model according to the input shape."""
+     self.n_features = input_shape[0][-1]
+-    self.kernel = self.add_variable(
+-        'kernel', shape=(self.n_features, self.n_channels))
+-    self.bias = self.add_variable('bias', shape=(self.n_channels,))
++    self.kernel = self.add_weight(
++        name='kernel', shape=(self.n_features, self.n_channels))
++    self.bias = self.add_weight(name='bias', shape=(self.n_channels,))
+     if self.skip_connection:
+-      self.skip_weight = self.add_variable(
+-          'skip_weight', shape=(self.n_channels,))
++      self.skip_weight = self.add_weight(
++          name='skip_weight', shape=(self.n_channels,))
+     else:
+       self.skip_weight = 0
+     super().build(input_shape)
+diff --git a/graph_embedding/dmon/train.py b/graph_embedding/dmon/train.py
+index 64785d389..12a4dd94e 100644
+--- a/graph_embedding/dmon/train.py
++++ b/graph_embedding/dmon/train.py
+@@ -162,6 +162,7 @@ def main(argv):
+   # graph, convert it to Tensorflow sparse tensor.
+   adjacency, features, labels, label_indices = load_npz(FLAGS.graph_path)
+   features = features.todense()
++  features = tf.convert_to_tensor(features, dtype=tf.float32)
+   n_nodes = adjacency.shape[0]
+   feature_size = features.shape[1]
+   graph = convert_scipy_sparse_to_sparse_tensor(adjacency)
