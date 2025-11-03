@@ -28,7 +28,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](http://vieclus.taa.univie.ac.at/) | [GitHub](https://github.com/VieClus/VieClus) |
 | | [DANE](docs/DANE.md) | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) | &#x274C; |
 | | [InfoFlow](docs/InfoFlow.md) | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) | [GitHub](https://github.com/felixfung/InfoFlow)
-| | [Leiden](docs/Leiden.md) | 2019 | Netherlands | 5057 | &#x2705; | | &#x2705; | | | | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC6435756/) | [GitHub](https://github.com/vtraag/leidenalg) |
+| &#x2705; | [Leiden](docs/Leiden.md) | 2019 | Netherlands | 5057 | &#x2705; | | &#x2705; | | | | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC6435756/) | [GitHub](https://github.com/vtraag/leidenalg) |
 | &#x2705; | [CommDGI](docs/CommDGI.md) | 2020 | China | 74 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3340531.3412042) | [GitHub](https://github.com/FDUDSDE/CommDGI) |
 | &#x2705; | [DMoN](docs/DMoN.md) | 2020 | Germany | 438 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://www.jmlr.org/papers/v24/20-998.html) | [GitHub](https://github.com/google-research/google-research/tree/master/graph_embedding/dmon) |
 | | [GNNS](docs/GNNS.md) | 2022 | US | 24 | | &#x2705; | &#x2705; |  | | | [Link](https://appliednetsci.springeropen.com/articles/10.1007/s41109-022-00500-z) | [GitHub](https://github.com/Alexander-Belyi/GNNS) |
