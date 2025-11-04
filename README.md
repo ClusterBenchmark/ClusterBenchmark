@@ -26,12 +26,12 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x274C; | [SCD](docs/SCD.md) | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | &#x274C; |
 | &#x2705; | [Hollocou](docs/Hollocou.md) | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/2566486.2568010?casa_token=3CTrHxKNAxkAAAAA:TkpstbQ4fAdfBbIYoKKGd2vX4tOZKE_v0zhuALljNnFivTdhtgPblkyla9ZvUTWw8XzbxDOA8Hn7JQ) | [GitHub](https://github.com/ahollocou/graph-streaming)
 | &#x2705; | [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](http://vieclus.taa.univie.ac.at/) | [GitHub](https://github.com/VieClus/VieClus) |
-| | [DANE](docs/DANE.md) | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) | &#x274C; |
-| | [InfoFlow](docs/InfoFlow.md) | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) | [GitHub](https://github.com/felixfung/InfoFlow)
+| &#x274C; | [DANE](docs/DANE.md) | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://par.nsf.gov/biblio/10074625) | &#x274C; |
+| &#x274C; | [InfoFlow](docs/InfoFlow.md) | 2019 | US | 3 | &#x2705; | | | | | &#x2705; | [Link](https://www.mdpi.com/2504-2289/3/3/42) | [GitHub](https://github.com/felixfung/InfoFlow)
 | &#x2705; | [Leiden](docs/Leiden.md) | 2019 | Netherlands | 5057 | &#x2705; | | &#x2705; | | | | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC6435756/) | [GitHub](https://github.com/vtraag/leidenalg) |
 | &#x2705; | [CommDGI](docs/CommDGI.md) | 2020 | China | 74 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3340531.3412042) | [GitHub](https://github.com/FDUDSDE/CommDGI) |
 | &#x2705; | [DMoN](docs/DMoN.md) | 2020 | Germany | 438 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://www.jmlr.org/papers/v24/20-998.html) | [GitHub](https://github.com/google-research/google-research/tree/master/graph_embedding/dmon) |
-| | [GNNS](docs/GNNS.md) | 2022 | US | 24 | | &#x2705; | &#x2705; |  | | | [Link](https://appliednetsci.springeropen.com/articles/10.1007/s41109-022-00500-z) | [GitHub](https://github.com/Alexander-Belyi/GNNS) |
+| &#x2705; | [GNNS](docs/GNNS.md) | 2022 | US | 24 | | &#x2705; | &#x2705; |  | | | [Link](https://appliednetsci.springeropen.com/articles/10.1007/s41109-022-00500-z) | [GitHub](https://github.com/Alexander-Belyi/GNNS) |
 | | Ucode | 2023 | Denmark | 18 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://link.springer.com/article/10.1007/s10994-023-06402-0) |
 | | DGCluster | 2023 | US | 10 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://ojs.aaai.org/index.php/AAAI/article/view/28983) |
 | | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
@@ -39,6 +39,15 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | | Neuromap | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://arxiv.org/abs/2310.01144) |
 | | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2502.06879) | [GitHub](https://github.com/KaHIP/CluStRE) |
 | | LIM | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2501.12946) | [GitHub](https://github.com/wuanghoong/Less-is-More)
+
+
+## Papers and solvers to check out
+
+This [paper](https://link.springer.com/article/10.1007/s13278-024-01318-6?utm_source=chatgpt.com) giving a benchmark dataset.
+
+This [paper](https://doi.org/10.1103/PhysRevE.90.012811) on the COMBO solver.
+
+This [paper](https://doi.org/10.1109/TCSS.2023.3306787) on the PARIS solver.
 
 ## Results
 
