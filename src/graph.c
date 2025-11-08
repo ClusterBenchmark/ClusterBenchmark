@@ -32,23 +32,23 @@ graph *graph_parse(FILE *f)
     long long *V = malloc(sizeof(long long) * (n + 1));
     int *E = malloc(sizeof(int) * m);
 
-    long long *VW = malloc(sizeof(long long) * n);
-    long long *EW = malloc(sizeof(long long) * m);
-
     int vertex_weights = (t == 10 || t == 11);
     int edge_weights = (t == 1 || t == 11);
 
-    long long ei = 0;
+    long long *VW = edge_weights ? malloc(sizeof(long long) * n) : NULL;
+    long long *EW = edge_weights ? malloc(sizeof(long long) * m) : NULL;
+
+    long long ei = 0, vw;
     for (int u = 0; u < n; u++)
     {
         while (Data[p] == '%')
             util_skip_line(Data, &p);
 
         if (vertex_weights)
-            util_parse_id(Data, &p, VW + u);
+            util_parse_id(Data, &p, &vw);
 
-        V[u] = ei;
         VW[u] = 0;
+        V[u] = ei;
         while (ei < m)
         {
             while (Data[p] == ' ')
@@ -60,12 +60,14 @@ graph *graph_parse(FILE *f)
             util_parse_id(Data, &p, &e);
             E[ei] = e - 1;
 
-            EW[ei] = 1;
             if (edge_weights)
+            {
                 util_parse_id(Data, &p, EW + ei);
+                VW[u] += EW[ei];
+            }
 
-            VW[u] += EW[ei];
-            ei++;
+            if (e - 1 != u)
+                ei++;
         }
         p++;
     }
@@ -156,27 +158,50 @@ void radix_sort_msd(int *E, long long *EW, int left, int right, int bit)
 void graph_sort_edges(graph *g)
 {
     g->m = 0;
-    long long s = 0;
-    for (int u = 0; u < g->n; u++)
+    if (g->EW == NULL)
     {
-        radix_sort_msd(g->E + s, g->EW + s, 0, g->V[u + 1] - s - 1, 31);
-
-        for (long long i = s; i < g->V[u + 1]; i++)
+        long long s = 0;
+        for (int u = 0; u < g->n; u++)
         {
-            int v = g->E[i];
-            if (i == s || v > g->E[g->m - 1])
+            qsort(g->E + s, g->V[u + 1] - g->V[u], sizeof(int), util_compare);
+
+            for (long long i = s; i < g->V[u + 1]; i++)
             {
-                g->E[g->m] = g->E[i];
-                g->EW[g->m] = g->EW[i];
-                g->m++;
+                int v = g->E[i];
+                if (v != u && (i == s || v > g->E[g->m - 1]))
+                {
+                    g->E[g->m] = g->E[i];
+                    g->m++;
+                }
             }
-            else
-            {
-                g->EW[g->m - 1] += g->EW[i];
-            }
+            s = g->V[u + 1];
+            g->V[u + 1] = g->m;
         }
-        s = g->V[u + 1];
-        g->V[u + 1] = g->m;
+    }
+    else
+    {
+        long long s = 0;
+        for (int u = 0; u < g->n; u++)
+        {
+            radix_sort_msd(g->E + s, g->EW + s, 0, g->V[u + 1] - s - 1, 31);
+
+            for (long long i = s; i < g->V[u + 1]; i++)
+            {
+                int v = g->E[i];
+                if (i == s || v > g->E[g->m - 1])
+                {
+                    g->E[g->m] = g->E[i];
+                    g->EW[g->m] = g->EW[i];
+                    g->m++;
+                }
+                else
+                {
+                    g->EW[g->m - 1] += g->EW[i];
+                }
+            }
+            s = g->V[u + 1];
+            g->V[u + 1] = g->m;
+        }
     }
 }
 
@@ -735,4 +760,167 @@ void graph_contract_par_internal(graph *g, graph *gc, int *A, int *FM,
     gc->n = n;
     graph_contract_group_supernodes(g, n, FM, V, E, Dt, C);
     graph_contract_construct_contracted(g, gc, FM, V, E, S, Dt, C);
+}
+
+/*
+
+    Idea:
+        - Assume clusters are numbered from 0..n
+        * Count sort vertices
+        * Count sort edges per new vertex
+*/
+
+graph *graph_contract_clusters(graph *g, int *C, long long *CC, int *FM)
+{
+    graph *gc = malloc(sizeof(graph));
+
+    int *C_FM = malloc(sizeof(int) * g->n);
+    int *Order = malloc(sizeof(int) * g->n);
+    int *Count = calloc(g->n, sizeof(int));
+    long long *Volume = calloc(g->n, sizeof(long long));
+
+    // Step 1. New labels
+    gc->n = 0;
+    for (int c = 0; c < g->n; c++)
+    {
+        if (CC[c] == 0)
+            continue;
+
+        C_FM[c] = gc->n++;
+    }
+
+    for (int u = 0; u < g->n; u++)
+    {
+        FM[u] = C_FM[C[u]];
+        Count[FM[u]]++;
+    }
+
+    // Prefix sum
+    int ps = 0;
+    for (int u = 0; u < gc->n; u++)
+    {
+        ps += Count[u];
+        Count[u] = ps - Count[u];
+    }
+
+    for (int u = 0; u < g->n; u++)
+    {
+        Order[Count[FM[u]]++] = u;
+    }
+
+    gc->V = malloc(sizeof(long long) * (gc->n + 1));
+    gc->VW = malloc(sizeof(long long) * gc->n);
+
+    int _a = (1 << 10);
+
+    gc->E = malloc(sizeof(int) * _a);
+    gc->EW = malloc(sizeof(long long) * _a);
+
+    for (int i = 0; i < g->n; i++)
+    {
+        Count[i] = 0;
+    }
+
+    for (int i = 0; i < g->n; i++)
+    {
+        int c = FM[Order[i]];
+        while (FM[Order[i]] == c)
+        {
+            int u = Order[i];
+            for (long long j = g->V[u]; j < g->V[u + 1]; j++)
+            {
+                int v = g->E[j];
+                Count[FM[v]] = 1;
+                Volume[FM[v]] += g->EW == NULL ? 1 : g->EW[j];
+            }
+        }
+    }
+
+    // Step 2. BFS -> Sort -> Contract Append
+    gc->V[0] = 0;
+    for (int k = 0; k < gc->n; k++)
+    {
+        int u = O[k];
+        int c = FM[u];
+
+        int s = 1, t = 0;
+        S[0] = u;
+        Vis[u] = 1;
+
+        gc->VW[c] = 0;
+        int m = 0;
+
+        while (s > 0)
+        {
+            for (int i = 0; i < s; i++)
+            {
+                int v = S[i];
+                for (long long j = g->V[v]; j < g->V[v + 1]; j++)
+                {
+                    int w = g->E[j];
+                    if (!Vis[w] && FM[w] == FM[v])
+                    {
+                        Vis[w] = 1;
+                        T[t++] = w;
+                    }
+                    else if (FM[w] != FM[v])
+                    {
+                        E[m] = FM[w];
+                        EW[m] = g->EW == NULL ? 1 : g->EW[j];
+                        m++;
+                    }
+
+                    if (g->EW == NULL)
+                        gc->VW[c]++;
+                    else
+                        gc->VW[c] += g->EW[j];
+                }
+            }
+
+            s = t;
+            t = 0;
+            util_swap_p(&S, &T);
+        }
+
+        radix_sort_msd(E, EW, 0, m - 1, 31);
+
+        int p = 0;
+        for (int i = 1; i < m; i++)
+        {
+            if (E[i] == E[p])
+                EW[p] += EW[i];
+            else
+            {
+                p++;
+                E[p] = E[i];
+                EW[p] = EW[i];
+            }
+        }
+        m = m > 0 ? p + 1 : 0;
+
+        while (gc->V[c] + m > _a)
+        {
+            _a *= 2;
+            gc->E = realloc(gc->E, sizeof(int) * _a);
+            gc->EW = realloc(gc->EW, sizeof(long long) * _a);
+        }
+
+        for (int i = 0; i < m; i++)
+        {
+            gc->E[gc->V[c] + i] = E[i];
+            gc->EW[gc->V[c] + i] = EW[i];
+        }
+
+        gc->V[c + 1] = gc->V[c] + m;
+        gc->m = gc->V[c + 1];
+    }
+
+    free(Vis);
+    free(O);
+    free(S);
+    free(T);
+    free(E);
+    free(EW);
+
+    return gc;
 }

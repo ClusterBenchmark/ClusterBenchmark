@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+// When EW is not null, VW[u] will store the sum of edge weights from u (including self edges)
+
 typedef struct
 {
     long long n, m;     // Number of vertices and edges
@@ -30,3 +32,5 @@ void graph_contract_par(graph *g, graph *gc, int *A, int *FM);
     T must hold at least 3 elements. */
 void graph_contract_par_internal(graph *g, graph *gc, int *A, int *FM,
                                  int *V, int *E, long long *S, long long **Dt, int *C, int *T);
+
+graph *graph_contract_clusters(graph *g, int *C, long long *CC, int *FM);

@@ -33,12 +33,13 @@ void compute_modularity(graph *g, int *cluster, long long *n, double *q, int *n_
 {
     long long edge_weight_sum = 0;
     *n_clusters = 0;
+
     for (int u = 0; u < g->n; u++)
     {
         if (cluster[u] + 1 > *n_clusters)
             *n_clusters = cluster[u] + 1;
 
-        edge_weight_sum += g->VW[u];
+        edge_weight_sum += g->VW == NULL ? g->V[u + 1] - g->V[u] : g->VW[u];
     }
 
     edge_weight_sum /= 2ll;
@@ -48,13 +49,13 @@ void compute_modularity(graph *g, int *cluster, long long *n, double *q, int *n_
 
     for (int u = 0; u < g->n; u++)
     {
-        community_weight[cluster[u]] += g->VW[u];
+        community_weight[cluster[u]] += g->VW == NULL ? g->V[u + 1] - g->V[u] : g->VW[u];
 
         for (long long i = g->V[u]; i < g->V[u + 1]; i++)
         {
             int v = g->E[i];
             if (u <= v && cluster[u] == cluster[v])
-                community_edges[cluster[u]] += g->EW[i];
+                community_edges[cluster[u]] += g->EW == NULL ? 1 : g->EW[i];
         }
     }
 

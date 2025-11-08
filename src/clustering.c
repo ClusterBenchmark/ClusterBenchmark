@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 clustering *clustering_init(graph *g)
 {
@@ -293,6 +294,335 @@ int clustering_best_move(clustering *c, graph *g, int u)
         else
             c->Valid[v] = 0;
     }
+
+    return 1;
+}
+
+/* Clustering Sparse */
+
+clustering_sparse *clustering_sparse_init(graph *g)
+{
+    clustering_sparse *c = malloc(sizeof(clustering_sparse));
+
+    c->Cluster = malloc(sizeof(int) * g->n);
+    c->Cluster_degree = malloc(sizeof(long long) * g->n);
+    c->Temp_counter = malloc(sizeof(long long) * g->n);
+
+    clustering_sparse_reset(c, g);
+
+    return c;
+}
+
+void clustering_sparse_free(clustering_sparse *c)
+{
+    free(c->Cluster);
+    free(c->Cluster_degree);
+    free(c->Temp_counter);
+
+    free(c);
+}
+
+void clustering_sparse_reset(clustering_sparse *c, graph *g)
+{
+    c->cluster_count = g->n;
+    c->modularity = 0ll;
+    c->edge_weight_sum = 0ll;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        c->Cluster[u] = u;
+        c->Temp_counter[u] = 0;
+    }
+
+    if (g->EW == NULL)
+    {
+        for (int u = 0; u < g->n; u++)
+        {
+            long long degree = g->V[u + 1] - g->V[u];
+            c->Cluster_degree[u] = degree;
+            c->edge_weight_sum += degree;
+            c->modularity -= degree * degree;
+        }
+    }
+    else
+    {
+        for (int u = 0; u < g->n; u++)
+        {
+            c->Cluster_degree[u] = g->VW[u];
+            c->edge_weight_sum += g->VW[u];
+            c->modularity -= g->VW[u] * g->VW[u];
+        }
+    }
+
+    c->edge_weight_sum /= 2ll;
+
+    if (g->EW == NULL)
+        return;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        long long nw = 0;
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            nw += g->EW[i];
+        }
+
+        c->modularity += 2ll * c->edge_weight_sum * (g->VW[u] - nw);
+    }
+}
+
+void clustering_sparse_set_clustering(clustering_sparse *c, graph *g, int *C)
+{
+    c->cluster_count = 0;
+    c->modularity = 0ll;
+    long long internal_edges = 0;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        c->Cluster_degree[u] = 0;
+    }
+
+    if (g->EW == NULL)
+    {
+        for (int u = 0; u < g->n; u++)
+        {
+            c->Cluster[u] = C[u];
+
+            c->Cluster_degree[C[u]] += g->V[u + 1] - g->V[u];
+
+            for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                int v = g->E[i];
+                if (C[u] == C[v])
+                    internal_edges++;
+            }
+        }
+    }
+    else
+    {
+        for (int u = 0; u < g->n; u++)
+        {
+            c->Cluster[u] = C[u];
+            c->Cluster_degree[C[u]] += g->VW[u];
+
+            for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                int v = g->E[i];
+                if (C[u] == C[v])
+                    internal_edges += g->EW[i];
+            }
+        }
+    }
+
+    internal_edges /= 2ll;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        if (c->Cluster_degree[u] == 0)
+            continue;
+
+        c->modularity -= (__int128_t)c->Cluster_degree[u] * (__int128_t)c->Cluster_degree[u];
+        c->cluster_count++;
+    }
+
+    c->modularity += (__int128_t)4 * (__int128_t)c->edge_weight_sum * (__int128_t)internal_edges;
+}
+
+void clustering_sparse_update(clustering_sparse *c, graph *g, clustering_sparse *cd, int *FM)
+{
+    c->cluster_count = cd->cluster_count;
+    c->modularity = cd->modularity;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        int cluster = cd->Cluster[FM[u]];
+        c->Cluster[u] = cluster;
+        c->Cluster_degree[cluster] = cd->Cluster_degree[cluster];
+    }
+}
+
+double clustering_sparse_get_modularity(clustering_sparse *c)
+{
+    __int128_t den = (__int128_t)4 * (__int128_t)c->edge_weight_sum * (__int128_t)c->edge_weight_sum;
+    __int128_t num = (__int128_t)1000000 * c->modularity;
+    double q = (double)(num / den) / 1000000.0;
+    return q;
+}
+
+void clustering_sparse_move_vertex(clustering_sparse *c, graph *g, int u, int c_new)
+{
+    int c_old = c->Cluster[u];
+    if (c_old == c_new)
+        return;
+
+    long long internal_old = 0, internal_new = 0;
+    long long vertex_weight = 0;
+
+    if (g->EW == NULL)
+    {
+        vertex_weight = g->V[u + 1] - g->V[u];
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+
+            internal_old += (c->Cluster[v] == c_old);
+            internal_new += (c->Cluster[v] == c_new);
+        }
+    }
+    else
+    {
+        vertex_weight = g->VW[u];
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+            if (v == u)
+                continue;
+
+            internal_old += (c->Cluster[v] == c_old) * g->EW[i];
+            internal_new += (c->Cluster[v] == c_new) * g->EW[i];
+        }
+    }
+
+    c->modularity += 4ll * c->edge_weight_sum * (internal_new - internal_old) +
+                     2ll * vertex_weight * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - vertex_weight);
+
+    c->cluster_count -= (c->Cluster_degree[c_old] == vertex_weight);
+    c->cluster_count += (c->Cluster_degree[c_new] == 0);
+
+    c->Cluster[u] = c_new;
+    c->Cluster_degree[c_old] -= vertex_weight;
+    c->Cluster_degree[c_new] += vertex_weight;
+}
+
+long long clustering_sparse_compute_move_delta(clustering_sparse *c, graph *g, int u, int c_new)
+{
+    int c_old = c->Cluster[u];
+    if (c_old == c_new)
+        return 0;
+
+    long long internal_old = 0, internal_new = 0;
+    long long vertex_weight = 0;
+
+    if (g->EW == NULL)
+    {
+        vertex_weight = g->V[u + 1] - g->V[u];
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+
+            internal_old += (c->Cluster[v] == c_old);
+            internal_new += (c->Cluster[v] == c_new);
+        }
+    }
+    else
+    {
+        vertex_weight = g->VW[u];
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+            if (v == u)
+                continue;
+
+            internal_old += (c->Cluster[v] == c_old) * g->EW[i];
+            internal_new += (c->Cluster[v] == c_new) * g->EW[i];
+        }
+    }
+
+    long long delta = 4ll * c->edge_weight_sum * (internal_new - internal_old) +
+                      2ll * vertex_weight * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - vertex_weight);
+
+    return delta;
+}
+
+void clustering_sparse_move_vertex_delta(clustering_sparse *c, graph *g, int u, int c_new, long long delta)
+{
+    int c_old = c->Cluster[u];
+    long long vertex_weight = (g->VW == NULL ? g->V[u + 1] - g->V[u] : g->VW[u]);
+
+    c->modularity += delta;
+
+    c->cluster_count -= (c->Cluster_degree[c_old] == vertex_weight);
+    c->cluster_count += (c->Cluster_degree[c_new] == 0);
+
+    c->Cluster[u] = c_new;
+    c->Cluster_degree[c_old] -= vertex_weight;
+    c->Cluster_degree[c_new] += vertex_weight;
+}
+
+int clustering_sparse_best_move(clustering_sparse *c, graph *g, int u)
+{
+    int c_old = c->Cluster[u];
+    int c_best = -1;
+
+    long long delta_best = 0;
+    long long internal_best = 0;
+    long long internal_old = 0;
+
+    long long vertex_weight = 0;
+
+    if (g->EW == NULL)
+    {
+        vertex_weight = g->V[u + 1] - g->V[u];
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            c->Temp_counter[c->Cluster[g->E[i]]]++;
+        }
+    }
+    else
+    {
+        vertex_weight = g->VW[u];
+
+        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        {
+            int v = g->E[i];
+            if (v == u)
+                continue;
+            c->Temp_counter[c->Cluster[v]] += g->EW[i];
+        }
+    }
+
+    internal_old = c->Temp_counter[c_old];
+    c->Temp_counter[c_old] = 0;
+
+    for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+    {
+        int v = g->E[i];
+        int c_new = c->Cluster[v];
+
+        if (c->Temp_counter[c_new] == 0)
+            continue;
+
+        long long internal_new = c->Temp_counter[c_new];
+        c->Temp_counter[c_new] = 0;
+
+        long long delta = 4ll * c->edge_weight_sum * (internal_new - internal_old) +
+                          2ll * vertex_weight * (c->Cluster_degree[c_old] - c->Cluster_degree[c_new] - vertex_weight);
+
+        if (delta > delta_best)
+        {
+            delta_best = delta;
+            c_best = c_new;
+            internal_best = internal_new;
+        }
+    }
+
+    if (delta_best == 0)
+        return 0;
+
+    c->modularity += delta_best;
+
+    c->cluster_count -= (c->Cluster_degree[c_old] == vertex_weight);
+    c->cluster_count += (c->Cluster_degree[c_best] == 0);
+
+    c->Cluster[u] = c_best;
+    c->Cluster_degree[c_old] -= vertex_weight;
+    c->Cluster_degree[c_best] += vertex_weight;
 
     return 1;
 }

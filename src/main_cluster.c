@@ -1,6 +1,6 @@
 #include "graph.h"
 #include "util.h"
-#include "difference_core.h"
+#include "simulated_annealing.h"
 
 #include <stdlib.h>
 
@@ -20,37 +20,51 @@ int main(int argc, char **argv)
 
     printf("%lld %lld\n", g->n, g->m / 2);
 
-    local_search *ls = local_search_init(g, 0);
-    clustering *c = clustering_init(g);
+    clustering_sparse *c = clustering_sparse_init(g);
 
-    graph *gc = graph_copy(g);
-    int *A = malloc(sizeof(int) * g->m);
-    int *FM = malloc(sizeof(int) * g->n);
+    simulated_annealing_run(g, c);
 
-    for (int i = 0; i < 10; i++)
+    f = fopen("test.txt", "w");
+    for (int u = 0; u < g->n; u++)
     {
-        local_search_explore(ls, c, g, 10.0, 1);
-
-        for (int u = 0; u < g->n; u++)
-        {
-            for (long long j = g->V[u]; j < g->V[u + 1]; j++)
-            {
-                A[j] = c->Cluster[u] == c->Cluster[g->E[j]];
-            }
-        }
-
-        graph_contract(g, gc, A, FM);
-
-        local_search *lsc = local_search_init(gc, 0);
-        clustering *cc = clustering_init(gc);
-
-        local_search_explore(lsc, cc, gc, 5.0, 1);
-
-        clustering_update(c, g, cc, FM);
-
-        local_search_free(lsc);
-        clustering_free(cc);
+        fprintf(f, "%d\n", c->Cluster[u]);
     }
+    fclose(f);
+
+    graph_free(g);
+    clustering_sparse_free(c);
+
+    // local_search *ls = local_search_init(g, 0);
+    // clustering *c = clustering_init(g);
+
+    // graph *gc = graph_copy(g);
+    // int *A = malloc(sizeof(int) * g->m);
+    // int *FM = malloc(sizeof(int) * g->n);
+
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     local_search_explore(ls, c, g, 10.0, 1);
+
+    //     for (int u = 0; u < g->n; u++)
+    //     {
+    //         for (long long j = g->V[u]; j < g->V[u + 1]; j++)
+    //         {
+    //             A[j] = c->Cluster[u] == c->Cluster[g->E[j]];
+    //         }
+    //     }
+
+    //     graph_contract(g, gc, A, FM);
+
+    //     local_search *lsc = local_search_init(gc, 0);
+    //     clustering *cc = clustering_init(gc);
+
+    //     local_search_explore(lsc, cc, gc, 5.0, 1);
+
+    //     clustering_update(c, g, cc, FM);
+
+    //     local_search_free(lsc);
+    //     clustering_free(cc);
+    // }
 
     // printf("%lld %lld\n", g->n, g->m / 2);
 
@@ -86,7 +100,7 @@ int main(int argc, char **argv)
     // fclose(f);
 
     // d_core_free(d);
-    graph_free(g);
+    // graph_free(g);
 
     return 0;
 }

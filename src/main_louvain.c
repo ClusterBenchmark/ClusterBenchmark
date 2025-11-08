@@ -1,6 +1,7 @@
 #include "graph.h"
 #include "util.h"
 #include "clustering.h"
+#include "local_search.h"
 
 #include <stdlib.h>
 #include <omp.h>
@@ -21,23 +22,28 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < 100; i++)
     {
+        local_search *ls = local_search_init(g, 0);
+
         clustering *c = clustering_init(g);
-        c->update_threshold = 1;
-        c->update_max = i;
+        c->update_threshold = 2;
+        c->update_max = (1 << i);
 
         double t0 = omp_get_wtime();
 
-        int imp = 1;
-        while (imp)
-        {
-            imp = 0;
-            for (int u = 0; u < g->n; u++)
-                imp |= clustering_best_move(c, g, u);
-        }
+        local_search_explore(ls, c, g, 30.0, 1);
+
+        // int imp = 1;
+        // while (imp)
+        // {
+        //     imp = 0;
+        //     for (int u = 0; u < g->n; u++)
+        //         imp |= clustering_best_move(c, g, u);
+        // }
 
         double t1 = omp_get_wtime();
-        printf("%lf\n", t1 - t0);
+        printf("%d,%lf\n", (1 << i), t1 - t0);
         clustering_free(c);
+        local_search_free(ls);
     }
 
     // int offset = util_path_name_offset(argv[1]);
