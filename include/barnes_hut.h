@@ -3,9 +3,9 @@
 #include "graph.h"
 
 #define INNER_WIDTH 16
-#define GRID_WIDTH 16384
+#define GRID_WIDTH 32768
 
-typedef struct  
+typedef struct
 {
     int m, l;
     double *CX, *CY, *Mass, *S;
@@ -14,6 +14,10 @@ typedef struct
     int n;
     float *X, *Y;
     float *fX, *fY, *vX, *vY;
+
+    float rest_l;
+    float k_spring, k_repel, k_gravity;
+    float theta;
 } barnes_hut;
 
 barnes_hut *barnes_hut_init(graph *g);

@@ -20,6 +20,10 @@ screen *screen_init(int height, int width)
     s->root_x = 0;
     s->root_y = 0;
 
+    for (int i = 0; i < SLIDERS; i++)
+        s->sliders[i] = 50;
+    s->drag = 0;
+
     return s;
 }
 
@@ -113,7 +117,7 @@ void screen_draw_circle_filled(screen *s, int xm, int ym, int r, uint32_t draw_c
     }
 }
 
-void screen_render_frame(screen *s, graph *g, float *X, float *Y, int draw_edges)
+void screen_render_frame(screen *s, graph *g, uint32_t *Colors, float *X, float *Y, int draw_edges)
 {
 #pragma omp parallel
     {
@@ -123,51 +127,10 @@ void screen_render_frame(screen *s, graph *g, float *X, float *Y, int draw_edges
             s->Pixels[i] = 0xffffff;
         }
 
-        // for (int i = 0; i < 16384 / 16; i++)
-        // {
-        //     int vx = ((float)(i * 16) + s->root_x) * s->zoom;
-        //     screen_draw_line(s, vx, 0, vx, s->height - 1, 0xff0000);
-        // }
-        // for (int i = 0; i < INNER_SIZE; i++)
-        // {
-        //     int vx = ((float)(i * INNER_WIDTH) + s->root_x) * s->zoom;
-        //     screen_draw_line(s, vx, 0, vx, s->height - 1, 0xff0000);
-        // }
-        // for (int i = 0; i < INNER_SIZE; i++)
-        // {
-        //     int vy = ((float)(i * INNER_WIDTH) + s->root_y) * s->zoom;
-        //     screen_draw_line(s, 0, vy, s->width - 1, vy, 0xff0000);
-        // }
-
-        // for (int i = 0; i < OUTER_SIZE; i++)
-        // {
-        //     int vx = ((float)(i * OUTER_WIDTH) + s->root_x) * s->zoom;
-        //     screen_draw_line(s, vx, 0, vx, s->height - 1, 0x00ff00);
-        // }
-        // for (int i = 0; i < OUTER_SIZE; i++)
-        // {
-        //     int vy = ((float)(i * OUTER_WIDTH) + s->root_y) * s->zoom;
-        //     screen_draw_line(s, 0, vy, s->width - 1, vy, 0x00ff00);
-        // }
-
-        // screen_draw_line(s, 100, 0, 100, s->height - 1, 0x00);
-
-        // for (int i = 0; i < OUTER_SIZE; i++)
-        // {
-        //     draw_line(i * OUTER_WIDTH, 0, i * OUTER_SIZE, HEIGHT, color, pixels);
-        // }
-        // for (int i = 0; i < INNER_WIDTH; i++)
-        // {
-        //     draw_line(0, i * CELL_WIDTH, WIDTH, i * CELL_WIDTH, color, pixels);
-        // }
-
 #pragma omp for
         for (int u = 0; u < g->n; u++)
         {
             int ux = (X[u] + s->root_x) * s->zoom, uy = (Y[u] + s->root_y) * s->zoom;
-
-            screen_draw_circle_filled(s, ux, uy, 2 + s->zoom * sqrtf((float)g->VW[u] / M_PI), 0x00, 0xff);
-            // screen_draw_circle(s, ux, uy, s->zoom * 3.0f, 0x00);
 
             if (!draw_edges)
                 continue;
@@ -182,5 +145,48 @@ void screen_render_frame(screen *s, graph *g, float *X, float *Y, int draw_edges
                     screen_draw_line(s, ux, uy, vx, vy, 0x00);
             }
         }
+#pragma omp for
+        for (int u = 0; u < g->n; u++)
+        {
+            int ux = (X[u] + s->root_x) * s->zoom, uy = (Y[u] + s->root_y) * s->zoom;
+            screen_draw_circle_filled(s, ux, uy, 2 + s->zoom * 3.0, 0x00, Colors[u]);
+        }
+
+        for (int i = 0; i < SLIDERS; i++)
+        {
+            screen_draw_line(s, 25, 25 * (i + 1), 125, 25 * (i + 1), 0x00);
+            screen_draw_circle_filled(s, 25 + s->sliders[i], 25 * (i + 1), 5, 0x00, 0xffffff);
+        }
     }
+}
+
+void screen_mouse_down(screen *s, int x, int y)
+{
+    for (int i = 0; i < SLIDERS; i++)
+    {
+        float dx = x - (25 + s->sliders[i]), dy = y - (25 * (i + 1));
+        float d = sqrtf(dx * dx + dy * dy);
+
+        if (d <= 5.0f)
+        {
+            s->drag = i + 1;
+        }
+    }
+}
+
+void screen_mouse_up(screen *s)
+{
+    s->drag = 0;
+}
+
+void screen_mose_move(screen *s, int x, int y)
+{
+    if (s->drag == 0)
+        return;
+
+    int p = s->drag - 1;
+
+    s->sliders[p] = x - 25;
+    s->sliders[p] = s->sliders[p] < 0 ? 0 : s->sliders[p];
+    s->sliders[p] = s->sliders[p] > 100 ? 100 : s->sliders[p];
 }

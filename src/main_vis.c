@@ -1,9 +1,7 @@
 #include "graph.h"
-// #include "force_layout.h"
 #include "barnes_hut.h"
 #include "screen.h"
 #include "clustering.h"
-#include "difference_core.h"
 
 #include <SDL2/SDL.h>
 #include <stdint.h>
@@ -11,6 +9,15 @@
 
 #define WIDTH 1500
 #define HEIGHT 900
+
+uint32_t hash_color(uint32_t id)
+{
+    uint32_t h = id * 2654435761u; // Knuth's multiplicative hash
+    uint8_t r = (h >> 16) & 0xFF;
+    uint8_t g = (h >> 8) & 0xFF;
+    uint8_t b = h & 0xFF;
+    return (r << 16) | (g << 8) | b;
+}
 
 int main(int argc, char **argv)
 {
@@ -29,55 +36,58 @@ int main(int argc, char **argv)
     fclose(f);
 
     graph_sort_edges(g);
-    for (int u = 0; u < g->n; u++)
-        g->VW[u] = 1;
 
     printf("%lld %lld\n", g->n, g->m);
 
-    // d_core *dc = d_core_init(g, 4, 0);
-    // d_core_run(dc, g, 60.0, 1);
-    // clustering *c = d_core_get_best_clustering(dc);
+    clustering_sparse *c = clustering_sparse_init(g);
 
-    // graph *gc = graph_copy(g);
-    // int *A = malloc(sizeof(int) * g->m);
-    // for (int u = 0; u < g->n; u++)
-    // {
-    //     for (long long i = g->V[u]; i < g->V[u + 1]; i++)
-    //     {
-    //         int v = g->E[i];
-    //         A[i] = c->Cluster[u] == c->Cluster[v];
-    //     }
-    // }
+    for (int i = 0; i < 3; i++)
+    {
+        int imp = 1;
+        while (imp)
+        {
+            imp = 0;
+            for (int u = 0; u < g->n; u++)
+            {
+                imp |= clustering_sparse_best_move(c, g, u);
+            }
+            printf("%lf\n", clustering_sparse_get_modularity(c));
+        }
 
-    // int *FM = malloc(sizeof(int) * g->n);
-    // graph_contract(g, gc, A, FM);
-    // graph_sort_edges(gc);
+        clustering_sparse_renumber_clusters(c, g);
 
-    // g = gc;
-    // for (int u = 0; u < g->n; u++)
-    //     g->VW[u] = 1;
+        graph *gc = graph_contract_clusters(g, c->cluster_count, c->Cluster);
+        clustering_sparse *cc = clustering_sparse_init(gc);
 
-    // f = fopen("test.graph", "w");
+        imp = 1;
+        while (imp)
+        {
+            imp = 0;
+            for (int u = 0; u < gc->n; u++)
+            {
+                imp |= clustering_sparse_best_move(cc, gc, u);
+            }
+            printf("%lf\n", clustering_sparse_get_modularity(c));
+        }
 
-    // fprintf(f, "%lld %lld 10\n", g->n, (g->m - 1) / 2);
+        clustering_sparse_set_clustering_from_overlay(c, g, cc);
 
-    // for (int u = 0; u < g->n; u++)
-    // {
-    //     fprintf(f, "%lld ", g->VW[u]);
-    //     for (long long i = g->V[u]; i < g->V[u + 1]; i++)
-    //     {
-    //         int v = g->E[i];
-    //         if (v == u)
-    //             continue;
-    //         fprintf(f, "%d ", v + 1);
-    //     }
-    //     fprintf(f, "\n");
-    // }
-    // fclose(f);
+        graph_free(gc);
+        clustering_sparse_free(cc);
+    }
+
+    printf("%d\n", c->cluster_count);
 
     screen *s = screen_init(HEIGHT, WIDTH);
     barnes_hut *bh = barnes_hut_init(g);
-    // force_layout *fl = force_layout_init(g);
+    uint32_t *Colors = malloc(sizeof(uint32_t) * g->n);
+
+    for (int u = 0; u < g->n; u++)
+    {
+        Colors[u] = hash_color(c->Cluster[u]);
+    }
+
+    clustering_sparse_free(c);
 
     int mbd = 0;
     int draw_edges = 0;
@@ -88,11 +98,22 @@ int main(int argc, char **argv)
         {
             if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == 1)
             {
+                screen_mouse_down(s, e.motion.x, e.motion.y);
                 mbd = 1;
             }
             else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == 1)
             {
+                screen_mouse_up(s);
                 mbd = 0;
+            }
+            else if (e.type == SDL_MOUSEMOTION && s->drag > 0)
+            {
+                screen_mose_move(s, e.motion.x, e.motion.y);
+                bh->rest_l = s->sliders[0];
+                bh->k_spring = (s->sliders[1] * 2.0f) / 100.0f;
+                bh->k_repel = (s->sliders[2] * 2.0f) / 100.0f;
+                bh->k_gravity = (s->sliders[3] * 2.0f) / 100.0f;
+                bh->theta = (s->sliders[4] * 2.0f) / 100.0f;
             }
             else if (e.type == SDL_MOUSEMOTION && mbd)
             {
@@ -122,12 +143,9 @@ int main(int argc, char **argv)
 
         double t0 = omp_get_wtime();
         barnes_hut_step(bh, g);
-        // force_layout_step(fl, g);
         double t1 = omp_get_wtime();
-        screen_render_frame(s, g, bh->X, bh->Y, draw_edges);
+        screen_render_frame(s, g, Colors, bh->X, bh->Y, draw_edges);
         double t2 = omp_get_wtime();
-
-        // s->Pixels[50 * WIDTH + 50] = 0xff;
 
         printf("\r%5.3lf %5.3lf", t1 - t0, t2 - t1);
         fflush(stdout);
@@ -142,7 +160,6 @@ int main(int argc, char **argv)
 
     graph_free(g);
     barnes_hut_free(bh);
-    // force_layout_free(fl);
     screen_free(s);
 
     SDL_DestroyTexture(tex);

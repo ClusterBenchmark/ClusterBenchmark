@@ -9,13 +9,8 @@ const float EPS = 0.0001f;
 const float MAX_FORCE = 1000.0f;
 
 // --- Parameters ---
-const float REST_L = 25.0f;
-const float K_SPRING = 1.0f;
-const float K_REPEL = 1.0f;
-const float K_GRAVITY = 1.0f;
 const float SOFTEN_EPS = 0.1f;
 const float DECAY = 0.999f;
-const float THETA = 2.0f;
 
 barnes_hut *barnes_hut_init(graph *g)
 {
@@ -80,6 +75,12 @@ barnes_hut *barnes_hut_init(graph *g)
         bh->vY[i] = 0.0f;
     }
 
+    bh->rest_l = 50.0f;
+    bh->k_spring = 1.0f;
+    bh->k_repel = 1.0f;
+    bh->k_gravity = 1.0f;
+    bh->theta = 1.0f;
+
     return bh;
 }
 
@@ -122,9 +123,9 @@ void barnes_hut_populate(barnes_hut *bh, graph *g)
         float x = bh->X[u], y = bh->Y[u];
         for (int i = 0; i < bh->l; i++)
         {
-            bh->CX[p] += bh->X[u] * (double)g->VW[u];
-            bh->CY[p] += bh->Y[u] * (double)g->VW[u];
-            bh->Mass[p] += (double)g->VW[u];
+            bh->CX[p] += bh->X[u]; // * (double)g->VW[u];
+            bh->CY[p] += bh->Y[u]; // * (double)g->VW[u];
+            bh->Mass[p] += 1.0;    // (double)g->VW[u];
 
             float w = bh->S[p] / 2;
 
@@ -182,9 +183,9 @@ void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
 
             if (w > 0)
             {
-                sum_x -= x * (double)g->VW[u];
-                sum_y -= y * (double)g->VW[u];
-                mass -= (double)g->VW[u];
+                sum_x -= x;  // * (double)g->VW[u];
+                sum_y -= y;  // * (double)g->VW[u];
+                mass -= 1.0; // (double)g->VW[u];
             }
 
             if (mass <= EPS)
@@ -194,10 +195,10 @@ void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
             float dx = x - cx, dy = y - cy;
             float d = sqrtf(dx * dx + dy * dy) + EPS;
 
-            if ((bh->S[p] / d) < THETA || ((p * 4) + 1) >= bh->m)
+            if ((bh->S[p] / d) < bh->theta || ((p * 4) + 1) >= bh->m)
             {
-                bh->fX[u] += K_REPEL * (dx / (d * d)) * mass;
-                bh->fY[u] += K_REPEL * (dy / (d * d)) * mass;
+                bh->fX[u] += bh->k_repel * (dx / (d * d)) * mass;
+                bh->fY[u] += bh->k_repel * (dy / (d * d)) * mass;
             }
             else
             {
@@ -256,8 +257,8 @@ void barnes_hut_forces_spring(barnes_hut *bh, graph *g)
 
         float d_g = sqrtf(dx_g * dx_g + dy_g * dy_g) + EPS;
 
-        bh->fX[u] += (dx_g / d_g) * K_GRAVITY;
-        bh->fY[u] += (dy_g / d_g) * K_GRAVITY;
+        bh->fX[u] += (dx_g / d_g) * bh->k_gravity;
+        bh->fY[u] += (dy_g / d_g) * bh->k_gravity;
 
         float degree = g->V[u + 1] - g->V[u];
 
@@ -271,7 +272,7 @@ void barnes_hut_forces_spring(barnes_hut *bh, graph *g)
             float dy = bh->Y[v] - bh->Y[u];
 
             float d = sqrtf(dx * dx + dy * dy) + EPS;
-            float s = K_SPRING * (d - REST_L);
+            float s = bh->k_spring * (d - bh->rest_l);
 
             bh->fX[u] += s * (dx / d) / degree;
             bh->fY[u] += s * (dy / d) / degree;

@@ -2,8 +2,6 @@
 
 #include <stdio.h>
 
-// When EW is not null, VW[u] will store the sum of edge weights from u (including self edges)
-
 typedef struct
 {
     long long n, m;     // Number of vertices and edges
@@ -22,15 +20,15 @@ void graph_sort_edges(graph *g);
 
 int graph_validate(graph *g);
 
-void graph_contract(graph *g, graph *gc, int *A, int *FM);
+graph *graph_contract_clusters(graph *g, int nc, int *C);
 
-void graph_contract_par(graph *g, graph *gc, int *A, int *FM);
+// void graph_contract(graph *g, graph *gc, int *A, int *FM);
 
-/*  V, E, and S must be at least n long.
-    C must be at least nt long.
-    Dt must be nt x n.
-    T must hold at least 3 elements. */
-void graph_contract_par_internal(graph *g, graph *gc, int *A, int *FM,
-                                 int *V, int *E, long long *S, long long **Dt, int *C, int *T);
+// void graph_contract_par(graph *g, graph *gc, int *A, int *FM);
 
-graph *graph_contract_clusters(graph *g, int *C, long long *CC, int *FM);
+// /*  V, E, and S must be at least n long.
+//     C must be at least nt long.
+//     Dt must be nt x n.
+//     T must hold at least 3 elements. */
+// void graph_contract_par_internal(graph *g, graph *gc, int *A, int *FM,
+//                                  int *V, int *E, long long *S, long long **Dt, int *C, int *T);

@@ -15,7 +15,7 @@ Another equivalent formulation that is easy to implement is defined as follows.
 $$Q = \sum_{c \in C} \left[ \frac{L_c}{m} - \left(\frac{K_c}{2m}\right)^2 \right]$$
 
 Where:
-* $L_c$ is the number of internal edges in community $c$ (counted once)
+* $L_c$ is the number of internal edges in community $c$ (counted once ?)
 * $K_c$ is the sum of degrees of nodes in community $c$
 * $m$ is the number of edges in the graph
 

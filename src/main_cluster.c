@@ -3,6 +3,7 @@
 #include "simulated_annealing.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 int main(int argc, char **argv)
 {
@@ -21,6 +22,8 @@ int main(int argc, char **argv)
     printf("%lld %lld\n", g->n, g->m / 2);
 
     clustering_sparse *c = clustering_sparse_init(g);
+
+    srand(time(NULL));
 
     simulated_annealing_run(g, c);
 
