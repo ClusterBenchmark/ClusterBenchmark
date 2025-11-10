@@ -24,7 +24,7 @@ source .venv/bin/activate
 
 export OMP_NUM_THREADS=4
 
-timeout -s SIGTERM 3600s python3 -m graph_embedding.dmon.train_metis --graph_path="$INPUT_FILE" --output_path="$BASENAME""_dmon_" --n_clusters="$C" --n_runs="$K" --n_epochs=100 --dropout_rate=0.5 2> /dev/null > "$BASENAME"_dmon_out.txt
+timeout -s SIGTERM 3600s python3 -m graph_embedding.dmon.train_metis --graph_path="$INPUT_FILE" --output_path="$BASENAME""_dmon_" --n_clusters="$C" --n_runs="$K" --n_epochs=1000 --dropout_rate=0.5 2> /dev/null > "$BASENAME"_dmon_out.txt
 
 PYTHON_OUT=$(cat "$BASENAME"_dmon_out.txt)
 
