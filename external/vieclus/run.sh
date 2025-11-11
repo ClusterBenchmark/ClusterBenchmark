@@ -23,14 +23,17 @@ echo -n "$BASENAME"
 
 for i in $(seq 1 $K);
 do
-    TIME=$(mpirun -n $P vieclus "$INPUT_FILE" --time_limit="$TL" --seed="$i" --output_filename="$BASENAME"_clustering.txt | grep 'Best solution found after' | awk '{print $5}')
+    TIME=$(/usr/bin/time -v mpirun -n $P ./vieclus "$INPUT_FILE" --time_limit="$TL" --seed="$i" --output_filename="$BASENAME"_clustering.txt 2> "$BASENAME"_vieclus_time_mem.txt | grep 'Best solution found after' | awk '{print $5}')
+    MAX_MEM=$(cat "$BASENAME"_vieclus_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
     EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$BASENAME"_clustering.txt)
     EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
     EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
     EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
 
-    echo -n ",$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC"
+    echo -n ",$MAX_MEM,$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC"
+
+    rm -rf "$BASENAME"_vieclus_time_mem.txt
 done
 
 echo ""
