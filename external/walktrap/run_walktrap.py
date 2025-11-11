@@ -2,6 +2,14 @@ import sys
 import igraph as ig
 import gc
 import time
+import argparse
+import signal
+
+class TimeoutError(Exception):
+    pass
+
+def handler(signum, frame):
+    raise TimeoutError()
 
 def read_metis_graph(filename):
     """
@@ -78,40 +86,58 @@ def run_walktrap(g):
 
 
 def main():
-    if len(sys.argv) != 5:
-        print(f"Usage: {sys.argv[0]} <input.metis> <output_file> <verbose> <k>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Run Walktrap clustering.")
+    parser.add_argument("--input_file", help="Path to the input graph file in METIS format.")
+    parser.add_argument("--output_file", help="Base name for output cluster files.")
+    parser.add_argument("--verbose", type=int, help="Enable verbose output.")
+    parser.add_argument("--k", type=int, help="Number of times to run the clustering.")
+    parser.add_argument("--timeout", type=int, default=0, help="Timeout in seconds for each clustering run. Default is 0 (no timeout).")
+    args = parser.parse_args()
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    verbose = int(sys.argv[3])
-    k = int(sys.argv[4])
+    if (args.verbose):
+        print(f"Reading graph from {args.input_file} ...")
+    g = read_metis_graph(args.input_file)
 
-    if (verbose):
-        print(f"Reading graph from {input_file} ...")
-    g = read_metis_graph(input_file)
-
-    if (verbose):
+    if (args.verbose):
         print("Running Walktrap clustering ...")
 
-    for i in range(k):
-        start_time = time.time()
-        membership, modularity = run_walktrap(g)
-        end_time = time.time()
-        elapsed = end_time - start_time
+    signal.signal(signal.SIGALRM, handler)
 
-        if (verbose):
-            print(f"N: {len(g.vs)}\nModularity: {modularity:.4f}\nTime: {elapsed:.4f}")
-            print(f"Writing cluster assignments to {output_file} ...")
-        else:
-            print(f"{elapsed:.4f},{modularity:.10f},", end="")
-            sys.stdout.flush()
+    for i in range(args.k):
+        gc.collect()
+        try:
+            if args.timeout > 0:
+                signal.alarm(args.timeout)
 
-        with open(output_file + str(i) + ".txt", "w") as out:
-            out.write("\n".join(map(str, membership)))
-            out.write("\n")
+            start_time = time.time()
+            membership, modularity = run_walktrap(g)
+            end_time = time.time()
+            elapsed = end_time - start_time
 
-    if (verbose):
+            if args.timeout > 0:
+                signal.alarm(0)
+
+            if (args.verbose):
+                print(f"N: {len(g.vs)}\nModularity: {modularity:.4f}\nTime: {elapsed:.4f}")
+                print(f"Writing cluster assignments to {args.output_file} ...")
+            else:
+                print(f"{elapsed:.4f},{modularity:.10f},", end="")
+                sys.stdout.flush()
+
+            with open(args.output_file + str(i) + ".txt", "w") as out:
+                out.write("\n".join(map(str, membership)))
+                out.write("\n")
+        except TimeoutError:
+            if (args.verbose):
+                print("Clustering timed out.")
+            else:
+                print("tle,tle,", end="")
+                sys.stdout.flush()
+            # The file for this run won't be created, so the calling script will know it failed.
+            continue
+
+
+    if (args.verbose):
         print("Done.")
     else:
         print()
