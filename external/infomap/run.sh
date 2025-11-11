@@ -1,12 +1,13 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds>"
     exit 1
 fi
 
 INPUT_FILE=$1
 K=$2
+TIMEOUT=$3
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
 # Make sure we are in the script's directory, so we can find the executables.
@@ -19,13 +20,14 @@ fi
 
 source .venv/bin/activate
 
-timeout -s SIGTERM 3600s python3 run_infomap.py "$INPUT_FILE" "$BASENAME""_infomap_" 0 "$K" > "$BASENAME"_infomap_out.txt
+/usr/bin/time -v python3 run_infomap.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_infomap_" --verbose 0 --k "$K" --timeout "$TIMEOUT" > "$BASENAME"_infomap_out.txt 2> "$BASENAME"_infomap_time_mem.txt
 
 PYTHON_OUT=$(cat "$BASENAME"_infomap_out.txt)
+MAX_MEM=$(cat "$BASENAME"_infomap_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
 rm "$BASENAME"_infomap_out.txt
 
-echo -n "$BASENAME"
+echo -n "$BASENAME,$MAX_MEM"
 
 for i in $(seq 1 $K);
 do
@@ -40,7 +42,7 @@ do
 
         echo -n ",$TIME,$MOD,$EVAL_MOD,$EVAL_N,$EVAL_CC"
     else
-        echo -n ",tle,tle,tle,tle"
+        echo -n ",tle,tle,tle,tle,tle"
     fi
 done
 
