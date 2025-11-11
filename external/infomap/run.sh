@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds>"
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads>"
     exit 1
 fi
 
 INPUT_FILE=$1
 K=$2
 TIMEOUT=$3
+THREADS=$4
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
 # Make sure we are in the script's directory, so we can find the executables.
@@ -19,6 +20,8 @@ if [[ "$INPUT_FILE" != /* ]]; then
 fi
 
 source .venv/bin/activate
+
+export OMP_NUM_THREADS="$THREADS"
 
 /usr/bin/time -v python3 run_infomap.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_infomap_" --verbose 0 --k "$K" --timeout "$TIMEOUT" > "$BASENAME"_infomap_out.txt 2> "$BASENAME"_infomap_time_mem.txt
 
