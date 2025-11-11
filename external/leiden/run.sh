@@ -1,12 +1,13 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds>"
     exit 1
 fi
 
 INPUT_FILE=$1
 K=$2
+TIMEOUT=$3
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
 # Make sure we are in the script's directory, so we can find the executables.
@@ -19,13 +20,14 @@ fi
 
 source .venv/bin/activate
 
-timeout -s SIGTERM 3600s python3 run_leiden.py "$INPUT_FILE" "$BASENAME""_leiden_" 0 "$K" > "$BASENAME"_leiden_out.txt
+/usr/bin/time -v python3 run_leiden.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_leiden_" --verbose 0 --k "$K" --timeout "$TIMEOUT" > "$BASENAME"_leiden_out.txt 2> "$BASENAME"_leiden_time_mem.txt
 
 PYTHON_OUT=$(cat "$BASENAME"_leiden_out.txt)
+MAX_MEM=$(cat "$BASENAME"_leiden_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
 rm "$BASENAME"_leiden_out.txt
 
-echo -n "$BASENAME"
+echo -n "$BASENAME,$MAX_MEM"
 
 for i in $(seq 1 $K);
 do

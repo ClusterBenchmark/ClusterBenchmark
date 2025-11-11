@@ -2,6 +2,9 @@ import sys
 import igraph as ig
 import gc
 import time
+import multiprocessing
+import queue
+import argparse
 
 def read_metis_graph(filename):
     """
@@ -76,41 +79,89 @@ def run_leiden(g):
     return membership, modularity
 
 
+def run_leiden_worker(g, result_queue):
+    """
+    A worker function to run Leiden in a separate process.
+    Puts the result in a queue.
+    """
+    try:
+        membership, modularity = run_leiden(g)
+        result_queue.put((membership, modularity))
+    except Exception as e:
+        # Pass exceptions back to the main process
+        result_queue.put(e)
+
+
 def main():
-    if len(sys.argv) != 5:
-        print(f"Usage: {sys.argv[0]} <input.metis> <output_file> <verbose> <k>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Run Leiden clustering.")
+    parser.add_argument("--input_file", help="Path to the input graph file in METIS format.")
+    parser.add_argument("--output_file", help="Base name for output cluster files.")
+    parser.add_argument("--verbose", type=int, help="Enable verbose output.")
+    parser.add_argument("--k", type=int, help="Number of times to run the clustering.")
+    parser.add_argument("--timeout", type=int, default=0, help="Timeout in seconds for each clustering run. Default is 0 (no timeout).")
+    args = parser.parse_args()
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    verbose = int(sys.argv[3])
-    k = int(sys.argv[4])
+    if (args.verbose):
+        print(f"Reading graph from {args.input_file} ...")
+    g = read_metis_graph(args.input_file)
 
-    if (verbose):
-        print(f"Reading graph from {input_file} ...")
-    g = read_metis_graph(input_file)
-
-    if (verbose):
+    if (args.verbose):
         print("Running Leiden clustering ...")
 
-    for i in range(k):
+    for i in range(args.k):
+        gc.collect()
+        result_queue = multiprocessing.Queue()
+        p = multiprocessing.Process(target=run_leiden_worker, args=(g, result_queue))
+
         start_time = time.time()
-        membership, modularity = run_leiden(g)
-        end_time = time.time()
-        elapsed = end_time - start_time
+        p.start()
 
-        if (verbose):
-            print(f"N: {len(g.vs)}\nModularity: {modularity:.4f}\nTime: {elapsed:.4f}")
-            print(f"Writing cluster assignments to {output_file} ...")
-        else:
-            print(f"{elapsed:.4f},{modularity:.10f},", end="")
-            sys.stdout.flush()
+        try:
+            # Wait for the result with a timeout
+            if args.timeout > 0:
+                result = result_queue.get(timeout=args.timeout)
+            else:
+                result = result_queue.get()
 
-        with open(output_file + str(i) + ".txt", "w") as out:
-            out.write("\n".join(map(str, membership)))
-            out.write("\n")
+            if isinstance(result, Exception):
+                raise result
 
-    if (verbose):
+            membership, modularity = result
+            end_time = time.time()
+            elapsed = end_time - start_time
+
+            if (args.verbose):
+                print(f"N: {len(g.vs)}\nModularity: {modularity:.4f}\nTime: {elapsed:.4f}")
+                print(f"Writing cluster assignments to {args.output_file} ...")
+            else:
+                print(f"{elapsed:.4f},{modularity:.10f},", end="")
+                sys.stdout.flush()
+
+            with open(args.output_file + str(i) + ".txt", "w") as out:
+                out.write("\n".join(map(str, membership)))
+                out.write("\n")
+        except queue.Empty:
+            if (args.verbose):
+                print("Clustering timed out.")
+            else:
+                print("tle,tle,", end="")
+                sys.stdout.flush()
+            # The file for this run won't be created, so the calling script will know it failed.
+            continue
+        except Exception as e:
+            if (args.verbose):
+                print(f"An error occurred during clustering: {e}")
+            else:
+                print("err,err,", end="")
+                sys.stdout.flush()
+            continue
+        finally:
+            # Ensure the process is terminated and joined
+            if p.is_alive():
+                p.terminate()
+            p.join()
+
+    if (args.verbose):
         print("Done.")
     else:
         print()
