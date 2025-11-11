@@ -21,7 +21,7 @@ DEP := $(sort $(DEP))
 vpath %.c src
 vpath %.h include
 
-all : CLUSTER VIS FEATURE
+all : CLUSTER VIS FEATURE EVAL
 
 -include $(DEP:.o=.d)
 

@@ -1,6 +1,7 @@
 #include "graph.h"
 #include "util.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -29,7 +30,7 @@ int *clustering_parse(FILE *f, long long n)
     return cluster;
 }
 
-void compute_modularity(graph *g, int *cluster, long long *n, double *q, int *n_clusters)
+void compute_modularity(graph *g, int *cluster, __int128_t *n, double *q, int *n_clusters)
 {
     long long edge_weight_sum = 0;
     *n_clusters = 0;
@@ -39,34 +40,51 @@ void compute_modularity(graph *g, int *cluster, long long *n, double *q, int *n_
         if (cluster[u] + 1 > *n_clusters)
             *n_clusters = cluster[u] + 1;
 
-        edge_weight_sum += g->VW == NULL ? g->V[u + 1] - g->V[u] : g->VW[u];
-    }
-
-    edge_weight_sum /= 2ll;
-
-    long long *community_weight = calloc(*n_clusters, sizeof(long long));
-    long long *community_edges = calloc(*n_clusters, sizeof(long long));
-
-    for (int u = 0; u < g->n; u++)
-    {
-        community_weight[cluster[u]] += g->VW == NULL ? g->V[u + 1] - g->V[u] : g->VW[u];
-
-        for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+        if (g->EW == NULL)
         {
-            int v = g->E[i];
-            if (u <= v && cluster[u] == cluster[v])
-                community_edges[cluster[u]] += g->EW == NULL ? 1 : g->EW[i];
+            edge_weight_sum += g->V[u + 1] - g->V[u];
+        }
+        else
+        {
+            for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                edge_weight_sum += g->EW[i];
+            }
         }
     }
 
-    long long s = 0, l_sum = 0;
+    long long *community_weight = calloc(*n_clusters, sizeof(long long));
+    long long l_sum = 0;
+
+    for (int u = 0; u < g->n; u++)
+    {
+        if (g->EW == NULL)
+        {
+            community_weight[cluster[u]] += g->V[u + 1] - g->V[u];
+            for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                if (cluster[u] == cluster[g->E[i]])
+                    l_sum++;
+            }
+        }
+        else
+        {
+            for (long long i = g->V[u]; i < g->V[u + 1]; i++)
+            {
+                community_weight[cluster[u]] += g->EW[i];
+                if (cluster[u] == cluster[g->E[i]])
+                    l_sum += g->EW[i];
+            }
+        }
+    }
+
+    *n = 0;
 
     int count = 0;
 
     for (int i = 0; i < *n_clusters; i++)
     {
-        s += community_weight[i] * community_weight[i];
-        l_sum += community_edges[i];
+        *n -= community_weight[i] * community_weight[i];
 
         if (community_weight[i] > 0)
             count++;
@@ -74,11 +92,14 @@ void compute_modularity(graph *g, int *cluster, long long *n, double *q, int *n_
 
     *n_clusters = count;
 
-    *n = 4ll * edge_weight_sum * l_sum - s;
-    *q = (double)*n / (4.0 * edge_weight_sum * edge_weight_sum);
+    *n += (__int128_t)edge_weight_sum * (__int128_t)l_sum;
+
+    // Computing modularity score with 9 decimal precision
+    __int128_t den = (__int128_t)edge_weight_sum * (__int128_t)edge_weight_sum;
+    __int128_t num = (__int128_t)1000000000 * *n;
+    *q = (double)(num / den) / 1000000000.0;
 
     free(community_weight);
-    free(community_edges);
 }
 
 void compute_metrics(graph *g, int *clusters, int *labels,
@@ -156,10 +177,23 @@ int main(int argc, char **argv)
     printf("%s,%lld,%lld", argv[1] + offset, g->n, g->m);
 
     double q;
-    long long n;
+    __int128_t n;
     int n_clusters;
     compute_modularity(g, cluster, &n, &q, &n_clusters);
-    printf(",%.10lf,%lld,%d", q, n, n_clusters);
+
+    printf(",%.9lf", q);
+    if (n > LLONG_MAX)
+    {
+        long long base = 1000000000000000000LL; // 1e18
+        long long hi = n / (__int128_t)base;
+        long long lo = n % (__int128_t)base;
+        printf(",%lld%018lld", hi, lo);
+    }
+    else
+    {
+        printf(",%lld", (long long)n);
+    }
+    printf(",%d", n_clusters);
 
     if (truth != NULL)
     {
@@ -168,6 +202,7 @@ int main(int argc, char **argv)
 
         printf(",%.8lf", (2.0 * (double)tp) / (2.0 * (double)tp + (double)fp + (double)fn));
         printf(",%.8lf", (double)(tp + tn) / (double)g->V[g->n]);
+        printf(",%d,%d,%d,%d", tp, fp, tn, fn);
     }
 
     printf("\n");
