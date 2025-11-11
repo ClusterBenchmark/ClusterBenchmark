@@ -19,11 +19,12 @@ fi
 
 ./CONVERT_GRAPH "$INPUT_FILE" "$BASENAME".graph
 
-./streamcom -f "$BASENAME".graph --vmax-start 10000 --vmax-end 10000 -o "$BASENAME" --niter "$K" > "$BASENAME"_hollocou_out.txt
+/usr/bin/time -v ./streamcom -f "$BASENAME".graph --vmax-start 10000 --vmax-end 10000 -o "$BASENAME" --niter "$K" > "$BASENAME"_hollocou_out.txt 2> "$BASENAME"_hollocou_time_mem.txt
 
 HOLLOCOU_OUT=$(cat "$BASENAME"_hollocou_out.txt | grep "Algorithm time:" | awk '{printf "%.3f,",$3 / 1000}')
+MAX_MEM=$(cat "$BASENAME"_hollocou_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
-echo -n "$BASENAME"
+echo -n "$BASENAME,$MAX_MEM"
 
 for i in $(seq 1 $K);
 do
