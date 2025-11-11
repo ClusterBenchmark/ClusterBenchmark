@@ -3,13 +3,9 @@ import igraph as ig
 import gc
 import time
 import argparse
-import signal
+import multiprocessing
+import queue
 
-class TimeoutError(Exception):
-    pass
-
-def handler(signum, frame):
-    raise TimeoutError()
 
 def read_metis_graph(filename):
     """
@@ -84,6 +80,17 @@ def run_walktrap(g):
         modularity = clusters.modularity
     return membership, modularity
 
+def run_walktrap_worker(g, result_queue):
+    """
+    A worker function to run walktrap in a separate process.
+    Puts the result in a queue.
+    """
+    try:
+        membership, modularity = run_walktrap(g)
+        result_queue.put((membership, modularity))
+    except Exception as e:
+        # Pass exceptions back to the main process
+        result_queue.put(e)
 
 def main():
     parser = argparse.ArgumentParser(description="Run Walktrap clustering.")
@@ -101,21 +108,28 @@ def main():
     if (args.verbose):
         print("Running Walktrap clustering ...")
 
-    signal.signal(signal.SIGALRM, handler)
-
     for i in range(args.k):
         gc.collect()
-        try:
-            if args.timeout > 0:
-                signal.alarm(args.timeout)
 
-            start_time = time.time()
-            membership, modularity = run_walktrap(g)
+        result_queue = multiprocessing.Queue()
+        p = multiprocessing.Process(target=run_walktrap_worker, args=(g, result_queue))
+        p.start()
+
+        start_time = time.time()
+
+        try:
+            # Wait for the result with a timeout
+            if args.timeout > 0:
+                result = result_queue.get(timeout=args.timeout)
+            else:
+                result = result_queue.get()
+
+            if isinstance(result, Exception):
+                raise result
+
+            membership, modularity = result
             end_time = time.time()
             elapsed = end_time - start_time
-
-            if args.timeout > 0:
-                signal.alarm(0)
 
             if (args.verbose):
                 print(f"N: {len(g.vs)}\nModularity: {modularity:.4f}\nTime: {elapsed:.4f}")
@@ -127,7 +141,7 @@ def main():
             with open(args.output_file + str(i) + ".txt", "w") as out:
                 out.write("\n".join(map(str, membership)))
                 out.write("\n")
-        except TimeoutError:
+        except queue.Empty:
             if (args.verbose):
                 print("Clustering timed out.")
             else:
@@ -135,6 +149,18 @@ def main():
                 sys.stdout.flush()
             # The file for this run won't be created, so the calling script will know it failed.
             continue
+        except Exception as e:
+            if (args.verbose):
+                print(f"An error occurred during clustering: {e}")
+            else:
+                print("err,err,", end="")
+                sys.stdout.flush()
+            continue
+        finally:
+            # Ensure the process is terminated and joined
+            if p.is_alive():
+                p.terminate()
+            p.join()
 
 
     if (args.verbose):
