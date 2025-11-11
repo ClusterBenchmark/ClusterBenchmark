@@ -113,9 +113,9 @@ def main():
 
         result_queue = multiprocessing.Queue()
         p = multiprocessing.Process(target=run_walktrap_worker, args=(g, result_queue))
-        p.start()
-
+        
         start_time = time.time()
+        p.start()
 
         try:
             # Wait for the result with a timeout
