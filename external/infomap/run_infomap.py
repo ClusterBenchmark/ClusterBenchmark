@@ -3,13 +3,8 @@ from infomap import Infomap
 import gc
 import time
 import argparse
-import signal
-
-class TimeoutError(Exception):
-    pass
-
-def handler(signum, frame):
-    raise TimeoutError()
+import multiprocessing
+import queue
 
 def read_metis_graph(filename):
     """
@@ -83,6 +78,19 @@ def run_infomap(im, n_vertices):
     return membership, im.codelength
 
 
+def run_infomap_worker(im, n_vertices, result_queue):
+    """
+    A worker function to run Infomap in a separate process.
+    Puts the result in a queue.
+    """
+    try:
+        membership, codelength = run_infomap(im, n_vertices)
+        result_queue.put((membership, codelength))
+    except Exception as e:
+        # Pass exceptions back to the main process
+        result_queue.put(e)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run Infomap clustering.")
     parser.add_argument("--input_file", help="Path to the input graph file in METIS format.")
@@ -99,21 +107,28 @@ def main():
     if (args.verbose):
         print("Running Infomap clustering ...")
 
-    signal.signal(signal.SIGALRM, handler)
-
     for i in range(args.k):
         gc.collect()
-        try:
-            if args.timeout > 0:
-                signal.alarm(args.timeout)
 
-            start_time = time.time()
-            membership, codelength = run_infomap(im, n_vertices)
+        result_queue = multiprocessing.Queue()
+        p = multiprocessing.Process(target=run_infomap_worker, args=(im, n_vertices, result_queue))
+        
+        start_time = time.time()
+        p.start()
+
+        try:
+            # Wait for the result with a timeout
+            if args.timeout > 0:
+                result = result_queue.get(timeout=args.timeout)
+            else:
+                result = result_queue.get()
+
+            if isinstance(result, Exception):
+                raise result
+
+            membership, codelength = result
             end_time = time.time()
             elapsed = end_time - start_time
-
-            if args.timeout > 0:
-                signal.alarm(0)
 
             if (args.verbose):
                 print(f"N: {n_vertices}\nCodelength: {codelength:.4f}\nTime: {elapsed:.4f}")
@@ -125,8 +140,7 @@ def main():
             with open(args.output_file + str(i) + ".txt", "w") as out:
                 out.write("\n".join(map(str, membership)))
                 out.write("\n")
-
-        except TimeoutError:
+        except queue.Empty:
             if (args.verbose):
                 print("Clustering timed out.")
             else:
@@ -134,8 +148,20 @@ def main():
                 sys.stdout.flush()
             # The file for this run won't be created, so the calling script will know it failed.
             continue
+        except Exception as e:
+            if (args.verbose):
+                print(f"An error occurred during clustering: {e}")
+            else:
+                print("err,err,", end="")
+                sys.stdout.flush()
+            continue
+        finally:
+            # Ensure the process is terminated and joined
+            if p.is_alive():
+                p.terminate()
+            p.join()
 
-    if (verbose):
+    if (args.verbose):
         print("Done.")
     else:
         print()
