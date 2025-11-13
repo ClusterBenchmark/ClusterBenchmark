@@ -145,11 +145,11 @@ void screen_render_frame(screen *s, graph *g, uint32_t *Colors, float *X, float 
                     screen_draw_line(s, ux, uy, vx, vy, 0x00);
             }
         }
-#pragma omp for
+// #pragma omp for
         for (int u = 0; u < g->n; u++)
         {
             int ux = (X[u] + s->root_x) * s->zoom, uy = (Y[u] + s->root_y) * s->zoom;
-            screen_draw_circle_filled(s, ux, uy, 2 + (s->zoom * R[u]), 0x00, Colors[u]);
+            screen_draw_circle_filled(s, ux, uy, 2 + (s->zoom * R[u]), Colors[u], Colors[u]);
         }
 
         for (int i = 0; i < SLIDERS; i++)

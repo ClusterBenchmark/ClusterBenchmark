@@ -44,7 +44,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < 3; i++)
     {
         int imp = 1;
-        while (imp)
+        int it = 0;
+        while (imp && it++ < 3)
         {
             imp = 0;
             for (int u = 0; u < g->n; u++)
@@ -84,13 +85,13 @@ int main(int argc, char **argv)
 
     for (int u = 0; u < g->n; u++)
     {
-        bh->R[u] = 1 + (rand() % 64);
-        Colors[u] = hash_color(c->Cluster[u]);
+        bh->R[u] = 1;                          // sqrt((double)gc->VW[u] / M_PI);
+        Colors[u] = hash_color(c->Cluster[u]); // u
     }
 
     clustering_sparse_free(c);
 
-    int mbd = 0;
+    int mbd = 0, selected = -1;
     int draw_edges = 0;
 
     while (running)
@@ -101,11 +102,38 @@ int main(int argc, char **argv)
             {
                 screen_mouse_down(s, e.motion.x, e.motion.y);
                 mbd = 1;
+
+                float x = -s->root_x + ((float)e.motion.x / s->zoom);
+                float y = -s->root_y + ((float)e.motion.y / s->zoom);
+
+                float min_d = 1e6;
+
+                for (int u = 0; u < g->n; u++)
+                {
+                    float dx = bh->X[u] - x, dy = bh->Y[u] - y;
+                    float d = sqrtf(dx * dx + dy * dy) * s->zoom;
+
+                    if (d < min_d)
+                        min_d = d;
+
+                    if (d <= 2 + (s->zoom * (float)bh->R[u]))
+                    {
+                        selected = u;
+                        bh->Tabu[u] = 1;
+                        break;
+                    }
+                }
             }
             else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == 1)
             {
                 screen_mouse_up(s);
                 mbd = 0;
+
+                if (selected >= 0)
+                {
+                    bh->Tabu[selected] = 0;
+                    selected = -1;
+                }
             }
             else if (e.type == SDL_MOUSEMOTION && s->drag > 0)
             {
@@ -118,8 +146,16 @@ int main(int argc, char **argv)
             }
             else if (e.type == SDL_MOUSEMOTION && mbd)
             {
-                s->root_x += (float)e.motion.xrel / s->zoom;
-                s->root_y += (float)e.motion.yrel / s->zoom;
+                if (selected >= 0)
+                {
+                    bh->X[selected] += (float)e.motion.xrel / s->zoom;
+                    bh->Y[selected] += (float)e.motion.yrel / s->zoom;
+                }
+                else
+                {
+                    s->root_x += (float)e.motion.xrel / s->zoom;
+                    s->root_y += (float)e.motion.yrel / s->zoom;
+                }
             }
             else if (e.type == SDL_MOUSEWHEEL)
             {
@@ -148,8 +184,8 @@ int main(int argc, char **argv)
         screen_render_frame(s, g, Colors, bh->X, bh->Y, bh->R, draw_edges);
         double t2 = omp_get_wtime();
 
-        printf("\r%5.3lf %5.3lf", t1 - t0, t2 - t1);
-        fflush(stdout);
+        // printf("\r%5.3lf %5.3lf", t1 - t0, t2 - t1);
+        // fflush(stdout);
 
         SDL_UpdateTexture(tex, NULL, s->Pixels, WIDTH * sizeof(uint32_t));
         SDL_RenderClear(ren);

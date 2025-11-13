@@ -52,9 +52,11 @@ barnes_hut *barnes_hut_init(graph *g)
             bh->Queue = malloc(sizeof(int *) * omp_get_num_threads());
             bh->Queue_mark = malloc(sizeof(int *) * omp_get_num_threads());
         }
-        bh->Queue[omp_get_thread_num()] = malloc(sizeof(int) * g->m);
-        bh->Queue_mark[omp_get_thread_num()] = malloc(sizeof(int) * g->m);
+        bh->Queue[omp_get_thread_num()] = malloc(sizeof(int) * count);
+        bh->Queue_mark[omp_get_thread_num()] = malloc(sizeof(int) * count);
     }
+
+    bh->Tabu = malloc(sizeof(int) * g->n);
 
     bh->n = g->n;
     bh->X = malloc(sizeof(float) * g->n);
@@ -67,6 +69,8 @@ barnes_hut *barnes_hut_init(graph *g)
 
     for (int i = 0; i < g->n; i++)
     {
+        bh->Tabu[i] = 0;
+
         bh->X[i] = (rand() % GRID_WIDTH);
         bh->Y[i] = (rand() % GRID_WIDTH);
 
@@ -104,6 +108,8 @@ void barnes_hut_free(barnes_hut *bh)
     free(bh->Queue);
     free(bh->Queue_mark);
 
+    free(bh->Tabu);
+
     free(bh->X);
     free(bh->Y);
     free(bh->R);
@@ -128,14 +134,13 @@ void barnes_hut_populate(barnes_hut *bh, graph *g)
     {
         int p = 0;
         float x = bh->X[u], y = bh->Y[u];
+        double area = M_PI * (double)(bh->R[u] * bh->R[u]);
         for (int i = 0; i < bh->l; i++)
         {
-            bh->CX[p] += bh->X[u]; // * (double)g->VW[u];
-            bh->CY[p] += bh->Y[u]; // * (double)g->VW[u];
-            bh->Mass[p] += 1.0;    // (double)g->VW[u];
-
-            double new_r = bh->R[u]; // bh->S[p] / 2 +
-            bh->Ri[p] = new_r > bh->Ri[p] ? new_r : bh->Ri[p];
+            bh->CX[p] += bh->X[u] * area; // * (double)g->VW[u];
+            bh->CY[p] += bh->Y[u] * area; // * (double)g->VW[u];
+            bh->Mass[p] += area;          // (double)g->VW[u];
+            bh->Ri[p] += (double)bh->R[u] * area;
 
             float w = bh->S[p] / 2;
 
@@ -169,7 +174,6 @@ void barnes_hut_populate(barnes_hut *bh, graph *g)
 
 void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
 {
-
     // for (int u = 0; u < g->n; u++)
     // {
     //     float x = bh->X[u], y = bh->Y[u];
@@ -178,13 +182,14 @@ void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
     //         if (v == u)
     //             continue;
 
+    //         double mass = M_PI * (double)(bh->R[v] * bh->R[v]);
     //         float dx = x - bh->X[v], dy = y - bh->Y[v];
     //         float d = sqrtf(dx * dx + dy * dy) + EPS;
 
     //         float d_eff = d - ((float)bh->R[u] + (float)bh->R[v]);
-    //         d_eff = d_eff > 1e-2f ? d_eff : 1e-2f;
+    //         d_eff = d_eff > 1.0f ? d_eff : 1.0f;
 
-    //         float force = bh->k_repel / (d_eff);
+    //         float force = bh->k_repel * mass / (d_eff);
     //         bh->fX[u] += force * dx / d;
     //         bh->fY[u] += force * dy / d;
     //     }
@@ -205,6 +210,7 @@ void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
 
         float x = bh->X[u], y = bh->Y[u];
         float _x = bh->X[u], _y = bh->Y[u];
+        double area = M_PI * (double)(bh->R[u] * bh->R[u]);
 
         while (s < t)
         {
@@ -212,24 +218,30 @@ void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
             int w = Queue_width[s];
             s++;
 
-            double sum_x = bh->CX[p], sum_y = bh->CY[p], mass = bh->Mass[p];
+            double sum_x = bh->CX[p], sum_y = bh->CY[p], mass = bh->Mass[p], ri = bh->Ri[p];
 
             if (w > 0)
             {
-                sum_x -= x;  // * (double)g->VW[u];
-                sum_y -= y;  // * (double)g->VW[u];
-                mass -= 1.0; // (double)g->VW[u];
+                sum_x -= x * area; // * (double)g->VW[u];
+                sum_y -= y * area; // * (double)g->VW[u];
+                mass -= area;      // (double)g->VW[u];
+                ri -= (double)bh->R[u] * area;
             }
 
-            if (mass <= EPS)
+            if (mass < 1.0f)
                 continue;
+
+            ri /= mass;
 
             float cx = sum_x / mass, cy = sum_y / mass;
             float dx = x - cx, dy = y - cy;
-            float d = sqrtf(dx * dx + dy * dy) + EPS;
+            float d = sqrtf(dx * dx + dy * dy) + 1e-8f;
 
-            float d_eff = d - ((float)bh->R[u] + bh->Ri[p]);
-            d_eff = d_eff > 1e-2f ? d_eff : 1e-2f;
+            // if (d < 1.0f)
+            //     continue;
+
+            float d_eff = d - ((float)bh->R[u] + ri); // If p is smalle, add bh->S[p] / 2
+            d_eff = d_eff > 1.0f ? d_eff : 1.0f;      // clamp
 
             if ((bh->S[p] / d_eff) < bh->theta || ((p * 4) + 1) >= bh->m)
             {
@@ -333,6 +345,13 @@ void barnes_hut_step(barnes_hut *bh, graph *g)
 #pragma omp parallel for
     for (int u = 0; u < g->n; u++)
     {
+        if (bh->Tabu[u])
+        {
+            bh->vX[u] = 0.0f;
+            bh->vY[u] = 0.0f;
+            continue;
+        }
+
         bh->fX[u] = bh->fX[u] != bh->fX[u] ? 0.0f : bh->fX[u];
         bh->fY[u] = bh->fY[u] != bh->fY[u] ? 0.0f : bh->fY[u];
 
