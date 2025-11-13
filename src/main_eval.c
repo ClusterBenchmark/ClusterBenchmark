@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 {
     if (argc != 3 && argc != 4)
     {
-        fprintf(stderr, "Usage: %s <metis_graph> <clustering> {<ground_truth_csv>}\n", argv[0]);
+        fprintf(stderr, "Usage: %s <metis_graph> <clustering> {<ground_truth_labels>}\n", argv[0]);
         return 1;
     }
 

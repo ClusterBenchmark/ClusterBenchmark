@@ -32,15 +32,31 @@ echo -n "$BASENAME,$MAX_MEM"
 for i in $(seq 1 $K);
 do
     FILE="$BASENAME"_walktrap_$((i - 1)).txt
+    LABEL_FILE="${INPUT_FILE%.graph}.labels"
     if [ -f $FILE ]; then
         TIME=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2 - 1))" '{print $var}')
         MOD=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2))" '{print $var}')
-        EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE")
-        EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
-        EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
-        EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
-
-        echo -n ",$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC"
+        if [ -f $LABEL_FILE ]; then
+            EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE" "$LABEL_FILE")
+            EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
+            EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
+            EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
+            EVAL_F1=$(echo "$EVAL_OUT" | awk -F',' '{print $7}')
+            EVAL_AC=$(echo "$EVAL_OUT" | awk -F',' '{print $8}')
+            EVAL_TP=$(echo "$EVAL_OUT" | awk -F',' '{print $9}')
+            EVAL_FP=$(echo "$EVAL_OUT" | awk -F',' '{print $10}')
+            EVAL_TN=$(echo "$EVAL_OUT" | awk -F',' '{print $11}')
+            EVAL_FN=$(echo "$EVAL_OUT" | awk -F',' '{print $12}')
+            
+            echo -n ",$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC,$EVAL_F1,$EVAL_AC,$EVAL_TP,$EVAL_FP,$EVAL_TN,$EVAL_FN"
+        else
+            EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE")
+            EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
+            EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
+            EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
+            
+            echo -n ",$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC"
+        fi
     else
         echo -n ",tle,tle,tle,tle"
     fi
