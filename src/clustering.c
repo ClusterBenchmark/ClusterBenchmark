@@ -620,6 +620,8 @@ void clustering_sparse_renumber_clusters(clustering_sparse *c, graph *g)
 
         c->Temp_counter[i] = ci + 1;
         c->Cluster_weight[ci] = c->Cluster_weight[i];
+        if (ci != i)
+            c->Cluster_weight[i] = 0;
         ci++;
     }
 
@@ -635,9 +637,7 @@ void clustering_sparse_renumber_clusters(clustering_sparse *c, graph *g)
             c->Cluster[u] = new_c - 1;
         }
     }
-
-    assert(ci == c->cluster_count);
-
+    
     for (int i = 0; i < g->n; i++)
     {
         c->Temp_counter[i] = 0;

@@ -41,55 +41,15 @@ int main(int argc, char **argv)
 
     clustering_sparse *c = clustering_sparse_init(g);
 
-    for (int i = 0; i < 3; i++)
-    {
-        int imp = 1;
-        int it = 0;
-        while (imp && it++ < 3)
-        {
-            imp = 0;
-            for (int u = 0; u < g->n; u++)
-            {
-                imp |= clustering_sparse_best_move(c, g, u);
-            }
-            printf("%lf\n", clustering_sparse_get_modularity(c));
-        }
-
-        clustering_sparse_renumber_clusters(c, g);
-
-        graph *gc = graph_contract_clusters(g, c->cluster_count, c->Cluster);
-        clustering_sparse *cc = clustering_sparse_init(gc);
-
-        imp = 1;
-        while (imp)
-        {
-            imp = 0;
-            for (int u = 0; u < gc->n; u++)
-            {
-                imp |= clustering_sparse_best_move(cc, gc, u);
-            }
-            printf("%lf\n", clustering_sparse_get_modularity(c));
-        }
-
-        clustering_sparse_set_clustering_from_overlay(c, g, cc);
-
-        graph_free(gc);
-        clustering_sparse_free(cc);
-    }
-
-    printf("%d\n", c->cluster_count);
-
     screen *s = screen_init(HEIGHT, WIDTH);
     barnes_hut *bh = barnes_hut_init(g);
     uint32_t *Colors = malloc(sizeof(uint32_t) * g->n);
 
     for (int u = 0; u < g->n; u++)
     {
-        bh->R[u] = 1;                          // sqrt((double)gc->VW[u] / M_PI);
-        Colors[u] = hash_color(c->Cluster[u]); // u
+        bh->R[u] = 1;         // sqrt((double)gc->VW[u] / M_PI);
+        Colors[u] = 0x2c2c2c; // hash_color(c->Cluster[u]); // u
     }
-
-    clustering_sparse_free(c);
 
     int mbd = 0, selected = -1;
     int draw_edges = 0;
@@ -167,6 +127,49 @@ int main(int argc, char **argv)
             else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_e)
             {
                 draw_edges = !draw_edges;
+            }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_c)
+            {
+                for (int u = 0; u < g->n; u++)
+                {
+                    clustering_sparse_best_move(c, g, u);
+                }
+
+                for (int u = 0; u < g->n; u++)
+                {
+                    Colors[u] = hash_color(c->Cluster[u]);
+                }
+            }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_o)
+            {
+                clustering_sparse_renumber_clusters(c, g);
+
+                graph *gc = graph_contract_clusters(g, c->cluster_count, c->Cluster);
+                clustering_sparse *cc = clustering_sparse_init(gc);
+
+                for (int u = 0; u < gc->n; u++)
+                {
+                    clustering_sparse_best_move(cc, gc, u);
+                }
+
+                clustering_sparse_set_clustering_from_overlay(c, g, cc);
+
+                graph_free(gc);
+                clustering_sparse_free(cc);
+
+                for (int u = 0; u < g->n; u++)
+                {
+                    Colors[u] = hash_color(c->Cluster[u]);
+                }
+            }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_r)
+            {
+                clustering_sparse_reset(c, g);
+                
+                for (int u = 0; u < g->n; u++)
+                {
+                    Colors[u] = hash_color(c->Cluster[u]);
+                }
             }
             else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_q)
             {
