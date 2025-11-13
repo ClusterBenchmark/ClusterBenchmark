@@ -8,11 +8,12 @@
 typedef struct
 {
     int m, l;
-    double *CX, *CY, *Mass, *S;
+    double *CX, *CY, *Mass, *S, *Ri;
     int **Queue, **Queue_mark;
 
     int n;
     float *X, *Y;
+    int *R;
     float *fX, *fY, *vX, *vY;
 
     float rest_l;

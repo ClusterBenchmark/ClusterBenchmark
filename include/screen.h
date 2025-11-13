@@ -27,7 +27,7 @@ void screen_draw_circle(screen *s, int xm, int ym, int r, uint32_t color);
 
 void screen_draw_circle_filled(screen *s, int xm, int ym, int r, uint32_t draw_color, uint32_t fill_color);
 
-void screen_render_frame(screen *s, graph *g, uint32_t *Colors, float *X, float *Y, int draw_edges);
+void screen_render_frame(screen *s, graph *g, uint32_t *Colors, float *X, float *Y, int *R, int draw_edges);
 
 void screen_mouse_down(screen *s, int x, int y);
 

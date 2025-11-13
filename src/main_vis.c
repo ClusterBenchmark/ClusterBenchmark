@@ -84,6 +84,7 @@ int main(int argc, char **argv)
 
     for (int u = 0; u < g->n; u++)
     {
+        bh->R[u] = 1 + (rand() % 64);
         Colors[u] = hash_color(c->Cluster[u]);
     }
 
@@ -144,7 +145,7 @@ int main(int argc, char **argv)
         double t0 = omp_get_wtime();
         barnes_hut_step(bh, g);
         double t1 = omp_get_wtime();
-        screen_render_frame(s, g, Colors, bh->X, bh->Y, draw_edges);
+        screen_render_frame(s, g, Colors, bh->X, bh->Y, bh->R, draw_edges);
         double t2 = omp_get_wtime();
 
         printf("\r%5.3lf %5.3lf", t1 - t0, t2 - t1);

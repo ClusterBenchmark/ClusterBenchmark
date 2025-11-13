@@ -10,7 +10,7 @@ const float MAX_FORCE = 1000.0f;
 
 // --- Parameters ---
 const float SOFTEN_EPS = 0.1f;
-const float DECAY = 0.999f;
+const float DECAY = 0.99f;
 
 barnes_hut *barnes_hut_init(graph *g)
 {
@@ -32,6 +32,7 @@ barnes_hut *barnes_hut_init(graph *g)
     bh->CY = malloc(sizeof(double) * count);
     bh->Mass = malloc(sizeof(double) * count);
     bh->S = malloc(sizeof(double) * count);
+    bh->Ri = malloc(sizeof(double) * count);
 
     size = 1, count = 0, width = GRID_WIDTH;
     while (width >= INNER_WIDTH)
@@ -58,6 +59,7 @@ barnes_hut *barnes_hut_init(graph *g)
     bh->n = g->n;
     bh->X = malloc(sizeof(float) * g->n);
     bh->Y = malloc(sizeof(float) * g->n);
+    bh->R = malloc(sizeof(int) * g->n);
     bh->fX = malloc(sizeof(float) * g->n);
     bh->fY = malloc(sizeof(float) * g->n);
     bh->vX = malloc(sizeof(float) * g->n);
@@ -67,6 +69,8 @@ barnes_hut *barnes_hut_init(graph *g)
     {
         bh->X[i] = (rand() % GRID_WIDTH);
         bh->Y[i] = (rand() % GRID_WIDTH);
+
+        bh->R[i] = 1;
 
         bh->fX[i] = 0.0f;
         bh->fY[i] = 0.0f;
@@ -90,6 +94,7 @@ void barnes_hut_free(barnes_hut *bh)
     free(bh->CY);
     free(bh->Mass);
     free(bh->S);
+    free(bh->Ri);
 
 #pragma omp parallel
     {
@@ -101,6 +106,7 @@ void barnes_hut_free(barnes_hut *bh)
 
     free(bh->X);
     free(bh->Y);
+    free(bh->R);
     free(bh->fX);
     free(bh->fY);
     free(bh->vX);
@@ -114,6 +120,7 @@ void barnes_hut_populate(barnes_hut *bh, graph *g)
     memset(bh->CX, 0, sizeof(double) * bh->m);
     memset(bh->CY, 0, sizeof(double) * bh->m);
     memset(bh->Mass, 0, sizeof(double) * bh->m);
+    memset(bh->Ri, 0, sizeof(double) * bh->m);
 
     // TODO, make par that splits work based on quadrant
 
@@ -126,6 +133,9 @@ void barnes_hut_populate(barnes_hut *bh, graph *g)
             bh->CX[p] += bh->X[u]; // * (double)g->VW[u];
             bh->CY[p] += bh->Y[u]; // * (double)g->VW[u];
             bh->Mass[p] += 1.0;    // (double)g->VW[u];
+
+            double new_r = bh->R[u]; // bh->S[p] / 2 +
+            bh->Ri[p] = new_r > bh->Ri[p] ? new_r : bh->Ri[p];
 
             float w = bh->S[p] / 2;
 
@@ -159,6 +169,29 @@ void barnes_hut_populate(barnes_hut *bh, graph *g)
 
 void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
 {
+
+    // for (int u = 0; u < g->n; u++)
+    // {
+    //     float x = bh->X[u], y = bh->Y[u];
+    //     for (int v = 0; v < g->n; v++)
+    //     {
+    //         if (v == u)
+    //             continue;
+
+    //         float dx = x - bh->X[v], dy = y - bh->Y[v];
+    //         float d = sqrtf(dx * dx + dy * dy) + EPS;
+
+    //         float d_eff = d - ((float)bh->R[u] + (float)bh->R[v]);
+    //         d_eff = d_eff > 1e-2f ? d_eff : 1e-2f;
+
+    //         float force = bh->k_repel / (d_eff);
+    //         bh->fX[u] += force * dx / d;
+    //         bh->fY[u] += force * dy / d;
+    //     }
+    // }
+
+    // return;
+
 #pragma omp parallel for
     for (int u = 0; u < g->n; u++)
     {
@@ -195,10 +228,14 @@ void barnes_hut_forces_repell(barnes_hut *bh, graph *g)
             float dx = x - cx, dy = y - cy;
             float d = sqrtf(dx * dx + dy * dy) + EPS;
 
-            if ((bh->S[p] / d) < bh->theta || ((p * 4) + 1) >= bh->m)
+            float d_eff = d - ((float)bh->R[u] + bh->Ri[p]);
+            d_eff = d_eff > 1e-2f ? d_eff : 1e-2f;
+
+            if ((bh->S[p] / d_eff) < bh->theta || ((p * 4) + 1) >= bh->m)
             {
-                bh->fX[u] += bh->k_repel * (dx / (d * d)) * mass;
-                bh->fY[u] += bh->k_repel * (dy / (d * d)) * mass;
+                float force = bh->k_repel * mass / d_eff;
+                bh->fX[u] += force * dx / d;
+                bh->fY[u] += force * dy / d;
             }
             else
             {
@@ -272,7 +309,8 @@ void barnes_hut_forces_spring(barnes_hut *bh, graph *g)
             float dy = bh->Y[v] - bh->Y[u];
 
             float d = sqrtf(dx * dx + dy * dy) + EPS;
-            float s = bh->k_spring * (d - bh->rest_l);
+            float rest_l = bh->rest_l + bh->R[u] + bh->R[v];
+            float s = bh->k_spring * (d - rest_l);
 
             bh->fX[u] += s * (dx / d) / degree;
             bh->fY[u] += s * (dy / d) / degree;
