@@ -58,7 +58,11 @@ do
             echo -n ",$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC"
         fi
     else
-        echo -n ",tle,tle,tle,tle"
+        if [ -f $LABEL_FILE ]; then
+            echo -n ",tle,tle,tle,tle,tle,tle,tle,tle,tle,tle"
+        else
+            echo -n ",tle,tle,tle,tle"
+        fi
     fi
 done
 
