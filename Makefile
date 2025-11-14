@@ -39,6 +39,7 @@ FEATURE : $(OBJ_FEATURE)
 
 test : EVAL
 	./tests/run_eval_tests.sh
+	python3 tests/test_eval_clusters.py
 
 bin/%.o : %.c
 	$(CC) $(CFLAGS) -MMD -c $< -o $@

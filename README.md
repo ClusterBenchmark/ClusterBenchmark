@@ -211,3 +211,34 @@ Truth | 0.72866156 | 47 | 1.00000000 | 1.00000000
 * Available at [Link]()
 
 ## Datasets
+
+This project references the following datasets:
+
+- **[LFR Benchmark](https://github.com/eXascaleInfolab/LFR-Benchmark_UndirWeightOvp)**. Generates graphs with tunable power-law degree/community distributions; useful for validating algorithms under realistic heterogeneity. Paper [Link](https://arxiv.org/abs/0805.4770). Alternate Github [Link](https://github.com/andrealancichinetti/LFRbenchmarks).
+- **[ABCD Graph Generator](https://github.com/bkamins/ABCDGraphGenerator.jl/tree/master)**. Provides fast generation of attributed, clustered benchmark graphs with configurable community size distributions. Paper [Link](https://arxiv.org/abs/2002.00843).
+- **[SNAP Community Datasets](https://snap.stanford.edu/data/index.html#communities)**. Real-world networks (Amazon, DBLP, YouTube, etc.) packaged with ground-truth or heuristic community labels; several files contain overlapping memberships, so prefer the Python evaluation script described below when working with them. Paper [Link](https://arxiv.org/abs/1606.07550).
+
+## Evaluation Scripts
+
+### C Evaluator (`EVAL`)
+
+Build the CLI with `make EVAL`, then run `./EVAL <graph.metis> <pred.labels> [truth.labels]`. Each label file is interpreted line-by-line (line `i` → node `i`), and every line must contain exactly one integer cluster ID. The tool outputs a CSV row with:
+
+1. Graph name, |V|, |E|
+2. Modularity `Q`
+3. The scaled numerator used to compute `Q` (useful for auditing overflow)
+4. Number of non-empty clusters
+5. Average conductance and cut ratio across discovered clusters (structural diagnostics that do not require ground truth)
+6. If a truth file is provided: edge-level F1, edge-level accuracy, and the TP/FP/TN/FN counts used to derive them
+7. Supervised set-level metrics (Adjusted Rand Index, Normalized Mutual Information, purity, inverse purity) computed directly from the per-node labels
+
+Items 5–7 are the “non-graph structural” scores: they evaluate the clustering purely through node memberships rather than the underlying topology.
+
+### Python Evaluator (`scripts/eval_clusters.py`)
+
+Run `python3 scripts/eval_clusters.py --pred <pred.labels> --truth <truth.labels> [--truth-multi] [--output table|json]`. Like the C tool, each line corresponds to a node; predictions must still have exactly one ID per line, but ground-truth lines may list zero or many IDs when `--truth-multi` is supplied. Under the hood:
+
+- For single-label truth it uses scikit-learn to report ARI, AMI/NMI (geometric averaging), homogeneity/completeness/V-measure, Fowlkes–Mallows, and purity/inverse purity. These metrics match the values printed by the C evaluator (see `tests/test_eval_clusters.py`).
+- For overlapping truth it switches to cdlib’s Overlapping NMI (LFK/GCE variants) plus the Omega index, and can optionally emit igraph comparison scores when `python-igraph` is installed.
+
+Use this Python script whenever you need overlapping community support (e.g., the SNAP datasets above) or want quick JSON summaries without parsing the METIS graph. Install dependencies via `pip install scikit-learn cdlib python-igraph`.
