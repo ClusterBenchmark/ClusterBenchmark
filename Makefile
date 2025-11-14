@@ -37,6 +37,9 @@ CLUSTER : $(OBJ_CLUSTER)
 FEATURE : $(OBJ_FEATURE)
 	$(CC) $(CFLAGS) -o $@ $^ -lm
 
+test : EVAL
+	./tests/run_eval_tests.sh
+
 bin/%.o : %.c
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
