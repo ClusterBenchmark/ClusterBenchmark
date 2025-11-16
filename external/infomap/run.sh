@@ -30,10 +30,10 @@ MAX_MEM=$(cat "$BASENAME"_infomap_time_mem.txt | grep 'Maximum resident set size
 
 rm "$BASENAME"_infomap_out.txt
 
-echo -n "$BASENAME,$MAX_MEM"
-
 for i in $(seq 1 $K);
 do
+    echo -n "$BASENAME,$i,$MAX_MEM"
+
     FILE="$BASENAME"_infomap_$((i - 1)).txt
     LABEL_FILE="${INPUT_FILE%.graph}.labels"
     if [ -f $FILE ]; then
@@ -51,25 +51,23 @@ do
             EVAL_TN=$(echo "$EVAL_OUT" | awk -F',' '{print $11}')
             EVAL_FN=$(echo "$EVAL_OUT" | awk -F',' '{print $12}')
             
-            echo -n ",$TIME,$MOD,$EVAL_MOD,$EVAL_N,$EVAL_CC,$EVAL_F1,$EVAL_AC,$EVAL_TP,$EVAL_FP,$EVAL_TN,$EVAL_FN"
+            echo ",$TIME,$MOD,$EVAL_MOD,$EVAL_N,$EVAL_CC,$EVAL_F1,$EVAL_AC,$EVAL_TP,$EVAL_FP,$EVAL_TN,$EVAL_FN"
         else
             EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE")
             EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
             EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
             EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
             
-            echo -n ",$TIME,$MOD,$EVAL_MOD,$EVAL_N,$EVAL_CC"
+            echo ",$TIME,$MOD,$EVAL_MOD,$EVAL_N,$EVAL_CC"
         fi
     else
         if [ -f $LABEL_FILE ]; then
-            echo -n ",tle,tle,tle,tle,tle,tle,tle,tle,tle,tle,tle"
+            echo ",tle,tle,tle,tle,tle,tle,tle,tle,tle,tle,tle"
         else
-            echo -n ",tle,tle,tle,tle,tle"
+            echo ",tle,tle,tle,tle,tle"
         fi
     fi
 done
-
-echo ""
 
 # echo "5. Cleaning up..."
 rm -rf "$BASENAME"_infomap_*.txt
