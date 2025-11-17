@@ -38,13 +38,8 @@ fi
 # Execute the command
 eval "$PYTHON_CMD > \"$BASENAME\"_dmon_out.txt 2> \"$BASENAME\"_dmon_time_mem.txt"
 
-
-# timeout -s SIGTERM 3600s python3 -m graph_embedding.dmon.train_metis --graph_path="$INPUT_FILE" --output_path="$BASENAME""_dmon_" --n_clusters="$C" --n_runs="$K" --n_epochs=1000 --dropout_rate=0.5 2> /dev/null > "$BASENAME"_dmon_out.txt
-
 PYTHON_OUT=$(cat "$BASENAME"_dmon_out.txt)
 MAX_MEM=$(cat "$BASENAME"_dmon_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
-
-# PYTHON_OUT=$(cat "$BASENAME"_dmon_out.txt)
 
 rm "$BASENAME"_dmon_out.txt
 
@@ -87,20 +82,6 @@ do
             echo ",tle,tle,tle,tle,tle,tle"
         fi
     fi
-    
-    # FILE="$BASENAME"_dmon_$((i - 1)).txt
-    # if [ -f $FILE ]; then
-    #     TIME=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2 - 1))" '{print $var}')
-    #     MOD=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2))" '{print $var}')
-    #     EVAL_OUT=$(../../../EVAL "$INPUT_FILE" "$FILE")
-    #     EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
-    #     EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
-    #     EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
-
-    #     echo -n ",$TIME,$MOD,$EVAL_MOD,$EVAL_N,$EVAL_CC"
-    # else
-    #     echo -n ",tle,tle,tle,tle"
-    # fi
 done
 
 # echo "5. Cleaning up..."
