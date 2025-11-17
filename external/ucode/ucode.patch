@@ -1,0 +1,351 @@
+diff --git a/main.py b/main.py
+index 5e3bb62..e030d62 100644
+--- a/main.py
++++ b/main.py
+@@ -18,142 +18,182 @@ import torch
+ from sklearn.metrics.cluster import normalized_mutual_info_score
+ from scipy import sparse
+ from sklearn import metrics
+-
+-
+-
+-def datapreprocessing(data_type, path, dataset, exist_B):
+-    if data_type == 'kipf':
+-        adj, features, labels = utils.load_data(dataset)
+-        with open(path + "/dataset/ind." + str(dataset) + ".graph", 'rb') as f:
+-            Graph = pkl.load(f, encoding='latin1')
+-        network = nx.Graph(Graph)
+-        label_mask = np.ones_like(labels)
+-    elif data_type == "npz":
+-        adj, features, labels, label_mask = utils.load_npz_to_sparse_graph(path + '/dataset/' + dataset + '.npz')
+-        network = nx.from_scipy_sparse_matrix(adj)
+-        features = sparse.csr_matrix(features)
+-    adj_metric=adj
+-    nb_nodes = features.shape[0]
+-    ft_size = features.shape[1]
+-    m = len(network.edges)
+-
+-    if exist_B == 0:
+-        B=utils.get_B(network)
+-        np.save(path+'/dataset/Modularity-'+dataset, B)
+-    else:
+-        B = np.load(path+'/dataset/Modularity-'+dataset+'.npy')
+-
+-    if data_type=="kipf":
+-        features, adj, B, true_labels = utils.convert_torch_kipf(adj, features, B, labels)
+-    elif data_type=="npz":
+-        features, adj, B, true_labels = utils.convert_torch_npz(adj, features, B, labels)
+-
+-    return features, adj, B, true_labels, label_mask, nb_nodes, ft_size, adj_metric, m
++import argparse
++import time
++import gc
++
++def read_metis_graph(filename):
++    with open(filename, "r") as f:
++        # Skip comment lines
++        first_line = ""
++        for line in f:
++            if line.strip() and not line.startswith('%'):
++                first_line = line.strip()
++                break
++
++        parts = first_line.split()
++        n_vertices = int(parts[0])
++        n_edges = int(parts[1])
++        t = 0
++        if (len(parts) > 2):
++            t = int(parts[2])
++
++        vertex_weights = (t == 10 or t == 11)
++        edge_weights = (t == 1 or t == 11)
++
++        G = nx.Graph()
++        G.add_nodes_from(range(n_vertices))
++
++        for u, line in enumerate(f):
++            if not line.strip() or line.startswith('%'):
++                continue
++
++            N = list(map(int, line.split()))
++            if vertex_weights:
++                N = N[1:]
++
++            if edge_weights:
++                N = zip(N[::2], N[1::2])
++                for v, w in N:
++                    G.add_edge(u, v - 1)
++            else:
++                for v in N:
++                    G.add_edge(u, v - 1)
++
++    gc.collect()
++
++    return G
++
++def load_features(path):
++    """
++    Parses a feature file.
++
++    Args:
++        path (str): The path to the feature file.
++
++    Returns:
++        np.ndarray: A NumPy array with the node features.
++    """
++    with open(path, "r") as f:
++        # Read header
++        header = f.readline().split()
++        num_nodes = int(header[0])
++        num_features = int(header[1])
++
++        # Read features
++        features = np.zeros((num_nodes, num_features), dtype=float)
++        for i, line in enumerate(f):
++            if line.strip():
++                features[i] = list(map(float, line.strip().split()))
++
++    return features
+ 
+ def train(
+-    dataset_dict,
++    G,
++    B,
++    features,
++    n_communities,
+     hid_units,
+     hid_dimension,
+-    data_type,
+-    path,
+-    exist_B,
+     epochs=500,
+-    num_experiments=1,
++    timeout=None
+ ):
+     sigmoidlogit = nn.Sigmoid()
+-    for data_name, n_communities in tqdm(dataset_dict.items()):
+-        print(data_name)
+-        preprocessed_data = datapreprocessing(data_type, path, data_name,exist_B)
+-        features, adj, B, true_labels, label_mask, nb_nodes, ft_size, adj_metric, m = preprocessed_data
+-        print(features.shape)
+-        nmi_list = np.zeros(num_experiments)
+-
+-        kmeans_nmi_list = np.zeros(num_experiments)
+-        cond_list, kmeans_cond_list = np.zeros(num_experiments), np.zeros(num_experiments)
+-        modularity_list, kmeans_modularity_list = np.zeros(num_experiments), np.zeros(num_experiments)
+-        Fscore_list, kmeans_Fscore_list = np.zeros(num_experiments), np.zeros(num_experiments)
+-
+-        for i in tqdm(range(num_experiments)):
+-            model = GCN(ft_size, hid_units, nb_nodes,hid_dimension)
+-            optimiser = torch.optim.Adam(model.parameters(), lr=0.001,weight_decay=0.1)
+-            if torch.cuda.is_available():
+-                model.cuda()
+-                features = features.cuda()
+-                B = B.cuda()
+-                adj = adj.cuda()
+-
+-            # Training loop
+-            for epoch in range(epochs):
+-                model.train()
+-                optimiser.zero_grad()
+-                logits = model(features, adj)
+-                loss = loss_modularity_trace(logits, B, n_communities, hid_units, m,'non-overlap')
+-                #print('loss:',loss)
+-                loss.backward()
+-                optimiser.step()
+-                model.eval()
+-            model.eval()
+-            logits = model(features, adj)
+-            logits=sigmoidlogit(logits)
+-            cpu_logits = logits.view(nb_nodes, hid_units).detach().cpu().numpy()
+-            preds = torch.argmax(logits[0], dim=1).detach().cpu().numpy()
+-            nmi = normalized_mutual_info_score(true_labels, preds)
+-            print('nmi:'+str(nmi))
+-            # Fit kmeans to the output space
+-            kmeans_model = KMeans(
+-                init='k-means++',
+-                n_clusters=n_communities,
+-                random_state=0
+-            ).fit(cpu_logits)
+-            kmeans_preds = kmeans_model.labels_
+-
+-            # Calculate NMI
+-            nmi = normalized_mutual_info_score(true_labels, preds)
+-            kmeans_nmi = normalized_mutual_info_score(true_labels, kmeans_preds)
+-            kmeans_nmi_list[i] = kmeans_nmi
+-            nmi_list[i] = nmi
+-
+-            cond_list[i] = utils.conductance(adj_metric, preds)
+-            kmeans_cond_list[i] = utils.conductance(adj_metric, kmeans_preds)
+-            modularity_list[i] = utils.modularity(adj_metric, preds)
+-            kmeans_modularity_list[i] = utils.modularity(adj_metric, kmeans_preds)
+-            p = utils.precision(true_labels, preds)
+-            r = utils.recall(true_labels, preds)
+-            Fscore_list[i] = 2 * (r * p) / (r + p)
+-
+-            p = utils.precision(true_labels, kmeans_preds)
+-            r = utils.recall(true_labels, kmeans_preds)
+-            kmeans_Fscore_list[i] = 2 * (r * p) / (r + p)
+-
+-        print('\n')
+-        print('Baseline scores:')
+-        print('NMI:', np.mean(nmi_list), np.std(nmi_list))
+-        print('Fscore:', np.mean(Fscore_list), np.std(Fscore_list))
+-        print('Conductance:', np.mean(cond_list), np.std(cond_list))
+-        print('Modularity:', np.mean(modularity_list), np.std(modularity_list))
+-
+-        print('Kmeans scores:')
+-        print('NMI:', np.mean(kmeans_nmi_list), np.std(kmeans_nmi_list))
+-        print('Fscore:', np.mean(kmeans_Fscore_list), np.std(kmeans_Fscore_list))
+-        print('Conductance:', np.mean(kmeans_cond_list), np.std(kmeans_cond_list))
+-        print('Modularity:', np.mean(kmeans_modularity_list), np.std(kmeans_modularity_list))
+-
+-def run_nonoverlapping():
+-    path=os.path.dirname(os.path.abspath(__file__))
+-    dataset_dict = {
+-        'cora':7
+-    }
+-
+-    hid_units=16 # This is the output
+-    hid_dimension=512
+-    epochs=500
+-    data_type='kipf'
+-    exist_B=1
+-    train(dataset_dict, hid_units,hid_dimension, data_type, path,exist_B, epochs=epochs)
++    
++    adj = nx.to_scipy_sparse_array(G)
++    adj_metric=adj
++    nb_nodes = features.shape[0]
++    ft_size = features.shape[1]
++    m = len(G.edges)
++    
++    features, adj, B, _ = utils.convert_torch_npz(adj, sparse.csr_matrix(features), B, np.array([0]))
++
++    model = GCN(ft_size, hid_units, nb_nodes,hid_dimension)
++    optimiser = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.1)
++    if torch.cuda.is_available():
++        model.cuda()
++        features = features.cuda()
++        B = B.cuda()
++        adj = adj.cuda()
++
++    finished_iterations = 0
++    start_time = time.time()
++    # Training loop
++    for epoch in range(epochs):
++        if timeout and (time.time() - start_time) > timeout:
++            break
++
++        model.train()
++        optimiser.zero_grad()
++        logits = model(features, adj)
++        loss = loss_modularity_trace(logits, B, n_communities, hid_units, m,'non-overlap')
++        # print('epoch:',epoch,'loss:',loss)
++        loss.backward()
++        optimiser.step()
++        finished_iterations += 1
++
++    model.eval()
++    logits = model(features, adj)
++    logits=sigmoidlogit(logits)
++    # cpu_logits = logits.view(nb_nodes, hid_units).detach().cpu().numpy()
++    
++    # kmeans_model = KMeans(
++    #     init='k-means++',
++    #     n_clusters=n_communities,
++    #     random_state=0
++    # ).fit(cpu_logits)
++    # kmeans_preds = kmeans_model.labels_
++    preds = torch.argmax(logits[0], dim=1).detach().cpu().numpy()
++
++    end_time = time.time()
++    print(f"{end_time - start_time},{finished_iterations},", end="")
++    # return kmeans_preds
++    return preds
++
++def run_nonoverlapping(args, G, features):
++
++    B=utils.get_B(G)
++    for i in range(args.it):
++        clusters = train(
++            G,
++            B,
++            features,
++            args.K,
++            args.hid_units,
++            args.hid_dimension,
++            args.epochs,
++            args.timeout
++        )
++
++        if clusters is not None:
++            output_filename = f"{args.output_file}_{i}.txt"
++            with open(output_filename, 'w') as f:
++                for cluster in clusters:
++                    f.write(f'{cluster}\n')
++    
++    print()
+ 
+ 
+ if __name__ == '__main__':
+-    run_nonoverlapping()
++    parser = argparse.ArgumentParser()
++    parser.add_argument('--metis_file', type=str, required=True, help='Path to the input graph in METIS format.')
++    parser.add_argument('--features_file', type=str, help='Path to the optional features file.')
++    parser.add_argument('--output_file', type=str, required=True, help='Name of output file.')
++    parser.add_argument('--K', type=int, default=16, help='How many partitions/clusters.')
++    parser.add_argument('--it', type=int, default=1, help='How many clusters to compute.')
++    parser.add_argument('--hid_units', type=int, default=16, help='Number of hidden units.')
++    parser.add_argument('--hid_dimension', type=int, default=256, help='Hidden dimension.')
++    parser.add_argument('--epochs', type=int, default=1000, help='Number of training iterations.')
++    parser.add_argument('--timeout', type=int, help='Timeout in seconds for the training loop.')
++    args = parser.parse_args()
++
++    G = read_metis_graph(args.metis_file)
++    if args.features_file:
++        features = load_features(args.features_file)
++    else:
++        features = np.ones((len(G.nodes()), 1))
++    
++    run_nonoverlapping(args, G, features)
+ 
+ 
+ 
+diff --git a/utils.py b/utils.py
+index db6e325..eecfae1 100644
+--- a/utils.py
++++ b/utils.py
+@@ -122,20 +122,20 @@ def get_B(G):
+   Q = 0
+   G = G.copy()
+   nx.set_edge_attributes(G, {e:1 for e in G.edges}, 'weight')
+-  A = nx.to_scipy_sparse_matrix(G).astype(float)
++  A = nx.to_scipy_sparse_array(G).astype(float)
+ 
+   if type(G) == nx.Graph:
+       # for undirected graphs, in and out treated as the same thing
+       out_degree = in_degree = dict(nx.degree(G))
+       M = 2.*(G.number_of_edges())
+-      print("Calculating modularity for undirected graph")
++      # print("Calculating modularity for undirected graph")
+   elif type(G) == nx.DiGraph:
+       in_degree = dict(G.in_degree())
+       out_degree = dict(G.out_degree())
+       M = 1.*G.number_of_edges()
+-      print("Calculating modularity for directed graph")
++      # print("Calculating modularity for directed graph")
+   else:
+-      print('Invalid graph type')
++      # print('Invalid graph type')
+       raise TypeError
+   Q=np.zeros(A.shape)
+   nodes = list(G)
+@@ -162,7 +162,7 @@ def sparse_to_tuple(sparse_mx, insert_batch=False):
+ 
+ def preprocess_features(features):
+     """Row-normalize feature matrix and convert to tuple representation"""
+-    rowsum = np.array(features.sum(1))
++    rowsum = np.array(features.sum(1)) + 1e-9
+     r_inv = np.power(rowsum, -1).flatten()
+     r_inv[np.isinf(r_inv)] = 0.
+     r_mat_inv = sp.diags(r_inv)
