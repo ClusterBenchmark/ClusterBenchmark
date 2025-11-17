@@ -157,6 +157,7 @@ def main():
 
         gc.collect()
 
+        finished_iterations = 0
         start_time = time.time()
         for epoch in range(args.train_iters):
             if args.timeout and (time.time() - start_time) > args.timeout:
@@ -173,9 +174,10 @@ def main():
             # loss = -modularity_loss
             loss.backward()
             optimizer.step()
+            finished_iterations += 1
 
         end_time = time.time()
-        print(f"{end_time - start_time:.4f},", end="")
+        print(f"{end_time - start_time:.4f},{finished_iterations},", end="")
 
         # 4. Evaluate the model and save the cluster assignments
         model.eval()

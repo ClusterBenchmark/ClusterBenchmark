@@ -29,7 +29,7 @@ export OMP_NUM_THREADS="$THREADS"
 cd CommDGI
 
 # Construct the python command
-PYTHON_CMD="/usr/bin/time -v python3 run_commdgi.py --metis_file \"$INPUT_FILE\" --K \"$C\" --it \"$K\" --train_iters 100 --timeout \"$TIMEOUT\" --output_file \"$BASENAME""_commdgi_\""
+PYTHON_CMD="/usr/bin/time -v python3 run_commdgi.py --metis_file \"$INPUT_FILE\" --K \"$C\" --it \"$K\" --timeout \"$TIMEOUT\" --output_file \"$BASENAME""_commdgi_\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --features_file \"$FEATURES\""
@@ -51,7 +51,8 @@ do
     FILE="$BASENAME"_commdgi_$((i - 1)).txt
     LABEL_FILE="${INPUT_FILE%.graph}.labels"
     if [ -f $FILE ]; then
-        TIME=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i))" '{print $var}')
+        TIME=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2 - 1))" '{print $var}')
+        IT=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2))" '{print $var}')
 
         if [ -f $LABEL_FILE ]; then
             EVAL_OUT=$(../../../EVAL "$INPUT_FILE" "$FILE" "$LABEL_FILE")
@@ -65,20 +66,20 @@ do
             EVAL_TN=$(echo "$EVAL_OUT" | awk -F',' '{print $11}')
             EVAL_FN=$(echo "$EVAL_OUT" | awk -F',' '{print $12}')
             
-            echo ",$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC,$EVAL_F1,$EVAL_AC,$EVAL_TP,$EVAL_FP,$EVAL_TN,$EVAL_FN"
+            echo ",$TIME,$IT,$EVAL_MOD,$EVAL_N,$EVAL_CC,$EVAL_F1,$EVAL_AC,$EVAL_TP,$EVAL_FP,$EVAL_TN,$EVAL_FN"
         else
             EVAL_OUT=$(../../../EVAL "$INPUT_FILE" "$FILE")
             EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
             EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
             EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
             
-            echo ",$TIME,$EVAL_MOD,$EVAL_N,$EVAL_CC"
+            echo ",$TIME,$IT,$EVAL_MOD,$EVAL_N,$EVAL_CC"
         fi
     else
         if [ -f $LABEL_FILE ]; then
-            echo ",tle,tle,tle,tle,tle,tle,tle,tle,tle,tle"
+            echo ",tle,tle,tle,tle,tle,tle,tle,tle,tle,tle,tle"
         else
-            echo ",tle,tle,tle,tle"
+            echo ",tle,tle,tle,tle,tle"
         fi
     fi
 done
