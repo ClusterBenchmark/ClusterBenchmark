@@ -38,6 +38,10 @@ flags.DEFINE_string(
     None,
     'Input graph path in METIS format.')
 flags.DEFINE_string(
+    'features_path',
+    None,
+    'Input features path.')
+flags.DEFINE_string(
     'output_path',
     'clusters.txt',
     'Output path for the cluster assignments.')
@@ -76,6 +80,40 @@ flags.DEFINE_integer(
     1,
     'Number of times to run the clustering.',
     lower_bound=1)
+flags.DEFINE_integer(
+    'n_threads',
+    None,
+    'Number of threads to use.')
+flags.DEFINE_integer(
+    'timeout',
+    None,
+    'Timeout in seconds for the training loop.')
+
+
+def load_features(path):
+    """
+    Parses a feature file.
+
+    Args:
+        path (str): The path to the feature file.
+
+    Returns:
+        np.ndarray: A NumPy array with the node features.
+    """
+    with open(path, "r") as f:
+        # Read header
+        header = f.readline().split()
+        num_nodes = int(header[0])
+        num_features = int(header[1])
+
+        # Read features
+        features = np.zeros((num_nodes, num_features), dtype=float)
+        for i, line in enumerate(f):
+            if line.strip():
+                features[i] = list(map(float, line.strip().split()))
+
+    return features
+
 
 
 def load_metis(filename):
@@ -170,13 +208,19 @@ def build_dmon(
 def main(argv):
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
+
+  if FLAGS.n_threads:
+    tf.config.threading.set_intra_op_parallelism_threads(FLAGS.n_threads)
+    tf.config.threading.set_inter_op_parallelism_threads(FLAGS.n_threads)
   
   # Load and process the data once.
   adjacency = load_metis(FLAGS.graph_path)
   adjacency = adjacency.tocsr()
   n_nodes = adjacency.shape[0]
-  features = scipy.sparse.identity(n_nodes, dtype=np.float32)
-  features = features.todense()
+  if FLAGS.features_path:
+    features = load_features(FLAGS.features_path)
+  else:
+    features = scipy.sparse.identity(n_nodes, dtype=np.float32).todense()
   features = tf.convert_to_tensor(features, dtype=tf.float32)
   feature_size = features.shape[1]
   graph = convert_scipy_sparse_to_sparse_tensor(adjacency)
@@ -185,8 +229,6 @@ def main(argv):
 
   for i in range(FLAGS.n_runs):
     output_path = f'{FLAGS.output_path}{i}.txt'
-
-    start_time = time.time()
 
     # Create model input placeholders of appropriate size
     input_features = tf.keras.layers.Input(shape=(feature_size,))
@@ -204,9 +246,14 @@ def main(argv):
     optimizer = tf.keras.optimizers.Adam(FLAGS.learning_rate)
     model.compile(optimizer, None)
 
+    start_time = time.time()
+    finished_iterations = 0
     for epoch in range(FLAGS.n_epochs):
+      if FLAGS.timeout and (time.time() - start_time) > FLAGS.timeout:
+        break
       loss_values, grads = grad(model, [features, graph_normalized, graph])
       optimizer.apply_gradients(zip(grads, model.trainable_variables))
+      finished_iterations += 1
 
     # Obtain the cluster assignments.
     _, assignments = model([features, graph_normalized, graph], training=False)
@@ -218,7 +265,7 @@ def main(argv):
 
     modularity = metrics.modularity(adjacency, clusters)
 
-    print(f'{computation_time:.4f},{modularity:.4f},', end='')
+    print(f'{computation_time:.4f},{finished_iterations},{modularity:.4f},', end='')
 
     # Save the cluster assignments.
     with open(output_path, 'w') as f:
