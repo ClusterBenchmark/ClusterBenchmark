@@ -361,20 +361,26 @@ class GNNSModularityOptimizer():
 
 
 def runGNNSSeries(G, max_num_communities, iterations_per_stage, num_random_configs, fraction_to_keep,
-                discretize_last=True, init_params=None, init_communities=None, alpha=0.0, manual_gc=True, verbose=0):
+                discretize_last=True, init_params=None, init_communities=None, alpha=0.0, manual_gc=True, verbose=0,
+                timeout=None):
     num_model_params = 2
     net_size = len(G)
     max_batch_size = hypers.get('max_batch_size', 1000)
     max_total_tensor_size = hypers.get('max_total_tensor_size', 200_000_000)
     max_batch_size = max(1, min(max_batch_size, int(max_total_tensor_size / (net_size * max_num_communities))))
-    start_time = time.time()
     GNNS = GNNSModularityOptimizer(G, strip_diagonal=hypers.get('strip_diagonal', True),
                                     normalize_modularity=hypers.get('normalize_modularity', False),
                                     normalize_each_step=hypers.get('normalize_each_step', True),
                                     use_sparse=hypers.get('use_sparse', False))
     final_modularities = np.empty(0)
     best_modularity = -1
+    best_communities = None
+    best_parameters = None
+    finished_iterations = 0
+    start_time = time.time()
     for i in range((num_random_configs + max_batch_size - 1) // max_batch_size):
+        if timeout and (time.time() - start_time) > timeout:
+            break
         cur_range = (i * max_batch_size, min((i + 1) * max_batch_size, num_random_configs))
         batch_size = cur_range[1] - cur_range[0]
         if init_params is None:
@@ -386,8 +392,11 @@ def runGNNSSeries(G, max_num_communities, iterations_per_stage, num_random_confi
         else:
             partition = eng.tile(init_communities, (batch_size, 1, 1))
         for stage in range(len(iterations_per_stage)):
+            if timeout and (time.time() - start_time) > timeout:
+                break
             discretize = discretize_last and (stage == len(iterations_per_stage) - 1)
             communities, modularities = GNNS.calculate(params, partition, iterations_per_stage[stage], discretize_result=discretize)
+            finished_iterations += iterations_per_stage[stage]
             modularities = eng.numpy(modularities)
             index_best = np.argmax(modularities)
             if verbose > 0:
@@ -421,7 +430,7 @@ def runGNNSSeries(G, max_num_communities, iterations_per_stage, num_random_confi
         del GNNS
         gc.collect()
         torch.cuda.empty_cache()
-    return best_communities, modularities, best_parameters, best_modularity, time.time()-start_time
+    return best_communities, modularities, best_parameters, best_modularity, time.time()-start_time, finished_iterations
 
 def read_metis_graph(filename):
     with open(filename, "r") as f:
@@ -465,12 +474,14 @@ def read_metis_graph(filename):
 
     return G
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="Input graph in METIS format")
-    parser.add_argument("output", help="Output file for clustering")
-    parser.add_argument("K", type=int, help="Number of clusterings to produce")
+    parser.add_argument("--input", help="Input graph in METIS format")
+    parser.add_argument("--output", help="Output file for clustering")
+    parser.add_argument("--K", type=int, help="Number of clusterings to produce")
     parser.add_argument("--num-communities", type=int, help="Number of communities to find")
+    parser.add_argument('--timeout', type=int, help='Timeout in seconds for the training loop.')
     args = parser.parse_args()
 
     G = read_metis_graph(args.input)
@@ -501,23 +512,26 @@ def main():
         num_communities = int(np.sqrt(len(G)))
 
     for i in range(args.K):
-        start_time = time.time()
-        C, _, _, _, _ = runGNNSSeries(G, max_num_communities = num_communities,
+        C, _, _, _, t, finished_iterations = runGNNSSeries(G, max_num_communities = num_communities,
                                                     iterations_per_stage=iterations_per_stage,
                                                     num_random_configs=num_initial_GNNS_configs,
                                                     fraction_to_keep=fraction_to_keep,
                                                     manual_gc=(len(G) > 1000),
-                                                    verbose=0)
-        end_time = time.time()
+                                                    verbose=0,
+                                                    timeout=args.timeout)
         
+        if C is None:
+            print(f"timeout,{finished_iterations},", end="")
+            continue
+
         partition = C.argmax(axis=1)
         
         output_filename = f"{args.output}_gnns_{i}.txt"
         with open(output_filename, 'w') as f:
             for node_id in range(len(partition)):
-                f.write(str(partition[node_id]) + '\n')
+                f.write(str(partition[node_id].item()) + '\n')
         
-        print(f"{end_time - start_time},", end="")
+        print(f"{t},{finished_iterations},", end="")
 
     print()
 
