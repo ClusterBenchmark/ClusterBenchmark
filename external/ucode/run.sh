@@ -83,4 +83,4 @@ do
 done
 
 # echo "5. Cleaning up..."
-# rm -rf "$BASENAME"_ucode_*.txt
+rm -rf "$BASENAME"_ucode_*.txt

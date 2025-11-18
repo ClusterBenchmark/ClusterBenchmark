@@ -312,10 +312,10 @@ index 5e3bb62..e030d62 100644
  
  
 diff --git a/utils.py b/utils.py
-index db6e325..eecfae1 100644
+index db6e325..fb10c55 100644
 --- a/utils.py
 +++ b/utils.py
-@@ -122,20 +122,20 @@ def get_B(G):
+@@ -122,25 +122,35 @@ def get_B(G):
    Q = 0
    G = G.copy()
    nx.set_edge_attributes(G, {e:1 for e in G.edges}, 'weight')
@@ -338,9 +338,27 @@ index db6e325..eecfae1 100644
 -      print('Invalid graph type')
 +      # print('Invalid graph type')
        raise TypeError
-   Q=np.zeros(A.shape)
+-  Q=np.zeros(A.shape)
++
++
++  # Q=np.zeros(A.shape)
++  # for i, j in product(range(len(nodes)),range(len(nodes))):
++  #   Q[i,j]=A[i,j]-(in_degree[nodes[i]]*out_degree[nodes[j]]/M )  
++  
    nodes = list(G)
-@@ -162,7 +162,7 @@ def sparse_to_tuple(sparse_mx, insert_batch=False):
+-  for i, j in product(range(len(nodes)),range(len(nodes))):
+-    Q[i,j]=A[i,j]-(in_degree[nodes[i]]*out_degree[nodes[j]]/M )
++  if M == 0:
++    # Avoid division by zero if the graph has no edges
++    Q = A.toarray()
++  else:
++    in_degree_vec = np.array([in_degree[node] for node in nodes])
++    out_degree_vec = np.array([out_degree[node] for node in nodes])
++    Q = A.toarray() - np.outer(in_degree_vec, out_degree_vec) / M
+   return Q/4
+ 
+ 
+@@ -162,7 +172,7 @@ def sparse_to_tuple(sparse_mx, insert_batch=False):
  
  def preprocess_features(features):
      """Row-normalize feature matrix and convert to tuple representation"""
