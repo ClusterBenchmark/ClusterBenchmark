@@ -1,0 +1,677 @@
+diff --git a/magi/utils.py b/magi/utils.py
+index 1528b7d..21a7ce9 100644
+--- a/magi/utils.py
++++ b/magi/utils.py
+@@ -14,6 +14,87 @@ from magi.clustering_metric import clustering_metrics
+ from magi.batch_kmeans_cuda import kmeans
+ 
+ 
++def read_metis_graph(filename):
++    """
++    Reads an unweighted graph in METIS format.
++    The parser should be able to handle vertex and/or edge weights,
++    but ignore them.
++    Returns the number of vertices and an edge list.
++    """
++    with open(filename, "r") as f:
++        # Skip comment lines
++        first_line = ""
++        for line in f:
++            if line.strip() and not line.startswith('%'):
++                first_line = line.strip()
++                break
++
++        parts = first_line.split()
++        n_vertices = int(parts[0])
++        n_edges = int(parts[1])
++        t = 0
++        if (len(parts) > 2):
++            t = int(parts[2])
++
++        vertex_weights = (t == 10 or t == 11)
++        edge_weights = (t == 1 or t == 11)
++
++        edge_list = []
++        for u, line in enumerate(f):
++            if not line.strip() or line.startswith('%'):
++                continue
++
++            N = list(map(int, line.split()))
++            if vertex_weights:
++                N = N[1:]
++
++            if edge_weights:
++                # Create a zip object of tuples for N
++                N = zip(N[::2], N[1::2])
++                for v, w in N:
++                    if v - 1 > u:  # only add each edge once
++                        edge_list.append([u, v - 1])
++            else:
++                for v in N:
++                    if v - 1 > u:  # only add each edge once
++                        edge_list.append([u, v - 1])
++    
++    return n_vertices, edge_list
++
++
++def read_features(filename, n_vertices):
++    """
++    Reads node features from a file.
++    The file has a header with the number of rows and columns.
++    If filename is None, returns a tensor of 1.0 for each vertex.
++    """
++    if filename is None:
++        return torch.ones((n_vertices, 1))
++
++    with open(filename, "r") as f:
++        # Read header
++        header = f.readline().split()
++        num_rows = int(header[0])
++        num_cols = int(header[1])
++
++        features = []
++        for line in f:
++            if not line.strip():
++                continue
++            features.append(list(map(float, line.split())))
++    
++    return torch.tensor(features)
++
++
++def write_clusters(filename, clusters):
++    """
++    Writes the cluster assignments to a file.
++    """
++    with open(filename, 'w') as f:
++        for cluster_id in clusters:
++            f.write(f'{cluster_id}\n')
++
++
+ def get_sim(batch, adj, wt=20, wl=3):
+     rowptr, col, _ = adj.csr()
+     batch_size = batch.shape[0]
+@@ -55,11 +136,11 @@ def setup_seed(seed):
+     torch.backends.cudnn.deterministic = True
+ 
+ 
+-def clustering(feature, n_clusters, true_labels, kmeans_device='cpu', batch_size=100000, tol=1e-4, device=torch.device('cuda:0'), spectral_clustering=False):
++def clustering(feature, n_clusters, true_labels=None, kmeans_device='cpu', batch_size=100000, tol=1e-4, device=torch.device('cuda:0'), spectral_clustering=False):
+     if spectral_clustering:
+         if isinstance(feature, torch.Tensor):
+             feature = feature.numpy()
+-        print("spectral clustering on cpu...")
++        # print("spectral clustering on cpu...")
+         patch_sklearn()
+         Cluster = SpectralClustering(
+             n_clusters=n_clusters, affinity='precomputed', random_state=0)
+@@ -69,17 +150,20 @@ def clustering(feature, n_clusters, true_labels, kmeans_device='cpu', batch_size
+         if kmeans_device == 'cuda':
+             if isinstance(feature, np.ndarray):
+                 feature = torch.tensor(feature)
+-            print("kmeans on gpu...")
++            # print("kmeans on gpu...")
+             predict_labels, _ = kmeans(
+                 X=feature, num_clusters=n_clusters, batch_size=batch_size, tol=tol, device=device)
+             predict_labels = predict_labels.numpy()
+         else:
+             if isinstance(feature, torch.Tensor):
+                 feature = feature.numpy()
+-            print("kmeans on cpu...")
++            # print("kmeans on cpu...")
+             patch_sklearn()
+             Cluster = KMeans(n_clusters=n_clusters, max_iter=10000, n_init=20)
+             predict_labels = Cluster.fit_predict(feature)
++    
++    if true_labels is None:
++        return predict_labels
+ 
+     cm = clustering_metrics(true_labels, predict_labels)
+     acc, nmi, adjscore, fms, f1_macro, f1_micro = cm.evaluationClusterModelFromLabel(
+diff --git a/train_gcn.py b/train_gcn.py
+index 6fdbb87..547db42 100644
+--- a/train_gcn.py
++++ b/train_gcn.py
+@@ -1,24 +1,30 @@
+-import csv
+ import random
+ import argparse
+ import numpy as np
++import time
+ 
+ import torch
+ import torch.nn.functional as F
+ from torch_geometric.nn import GCNConv
+ from torch_sparse import SparseTensor
+-from torch_geometric.datasets import Planetoid, Amazon
++from torch_geometric.data import Data
+ from torch_geometric.utils import to_undirected, add_remaining_self_loops
+ 
+-from magi.utils import setup_seed, get_sim, get_mask, scale, clustering
++
++from magi.utils import setup_seed, get_sim, get_mask, scale, clustering, read_metis_graph, read_features, write_clusters
+ from magi.model import Model, Encoder
+ 
+ parser = argparse.ArgumentParser()
+ parser.add_argument('--verbose', type=bool, default=True, help='')
+-parser.add_argument('--runs', type=int, default=1, help='runs')
+ 
+-# dataset para
+-parser.add_argument('--dataset', type=str, default='Cora')
++# New arguments
++parser.add_argument('--graph_file', type=str, required=True, help='Path to the METIS graph file.')
++parser.add_argument('--feature_file', type=str, help='Path to the node features file.')
++parser.add_argument('--output_path', type=str, required=True, help='Base path for output cluster files.')
++parser.add_argument('--timelimit', type=int, default=3600, help='Time limit in seconds.')
++parser.add_argument('--iterations', type=int, default=1, help='Number of times to train a model and save the clustering results.')
++parser.add_argument('--n_clusters', type=int, required=True, help='Number of clusters.')
++
+ 
+ # model para
+ parser.add_argument('--hidden', type=str, default='512', help='GNN encoder')
+@@ -39,121 +45,87 @@ parser.add_argument('--ns', type=float, default=0.5, help='')
+ args = parser.parse_args()
+ 
+ 
+-def train():
+-    randint = random.randint(1, 1000000)
+-    setup_seed(randint)
+-    if args.verbose:
+-        print('random seed : ', randint, '\n', args)
+-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
++def train(model, x, edge_index, optimizer, timelimit):
+ 
+-    path = 'data/'
+-    if args.dataset in ['Cora', 'Citeseer']:
+-        dataset = Planetoid(path, args.dataset)
+-    elif args.dataset in ['Photo', 'Computers']:
+-        dataset = Amazon(path, args.dataset)
+-    else:
+-        raise RuntimeError(f"Unknown dataset {args.dataset}")
+-
+-    data = dataset[0]
+-    x, edge_index, y = data.x, data.edge_index, data.y
+-    N, E = data.num_nodes, data.num_edges
+-    edge_index = to_undirected(add_remaining_self_loops(edge_index)[0])
+-    adj = SparseTensor(row=edge_index[0],
+-                       col=edge_index[1], sparse_sizes=(N, N))
++    num_nodes = x.shape[0]
++    adj = SparseTensor(row=edge_index[0], col=edge_index[1], sparse_sizes=(num_nodes, num_nodes))
+     adj.fill_value_(1.)
+-    batch = torch.LongTensor(list(range(N)))
+-    batch, adj_batch = get_sim(batch, adj, wt=args.wt, wl=args.wl)
+-
++    batch_nodes = torch.LongTensor(list(range(num_nodes)))
++    _, adj_batch = get_sim(batch_nodes, adj, wt=args.wt, wl=args.wl)
+     mask = get_mask(adj_batch)
+ 
+-    hidden = list(map(int, args.hidden.split(',')))
+-    if args.projection == '':
+-        projection = None
+-    else:
+-        projection = list(map(int, args.projection.split(',')))
+-
+-    encoder = Encoder(data.num_features, hidden, base_model=GCNConv,
+-                      dropout=args.dropout, ns=args.ns).to(device)
+-    model = Model(
+-        encoder, in_channels=hidden[-1], project_hidden=projection, tau=args.tau).to(device)
+-    x, edge_index = data.x.to(device), data.edge_index.to(device)
+-    optimizer = torch.optim.Adam(
+-        model.parameters(), lr=args.lr, weight_decay=args.wd)
+-
+-    dataset2n_clusters = {'Cora': 7,
+-                          'Citeseer': 6, 'Photo': 8, 'Computers': 10}
+-    n_clusters = dataset2n_clusters[args.dataset]
+-
+-    # train
++    model.train()
++    iterations = 0
++    start_time = time.time()
+     for epoch in range(1, args.epochs + 1):
+-        model.train()
++        if time.time() - start_time > timelimit:
++            # print("Time limit reached, stopping training.")
++            break
+         optimizer.zero_grad()
+         out = model(x, edge_index)
+         out = scale(out)
+         out = F.normalize(out, p=2, dim=1)
++        
+         loss = model.loss(out, mask)
++        
+         loss.backward()
+         optimizer.step()
+-        if args.verbose:
+-            print(f'(T) | Epoch={epoch:03d}, loss={float(loss):.4f}')
++        iterations += 1
++        # if args.verbose:
++        #     print(f'(T) | Epoch={epoch:03d}, loss={float(loss):.4f}')
+ 
+-    # eval
+-    with torch.no_grad():
+-        model.eval()
+-        out = model(x, edge_index)
+-        out = scale(out)
+-        out = F.normalize(out, p=2, dim=1).detach().cpu()
+-        acc, nmi, ari, f1_macro, f1_micro = clustering(
+-            out.numpy(), n_clusters, y.numpy(), spectral_clustering=True)
+-
+-    print(
+-        f'train over | ACC={acc:.4f}, NMI={nmi:.4f},  ARI={ari:.4f}, f1_macro={f1_macro:.4f}, f1_micro={f1_micro:.4f}')
+-
+-    return acc, nmi, ari, f1_macro, f1_micro
+-
+-
+-def run(runs=1, result=None):
+-    if result:
+-        with open(result, 'w', encoding='utf-8-sig', newline='') as f_w:
+-            writer = csv.writer(f_w)
+-            writer.writerow(
+-                ['runs', 'acc', 'nmi', 'ari', 'f1_macro', 'f1_micro'])
+-
+-    ACC, NMI, ARI, F1_MA, F1_MI = [], [], [], [], []
+-    for i in range(runs):
+-        print(f'\n----------------------runs {i+1: d} start')
+-        acc, nmi, ari, f1_macro, f1_micro = train()
+-        print(f'\n----------------------runs {i+1: d} over')
+-
+-        if result:
+-            with open(result, 'a', encoding='utf-8', newline='') as f_w:
+-                writer = csv.writer(f_w)
+-                writer.writerow([i+1, acc, nmi, ari, f1_macro, f1_micro])
+-        ACC.append(acc)
+-        NMI.append(nmi)
+-        ARI.append(ari)
+-        F1_MA.append(f1_macro)
+-        F1_MI.append(f1_micro)
+-    ACC = np.array(ACC)
+-    NMI = np.array(NMI)
+-    ARI = np.array(ARI)
+-    F1_MA = np.array(F1_MA)
+-    F1_MI = np.array(F1_MI)
+-
+-    print(f'mean | ACC={ACC.mean():.4f}, NMI={NMI.mean():.4f},  ARI={ARI.mean():.4f}, '
+-          f'f1_macro={F1_MA.mean():.4f}, f1_micro={F1_MI.mean():.4f}')
+-    print(f'std | ACC={ACC.std():.4f}, NMI={NMI.std():.4f},  ARI={ARI.std():.4f}, '
+-          f'f1_macro={F1_MA.std():.4f}, f1_micro={F1_MI.std():.4f}')
+-
+-    if result:
+-        with open(result, 'a', encoding='utf-8-sig', newline='') as f_w:
+-            writer = csv.writer(f_w)
+-            writer.writerow(['mean', ACC.mean(), NMI.mean(),
+-                            ARI.mean(), F1_MA.mean(), F1_MI.mean()])
+-            writer.writerow(['std', ACC.std(), NMI.std(),
+-                            ARI.std(), F1_MA.std(), F1_MI.std()])
++    print(f'{time.time() - start_time},{iterations},', end='')
++    return out # Return embeddings for clustering
+ 
+ 
+ if __name__ == '__main__':
+-    result = None
+-    run(args.runs, result)
++    # Load data using new utility functions
++    num_nodes, edge_list = read_metis_graph(args.graph_file)
++    features = read_features(args.feature_file, num_nodes)
++
++    edge_index = torch.tensor(edge_list, dtype=torch.long).t().contiguous()
++    edge_index = to_undirected(add_remaining_self_loops(edge_index)[0])
++
++    data = Data(x=features, edge_index=edge_index)
++
++    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
++
++    x, edge_index = data.x.to(device), data.edge_index.to(device)
++
++    # print("Finished parsing")
++
++    for i in range(args.iterations):
++        current_seed = i # args.seed + i # Increment seed for each iteration
++        setup_seed(current_seed)
++        # if args.verbose:
++        #     print(f'Iteration {i+1}/{args.iterations}, random seed: {current_seed}')
++
++        N = data.num_nodes
++
++        hidden = list(map(int, args.hidden.split(',')))
++        if args.projection == '':
++            projection = None
++        else:
++            projection = list(map(int, args.projection.split(',')))
++
++        encoder = Encoder(data.num_features, hidden, base_model=GCNConv,
++                          dropout=args.dropout, ns=args.ns).to(device)
++        model = Model(
++            encoder, in_channels=hidden[-1], project_hidden=projection, tau=args.tau).to(device)
++        optimizer = torch.optim.Adam(
++            model.parameters(), lr=args.lr, weight_decay=args.wd)
++
++        node_embeddings = train(model, x, edge_index, optimizer, args.timelimit)
++
++        # Clustering
++        with torch.no_grad():
++            model.eval()
++            # If train returns the final embeddings, use them directly, otherwise re-run model.
++            # Assuming `node_embeddings` from train is what we need.
++            out_cpu = node_embeddings.detach().cpu().numpy()
++            
++            clusters = clustering(out_cpu, n_clusters=args.n_clusters, true_labels=None)
++            
++            output_file = f'{args.output_path}{i}.txt'
++            write_clusters(output_file, clusters)
++            # print(f"Clustering assignment for iteration {i+1} saved to {output_file}")
+diff --git a/train_sage.py b/train_sage.py
+index 99a45ee..c6b9070 100644
+--- a/train_sage.py
++++ b/train_sage.py
+@@ -1,4 +1,3 @@
+-import csv
+ import random
+ import time
+ import argparse
+@@ -7,29 +6,33 @@ from tqdm import tqdm
+ 
+ import torch
+ import torch.nn.functional as F
+-from torch_geometric.datasets import Reddit
++from torch_geometric.data import Data
+ from torch_geometric.utils import to_undirected, add_remaining_self_loops
+ from torch_sparse import SparseTensor
+ 
++
+ from magi.model import Model, Encoder
+ from magi.neighbor_sampler import NeighborSampler
+-from magi.utils import setup_seed, get_mask, clustering
++from magi.utils import setup_seed, get_mask, clustering, read_metis_graph, read_features, write_clusters
+ 
+ 
+ parser = argparse.ArgumentParser()
+ parser.add_argument('--verbose', type=bool, default=True)
+-parser.add_argument('--runs', type=int, default=1)
+-parser.add_argument('--max_duration', type=int,
+-                    default=60, help='max duration time')
++
++# New arguments
++parser.add_argument('--graph_file', type=str, required=True, help='Path to the METIS graph file.')
++parser.add_argument('--feature_file', type=str, help='Path to the node features file.')
++parser.add_argument('--output_path', type=str, required=True, help='Base path for output cluster files.')
++parser.add_argument('--timelimit', type=int, default=3600, help='Time limit in seconds.')
++parser.add_argument('--iterations', type=int, default=1, help='Number of times to train a model and save the clustering results.')
++parser.add_argument('--n_clusters', type=int, required=True, help='Number of clusters.')
++
+ parser.add_argument('--kmeans_device', type=str,
+                     default='cpu', help='kmeans device, cuda or cpu')
+ parser.add_argument('--kmeans_batch', type=int, default=-1,
+                     help='batch size of kmeans on GPU, -1 means full batch')
+ parser.add_argument('--batchsize', type=int, default=2048, help='')
+ 
+-# dataset para
+-parser.add_argument('--dataset', type=str, default='ogbn-arxiv')
+-
+ # model para
+ parser.add_argument('--hidden_channels', type=str, default='512,256')
+ parser.add_argument('--size', type=str, default='10,10', help='')
+@@ -40,7 +43,7 @@ parser.add_argument('--ns', type=float, default=0.5)
+ # sample para
+ parser.add_argument('--wt', type=int, default=20)
+ parser.add_argument('--wl', type=int, default=4)
+-parser.add_argument('--n', type=int, default=2048)
++# parser.add_argument('--n', type=int, default=2048) # This argument was only used in original train() for printing, can be removed.
+ 
+ # learning para
+ parser.add_argument('--dropout', type=float, default=0, help='')
+@@ -50,86 +53,18 @@ parser.add_argument('--epochs', type=int, default=100)
+ args = parser.parse_args()
+ 
+ 
+-def train():
+-    ts = time.time()
+-    randint = random.randint(1, 1000000)
+-    setup_seed(randint)
+-    if args.verbose:
+-        print('random seed : ', randint, '\n', args)
+-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+-
+-    if args.dataset in ['ogbn-arxiv', 'ogbn-products', 'ogbn-papers100M']:
+-        path = './data/OGB/'
+-        from ogb.nodeproppred import PygNodePropPredDataset
+-        dataset = PygNodePropPredDataset(root=path, name=args.dataset)
+-        x, edge_index, y = dataset[0].x, dataset[0].edge_index, dataset[0].y
+-        y = y[:, 0]
+-    elif args.dataset == 'Reddit':
+-        path = './data/Reddit/'
+-        dataset = Reddit(root=path)
+-        x, edge_index, y = dataset[0].x, dataset[0].edge_index, dataset[0].y
+-    else:
+-        raise RuntimeError(f"Unknown dataset {args.dataset}")
+-
+-    edge_index = to_undirected(add_remaining_self_loops(edge_index)[0])
+-
+-    N, E, num_features = x.shape[0], edge_index.shape[-1], x.shape[-1]
+-    print(f"Loading {args.dataset} is over, num_nodes: {N: d}, num_edges: {E: d}, "
+-          f"num_feats: {num_features: d}, time costs: {time.time()-ts: .2f}")
+-
+-    adj = SparseTensor(row=edge_index[0],
+-                       col=edge_index[1], sparse_sizes=(N, N))
+-    adj.fill_value_(1.)
+-
+-    hidden = list(map(int, args.hidden_channels.split(',')))
+-    if args.projection == '':
+-        projection = None
+-    else:
+-        projection = list(map(int, args.projection.split(',')))
+-    size = list(map(int, args.size.split(',')))
+-    assert len(hidden) == len(size)
+-
+-    train_loader = NeighborSampler(edge_index, adj,
+-                                   is_train=True,
+-                                   node_idx=None,
+-                                   wt=args.wt,
+-                                   wl=args.wl,
+-                                   sizes=size,
+-                                   batch_size=args.batchsize,
+-                                   shuffle=True,
+-                                   drop_last=True,
+-                                   num_workers=6)
+-
+-    test_loader = NeighborSampler(edge_index, adj,
+-                                  is_train=False,
+-                                  node_idx=None,
+-                                  sizes=size,
+-                                  batch_size=10000,
+-                                  shuffle=False,
+-                                  drop_last=False,
+-                                  num_workers=6)
+-
+-    encoder = Encoder(num_features, hidden_channels=hidden,
+-                      dropout=args.dropout, ns=args.ns).to(device)
+-    model = Model(
+-        encoder, in_channels=hidden[-1], project_hidden=projection, tau=args.tau).to(device)
+-    optimizer = torch.optim.Adam(
+-        model.parameters(), lr=args.lr, weight_decay=args.wd)
+-
+-    dataset2n_clusters = {'ogbn-arxiv': 40, 'Reddit': 41,
+-                          'ogbn-products': 47, 'ogbn-papers100M': 172}
+-    n_clusters = dataset2n_clusters[args.dataset]
+-
+-    x = x.to(device)
+-    print(f"Start training")
+-
+-    ts_train = time.time()
+-    stop_pos = False
+-    for epoch in range(1, args.epochs):
+-        model.train()
++def train(model, x, device, train_loader, test_loader, hidden, timelimit):
++    model.train()
++    iterations = 0
++    start_time = time.time()
++    for epoch in range(1, args.epochs + 1):
++        if time.time() - start_time > timelimit:
++            break
++        
+         total_loss = total_examples = 0
+-
+         for (batch_size, n_id, adjs), adj_batch, batch in train_loader:
++            if time.time() - start_time > timelimit:
++                break
+             # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
+             if len(hidden) == 1:
+                 adjs = [adjs]
+@@ -145,26 +80,17 @@ def train():
+             optimizer.step()
+             total_loss += float(loss)
+             total_examples += batch_size
++        
++        iterations += 1
+ 
+-            if args.verbose:
+-                print(f'(T) | Epoch {epoch:02d}, loss: {loss:.4f}, '
+-                      f'train_time_cost: {time.time() - ts_train:.2f}, examples: {batch_size:d}')
+-
+-            train_time_cost = time.time() - ts_train
+-            if train_time_cost // 60 >= args.max_duration:
+-                print(
+-                    "*********************** Maximum training time is exceeded ***********************")
+-                stop_pos = True
+-                break
+-        if stop_pos:
+-            break
+-
+-    print(f'Finish training, training time cost: {time.time() - ts_train:.2f}')
+-
++            # if args.verbose:
++            #     print(f'(T) | Epoch {epoch:02d}, loss: {loss:.4f}, examples: {batch_size:d}')
++    
++    # After training, get full embeddings for clustering
+     with torch.no_grad():
+         model.eval()
+         z = []
+-        for count, ((batch_size, n_id, adjs), _, batch) in enumerate(tqdm(test_loader)):
++        for count, ((batch_size, n_id, adjs), _, batch) in enumerate(test_loader):
+             if len(hidden) == 1:
+                 adjs = [adjs]
+             adjs = [adj.to(device) for adj in adjs]
+@@ -173,53 +99,78 @@ def train():
+         z = torch.cat(z, dim=0)
+         z = F.normalize(z, p=2, dim=1)
+ 
+-    ts_clustering = time.time()
+-    print(f'Start clustering, num_clusters: {n_clusters: d}')
+-    acc, nmi, ari, f1_macro, f1_micro = clustering(z, n_clusters, y.numpy(), kmeans_device=args.kmeans_device,
+-                                                   batch_size=args.kmeans_batch, tol=1e-4, device=device, spectral_clustering=False)
+-
+-    print(f'Finish clustering, acc: {acc:.4f}, nmi: {nmi:.4f}, ari: {ari:.4f}, f1_macro: {f1_macro:.4f}, '
+-          f'f1_micro: {f1_micro:.4f}, clustering time cost: {time.time() - ts_clustering:.2f}')
+-    return acc, nmi, ari, f1_macro, f1_micro
+-
+-
+-def run(runs=1, result=None):
+-    if result:
+-        with open(result, 'w', encoding='utf-8-sig', newline='') as f_w:
+-            writer = csv.writer(f_w)
+-            writer.writerow(
+-                ['runs', 'acc', 'nmi', 'ari', 'f1_macro', 'f1_micro'])
+-
+-    ACC, NMI, ARI, F1_MA, F1_MI = [], [], [], [], []
+-    for i in range(runs):
+-        print(f'\n----------------------runs {i+1: d} start')
+-        acc, nmi, adjscore, f1_macro, f1_micro = train()
+-        print(f'\n----------------------runs {i + 1: d} over')
+-        if result:
+-            with open(result, 'a', encoding='utf-8-sig', newline='') as f_w:
+-                writer = csv.writer(f_w)
+-                writer.writerow([i+1, acc, nmi, adjscore, f1_macro, f1_micro])
+-
+-        ACC.append(acc)
+-        NMI.append(nmi)
+-        ARI.append(adjscore)
+-        F1_MA.append(f1_macro)
+-        F1_MI.append(f1_micro)
+-
+-    ACC = np.array(ACC)
+-    NMI = np.array(NMI)
+-    ARI = np.array(ARI)
+-    F1_MA = np.array(F1_MA)
+-    F1_MI = np.array(F1_MI)
+-    if result:
+-        with open(result, 'a', encoding='utf-8-sig', newline='') as f_w:
+-            writer = csv.writer(f_w)
+-            writer.writerow(['mean', ACC.mean(), NMI.mean(),
+-                            ARI.mean(), F1_MA.mean(), F1_MI.mean()])
+-            writer.writerow(['std', ACC.std(), NMI.std(),
+-                            ARI.std(), F1_MA.std(), F1_MI.std()])
++    print(f'{time.time() - start_time},{iterations},', end='')
++    return z
+ 
+ 
+ if __name__ == '__main__':
+-    result = None
+-    run(args.runs, result)
++    # Load data using new utility functions
++    num_nodes, edge_list = read_metis_graph(args.graph_file)
++    features = read_features(args.feature_file, num_nodes)
++    
++    edge_index = torch.tensor(edge_list, dtype=torch.long).t().contiguous()
++    edge_index = to_undirected(add_remaining_self_loops(edge_index)[0])
++    
++    data = Data(x=features, edge_index=edge_index)
++
++    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
++    x = data.x.to(device)
++
++    # print("Finished parsing")
++    
++    for i in range(args.iterations):
++        current_seed = i # Assuming a seed argument exists or creating one for each iteration
++        setup_seed(current_seed)
++        # if args.verbose:
++        #     print(f'Iteration {i+1}/{args.iterations}, random seed: {current_seed}')
++
++        adj = SparseTensor(row=edge_index[0],
++                           col=edge_index[1], sparse_sizes=(num_nodes, num_nodes))
++        adj.fill_value_(1.)
++
++        hidden = list(map(int, args.hidden_channels.split(',')))
++        if args.projection == '':
++            projection = None
++        else:
++            projection = list(map(int, args.projection.split(',')))
++        size = list(map(int, args.size.split(',')))
++        assert len(hidden) == len(size) # Ensure 'size' is defined
++
++        train_loader = NeighborSampler(edge_index, adj,
++                                       is_train=True,
++                                       node_idx=None,
++                                       wt=args.wt,
++                                       wl=args.wl,
++                                       sizes=size,
++                                       batch_size=args.batchsize,
++                                       shuffle=True,
++                                       drop_last=True,
++                                       num_workers=1) # num_workers can be adjusted
++
++        test_loader = NeighborSampler(edge_index, adj,
++                                      is_train=False,
++                                      node_idx=None,
++                                      sizes=size,
++                                      batch_size=10000,
++                                      shuffle=False,
++                                      drop_last=False,
++                                      num_workers=1)
++
++        encoder = Encoder(data.num_features, hidden_channels=hidden,
++                          dropout=args.dropout, ns=args.ns).to(device)
++        model = Model(
++            encoder, in_channels=hidden[-1], project_hidden=projection, tau=args.tau).to(device)
++        optimizer = torch.optim.Adam(
++            model.parameters(), lr=args.lr, weight_decay=args.wd)
++
++        node_embeddings = train(model, x, device, train_loader, test_loader, hidden, args.timelimit)
++
++        # Clustering
++        out_cpu = node_embeddings.detach().cpu().numpy()
++        
++        clusters = clustering(out_cpu, n_clusters=args.n_clusters, true_labels=None)
++        
++        output_file = f'{args.output_path}{i}.txt'
++        write_clusters(output_file, clusters)
++        # print(f"Clustering assignment for iteration {i+1} saved to {output_file}")
++    print()

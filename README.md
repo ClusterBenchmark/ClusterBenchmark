@@ -34,7 +34,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [GNNS](docs/GNNS.md) | 2022 | US | 24 | | &#x2705; | &#x2705; |  | | | [Link](https://appliednetsci.springeropen.com/articles/10.1007/s41109-022-00500-z) | [GitHub](https://github.com/Alexander-Belyi/GNNS) |
 | &#x2705; | [UCoDe](docs/UCoDe.md) | 2023 | Denmark | 18 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://link.springer.com/article/10.1007/s10994-023-06402-0) | [GitHub](https://github.com/AU-DIS/UCODE) |
 | &#x2705; | [DGCluster](docs/DGCluster.md) | 2023 | US | 10 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://ojs.aaai.org/index.php/AAAI/article/view/28983) | [GitHub](https://github.com/pyrobits/DGCluster) |
-| | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
+| &#x2705; | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://dl.acm.org/doi/abs/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
 | | Bayan | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.110.044315) |
 | | Neuromap | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://arxiv.org/abs/2310.01144) |
 | | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2502.06879) | [GitHub](https://github.com/KaHIP/CluStRE) |
@@ -48,6 +48,8 @@ This [paper](https://link.springer.com/article/10.1007/s13278-024-01318-6?utm_so
 This [paper](https://doi.org/10.1103/PhysRevE.90.012811) on the COMBO solver.
 
 This [paper](https://doi.org/10.1109/TCSS.2023.3306787) on the PARIS solver.
+
+MGCCN Contrastive autoencoder
 
 ### Bayan (2024)
 
