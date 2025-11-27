@@ -22,6 +22,11 @@ if [[ "$INPUT_FILE" != /* ]]; then
     INPUT_FILE="$(pwd)/$INPUT_FILE"
 fi
 
+# If the feature file path is relative, make it absolute.
+if [[ -n "$FEATURES" && "$FEATURES" != /* ]]; then
+    FEATURES="$(pwd)/$FEATURES"
+fi
+
 source .venv/bin/activate
 
 export OMP_NUM_THREADS="$THREADS"
