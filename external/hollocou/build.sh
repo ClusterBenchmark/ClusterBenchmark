@@ -3,7 +3,11 @@ set -e
 
 git clone https://github.com/ahollocou/graph-streaming.git
 
-cd graph-streaming/cpp/
+cd graph-streaming/
+
+git checkout dcdedd162e56852fbef84be01b5d51ef2d7258d8
+
+cd cpp/
 
 # Adding missing includes
 sed -i '11i\#include <ctime>' source/streamcom/main.cpp
