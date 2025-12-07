@@ -1,5 +1,5 @@
 diff --git a/extern/KaHIP/lib/io/graph_io.cpp b/extern/KaHIP/lib/io/graph_io.cpp
-index 8b94911..e23ef98 100644
+index 8b94911..02e85a2 100644
 --- a/extern/KaHIP/lib/io/graph_io.cpp
 +++ b/extern/KaHIP/lib/io/graph_io.cpp
 @@ -142,11 +142,11 @@ int graph_io::readGraphWeighted(graph_access & G, std::string filename) {
@@ -19,6 +19,15 @@ index 8b94911..e23ef98 100644
                  }
                  G.setNodeWeight(node, weight);
  
+@@ -167,7 +167,7 @@ int graph_io::readGraphWeighted(graph_access & G, std::string filename) {
+                         G.setEdgeWeight(e, edge_weight);
+                 }
+ 
+-                if(in.eof()) {
++                if(in.eof() || node_counter == nmbNodes) {
+                         break;
+                 }
+         }
 @@ -269,11 +269,11 @@ int graph_io::readGraphWeightedFast(graph_access & G, std::string filename) {
                  if( read_nw ) {
                          weight = naive(line, line_ptr);
@@ -36,6 +45,15 @@ index 8b94911..e23ef98 100644
                  }
                  G.setNodeWeight(node, weight);
  
+@@ -295,7 +295,7 @@ int graph_io::readGraphWeightedFast(graph_access & G, std::string filename) {
+                         G.setEdgeWeight(e, edge_weight);
+                 }
+ 
+-                if(in.eof()) {
++                if(in.eof() || node_counter == nmbNodes) {
+                         break;
+                 }
+         }
 diff --git a/extern/KaHIP/lib/parallel_mh_clustering/population_clustering.cpp b/extern/KaHIP/lib/parallel_mh_clustering/population_clustering.cpp
 index cd358b4..1759eb7 100644
 --- a/extern/KaHIP/lib/parallel_mh_clustering/population_clustering.cpp
