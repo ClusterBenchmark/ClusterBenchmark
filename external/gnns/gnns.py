@@ -481,7 +481,8 @@ def main():
     parser.add_argument("--output", help="Output file for clustering")
     parser.add_argument("--K", type=int, help="Number of clusterings to produce")
     parser.add_argument("--num-communities", type=int, help="Number of communities to find")
-    parser.add_argument('--timeout', type=int, help='Timeout in seconds for the training loop.')
+    parser.add_argument("--timeout", type=int, help="Timeout in seconds for the training loop.")
+    parser.add_argument("--num-processes", type=int, help="Number of threads to use.")
     args = parser.parse_args()
 
     G = read_metis_graph(args.input)
@@ -500,7 +501,7 @@ def main():
     hypers['use_sparse'] = True
     hypers['max_batch_size'] = 1000
     hypers['max_total_tensor_size'] = 100_000_000
-    hypers["num_processes"] = 4
+    hypers["num_processes"] = args.num_processes
     
     set_all_random_seeds(hypers['seed'])
     iterations_per_stage = [10, 10, 30]
