@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$#" -ne 4 ] && [ "$#" -ne 5 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads> [<features>]"
+if [ "$#" -ne 5 ] && [ "$#" -ne 6 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads> <c> [<features>]"
     exit 1
 fi
 
@@ -9,7 +9,8 @@ INPUT_FILE=$1
 K=$2
 TIMEOUT=$3
 THREADS=$4
-FEATURES=${5:-} # Set to empty if not provided
+C=$5
+FEATURES=${6:-} # Set to empty if not provided
 
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
@@ -28,7 +29,7 @@ source .venv/bin/activate
 export OMP_NUM_THREADS="$THREADS"
 
 # Construct the python command
-PYTHON_CMD="/usr/bin/time -v python3 train_sage.py --graph_file \"$INPUT_FILE\" --output_path \"$BASENAME\"_magi_ --iterations \"$K\" --n_clusters=16 --timelimit \"$TIMEOUT\""
+PYTHON_CMD="/usr/bin/time -v python3 train_sage.py --graph_file \"$INPUT_FILE\" --output_path \"$BASENAME\"_magi_ --iterations \"$K\" --n_clusters \"$C\" --timelimit \"$TIMEOUT\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --feature_file \"$FEATURES\""
@@ -54,31 +55,13 @@ do
 
         if [ -f $LABEL_FILE ]; then
             EVAL_OUT=$(../../../EVAL "$INPUT_FILE" "$FILE" "$LABEL_FILE")
-            EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
-            EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
-            EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
-            EVAL_F1=$(echo "$EVAL_OUT" | awk -F',' '{print $7}')
-            EVAL_AC=$(echo "$EVAL_OUT" | awk -F',' '{print $8}')
-            EVAL_TP=$(echo "$EVAL_OUT" | awk -F',' '{print $9}')
-            EVAL_FP=$(echo "$EVAL_OUT" | awk -F',' '{print $10}')
-            EVAL_TN=$(echo "$EVAL_OUT" | awk -F',' '{print $11}')
-            EVAL_FN=$(echo "$EVAL_OUT" | awk -F',' '{print $12}')
-            
-            echo ",$TIME,$IT,$EVAL_MOD,$EVAL_N,$EVAL_CC,$EVAL_F1,$EVAL_AC,$EVAL_TP,$EVAL_FP,$EVAL_TN,$EVAL_FN"
+            echo ",$TIME,$IT,""$EVAL_OUT"
         else
             EVAL_OUT=$(../../../EVAL "$INPUT_FILE" "$FILE")
-            EVAL_MOD=$(echo "$EVAL_OUT" | awk -F',' '{print $4}')
-            EVAL_N=$(echo "$EVAL_OUT" | awk -F',' '{print $5}')
-            EVAL_CC=$(echo "$EVAL_OUT" | awk -F',' '{print $6}')
-            
-            echo ",$TIME,$IT,$EVAL_MOD,$EVAL_N,$EVAL_CC"
+            echo ",$TIME,$IT,""$EVAL_OUT"
         fi
     else
-        if [ -f $LABEL_FILE ]; then
-            echo ",tle,tle,tle,tle,tle,tle,tle,tle,tle,tle,tle"
-        else
-            echo ",tle,tle,tle,tle,tle"
-        fi
+        echo ""
     fi
 done
 
