@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$#" -ne 4 ] && [ "$#" -ne 5 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads> [<features>]"
+if [ "$#" -ne 5 ] && [ "$#" -ne 6 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads> <c> [<features>]"
     exit 1
 fi
 
@@ -9,7 +9,8 @@ INPUT_FILE=$1
 K=$2
 TIMEOUT=$3
 THREADS=$4
-FEATURES=${5:-} # Set to empty if not provided
+C=$5
+FEATURES=${6:-} # Set to empty if not provided
 
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
@@ -28,7 +29,7 @@ source .venv/bin/activate
 export OMP_NUM_THREADS="$THREADS"
 
 # Construct the python command
-PYTHON_CMD="/usr/bin/time -v python3 main.py --metis_file=\"$INPUT_FILE\" --K 16 --it \"$K\" --timeout=\"$TIMEOUT\" --output_file \"$BASENAME""_ucode\""
+PYTHON_CMD="/usr/bin/time -v python3 main.py --metis_file=\"$INPUT_FILE\" --K \"$C\" --it \"$K\" --timeout=\"$TIMEOUT\" --output_file \"$BASENAME""_ucode\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --features_file \"$FEATURES\""
