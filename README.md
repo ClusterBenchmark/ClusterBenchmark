@@ -35,8 +35,8 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [UCoDe](docs/UCoDe.md) | 2023 | Denmark | 18 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1007/s10994-023-06402-0) | [GitHub](https://github.com/AU-DIS/UCODE) |
 | &#x2705; | [DGCluster](docs/DGCluster.md) | 2023 | US | 10 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1609/aaai.v38i10.28983) | [GitHub](https://github.com/pyrobits/DGCluster) |
 | &#x2705; | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
-| &#x2705; | [Bayan](docs/Bayan.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1103/PhysRevE.110.044315) |
-| | Neuromap | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://arxiv.org/abs/2310.01144) |
+| &#x2705; | [Bayan](docs/Bayan.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1103/PhysRevE.110.044315) | [GitHub](https://github.com/saref/bayan) |
+| &#x274C; | [Neuromap](docs/Neuromap.md) | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://doi.org/10.52202/079017-0554) | [GitHub](https://github.com/chrisbloecker/neuromap) | 
 | | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2502.06879) | [GitHub](https://github.com/KaHIP/CluStRE) |
 | | LIM | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2501.12946) | [GitHub](https://github.com/wuanghoong/Less-is-More)
 
@@ -50,17 +50,6 @@ This [paper](https://doi.org/10.1103/PhysRevE.90.012811) on the COMBO solver.
 This [paper](https://doi.org/10.1109/TCSS.2023.3306787) on the PARIS solver.
 
 MGCCN Contrastive autoencoder
-
-### Neuromap (2024)
-
-* **Place** Department of Informatics, University of Zurich, Switzerland
-* **Authors** Christopher Blöcker, Chester Tan, Ingo Scholtes
-* **Type** Machine Learning, GNN-based
-* **Strategy** Map Equation Loss
-* **Cited** 3
-* **Objective** Map Equation, Adjusted Mutual Informatio
-* **Dataset** Cora, Citeseer, PubMed, Coauthor CS, Coauthor Phys., Cora ML, Wiki CS, ogb-arxiv
-* Available at [Link](https://arxiv.org/abs/2310.01144)
 
 ### Test
 
