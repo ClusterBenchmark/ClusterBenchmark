@@ -35,7 +35,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [UCoDe](docs/UCoDe.md) | 2023 | Denmark | 18 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1007/s10994-023-06402-0) | [GitHub](https://github.com/AU-DIS/UCODE) |
 | &#x2705; | [DGCluster](docs/DGCluster.md) | 2023 | US | 10 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1609/aaai.v38i10.28983) | [GitHub](https://github.com/pyrobits/DGCluster) |
 | &#x2705; | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
-| | Bayan | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.110.044315) |
+| &#x2705; | [Bayan](docs/Bayan.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1103/PhysRevE.110.044315) |
 | | Neuromap | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://arxiv.org/abs/2310.01144) |
 | | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2502.06879) | [GitHub](https://github.com/KaHIP/CluStRE) |
 | | LIM | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2501.12946) | [GitHub](https://github.com/wuanghoong/Less-is-More)
@@ -50,17 +50,6 @@ This [paper](https://doi.org/10.1103/PhysRevE.90.012811) on the COMBO solver.
 This [paper](https://doi.org/10.1109/TCSS.2023.3306787) on the PARIS solver.
 
 MGCCN Contrastive autoencoder
-
-### Bayan (2024)
-
-* **Place** Department of Mechanical and Industrial Engineering, University of Toronto, Canada
-* **Authors** Samin Aref, Mahdi Mostajabdaveh, Hriday Chheda
-* **Type** Algorithm Engineering, Exact
-* **Strategy** Branch-and-cut integer programming
-* **Cited** 18
-* **Objective** Modularity, Ground Truth
-* **Dataset** Small real networks (a few thousand edges at most)
-* Available at [Link](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.110.044315)
 
 ### Neuromap (2024)
 
