@@ -1,0 +1,60 @@
+diff --git a/compile.sh b/compile.sh
+index bbc7ec5..3ccf158 100755
+--- a/compile.sh
++++ b/compile.sh
+@@ -1,14 +1,25 @@
+ #!/bin/bash
+ 
++set -e
++
++if [ ! -d "extern/sparsehash" ]; then
++    git submodule add https://github.com/sparsehash/sparsehash.git extern/sparsehash
++fi
++
++cd extern/sparsehash
++./configure --prefix=$(pwd)/../../build/sparsehash
++make
++make install
++cd ../..
++
+ NCORES=12
+ unamestr=`uname`
+ 
+ rm -rf deploy
+-rm -rf build
+-mkdir build
+-cd build 
+-cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_CXX_FLAGS="-w" ../
++mkdir -p build
++cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_CXX_FLAGS="-w" -S . -B build
+ #cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg -DCMAKE_SHARED_LINKER_FLAGS=-pg ../
++cd build
+ make -j $NCORES
+ cd ..
+ 
+diff --git a/extern/KaGen/cmake/FindSparsehash.cmake b/extern/KaGen/cmake/FindSparsehash.cmake
+index 4620f28..25a3954 100644
+--- a/extern/KaGen/cmake/FindSparsehash.cmake
++++ b/extern/KaGen/cmake/FindSparsehash.cmake
+@@ -4,6 +4,7 @@ pkg_check_modules(PC_Sparsehash QUIET libsparsehash)
+ find_path(Sparsehash_INCLUDE_DIR
+   NAMES google/sparsehash/sparsehashtable.h
+   PATHS ${PC_Sparsehash_INCLUDE_DIRS}
++  HINTS "${CMAKE_BINARY_DIR}/sparsehash/include"
+ )
+ 
+ include(FindPackageHandleStandardArgs)
+diff --git a/extern/VieClus/lib/parallel_mh_clustering/population_clustering.cpp b/extern/VieClus/lib/parallel_mh_clustering/population_clustering.cpp
+index 74abf4c..d93959e 100644
+--- a/extern/VieClus/lib/parallel_mh_clustering/population_clustering.cpp
++++ b/extern/VieClus/lib/parallel_mh_clustering/population_clustering.cpp
+@@ -117,6 +117,7 @@ void population_clustering::createIndividuum(const KaHIP::PartitionConfig & conf
+ 
+ void population_clustering::insert(KaHIP::graph_access & G, Individuum & ind) {
+         if( ind.objective > best_objective ) {
++                std::cout << "New best solution found after " << m_global_timer.elapsed() << " with score " << ind.objective << std::endl;
+                 m_filebuffer_string <<  m_global_timer.elapsed() <<  " " <<  ind.objective <<  std::endl;
+                 m_time_stamp++;
+                 best_objective = ind.objective;
+
+-Subproject commit 1dffea3d917445d70d33d0c7492919fc4408fe5c

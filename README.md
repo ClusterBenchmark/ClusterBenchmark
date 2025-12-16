@@ -37,7 +37,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [MAGI](docs/MAGI.md) | 2024 | China | 15 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1145/3637528.3671967) | [GitHub](https://github.com/EdisonLeeeee/MAGI) |
 | &#x2705; | [Bayan](docs/Bayan.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1103/PhysRevE.110.044315) | [GitHub](https://github.com/saref/bayan) |
 | &#x274C; | [Neuromap](docs/Neuromap.md) | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://doi.org/10.52202/079017-0554) | [GitHub](https://github.com/chrisbloecker/neuromap) | 
-| | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2502.06879) | [GitHub](https://github.com/KaHIP/CluStRE) |
+| &#x2705; | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.4230/LIPIcs.SEA.2025.11) | [GitHub](https://github.com/KaHIP/CluStRE) |
 | | LIM | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2501.12946) | [GitHub](https://github.com/wuanghoong/Less-is-More)
 
 
