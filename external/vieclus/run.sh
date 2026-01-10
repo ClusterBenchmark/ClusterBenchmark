@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads>"
+if [ "$#" -ne 5 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads> <memory_limit_gb>"
     exit 1
 fi
 
@@ -9,6 +9,7 @@ INPUT_FILE=$1
 K=$2
 TIMEOUT=$3
 THREADS=$4
+MEM_LIMIT=$5
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
 # If the input file path is relative, make it absolute.
@@ -19,12 +20,17 @@ fi
 # Make sure we are in the script's directory, so we can find the executables.
 cd "$(dirname "$0")"
 
+ulimit -v $(($MEM_LIMIT * 1024 * 1024))
+set -o pipefail
+
 for i in $(seq 1 $K);
 do
-    TIME=$(/usr/bin/time -v mpirun -n $THREADS ./vieclus "$INPUT_FILE" --time_limit="$TIMEOUT" --seed="$i" --output_filename="$BASENAME"_clustering.txt 2> "$BASENAME"_vieclus_time_mem.txt | grep 'Best solution found after' | awk '{print $5}')
+    TIME=$(timeout --kill-after=10s $(($TIMEOUT + 600)) /usr/bin/time -v mpirun -n $THREADS ./vieclus "$INPUT_FILE" --time_limit="$TIMEOUT" --seed="$i" --output_filename="$BASENAME"_clustering.txt 2> "$BASENAME"_vieclus_time_mem.txt | grep 'Best solution found after' | awk '{print $5}')
     MAX_MEM=$(cat "$BASENAME"_vieclus_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
-    echo -n "$BASENAME,$i,$MAX_MEM"
+    STATUS=$?
+
+    echo -n "vieclus,$BASENAME,$i,$MAX_MEM,$STATUS"
 
     LABEL_FILE="${INPUT_FILE%.graph}.labels"
 

@@ -1,12 +1,14 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k>"
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <memory_limit_gb>"
     exit 1
 fi
 
 INPUT_FILE=$1
 K=$2
+TIMEOUT=$3
+MEM_LIMIT=$4
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
 # If the input file path is relative, make it absolute.
@@ -17,12 +19,16 @@ fi
 # Make sure we are in the script's directory, so we can find the executables.
 cd "$(dirname "$0")"
 
+ulimit -v $(($MEM_LIMIT * 1024 * 1024))
+
 for i in $(seq 1 $K);
 do
-    TIME=$(/usr/bin/time -v ./clustre "$INPUT_FILE" --seed="$i" --one_pass_algorithm=modularity --mode=light 2> "$BASENAME"_clustre_time_mem.txt | grep 'Total Time:' | awk '{print $3}')
+    TIME=$(timeout --kill-after=10s $(($TIMEOUT + 600)) /usr/bin/time -v ./clustre "$INPUT_FILE" --seed="$i" --one_pass_algorithm=modularity --mode=light 2> "$BASENAME"_clustre_time_mem.txt | grep 'Total Time:' | awk '{print $3}')
     MAX_MEM=$(cat "$BASENAME"_clustre_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
-    echo -n "$BASENAME,$i,$MAX_MEM"
+    STATUS=$?
+
+    echo -n "clustre_fast,$BASENAME,$i,$MAX_MEM,$STATUS"
 
     LABEL_FILE="${INPUT_FILE%.graph}.labels"
 

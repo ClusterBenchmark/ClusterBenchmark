@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads>"
+if [ "$#" -ne 5 ]; then
+    echo "Usage: $0 <path_to_graph_file> <k> <timeout_seconds> <threads> <memory_limit_gb>"
     exit 1
 fi
 
@@ -9,6 +9,7 @@ INPUT_FILE=$1
 K=$2
 TIMEOUT=$3
 THREADS=$4
+MEM_LIMIT=$5
 
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
@@ -24,7 +25,11 @@ source .venv/bin/activate
 
 export OMP_NUM_THREADS="$THREADS"
 
-/usr/bin/time -v python3 gnns.py --input "$INPUT_FILE" --output "$BASENAME" --K "$K" --timeout "$TIMEOUT" --num-processes "$THREADS" > "$BASENAME"_gnns_out.txt 2> "$BASENAME"_gnns_time_mem.txt
+ulimit -v $(($MEM_LIMIT * 1024 * 1024))
+
+timeout --kill-after=10s $(($TIMEOUT * $K + 600)) /usr/bin/time -v python3 gnns.py --input "$INPUT_FILE" --output "$BASENAME" --K "$K" --timeout "$TIMEOUT" --num-processes "$THREADS" > "$BASENAME"_gnns_out.txt 2> "$BASENAME"_gnns_time_mem.txt
+
+STATUS=$?
 
 PYTHON_OUT=$(cat "$BASENAME"_gnns_out.txt)
 MAX_MEM=$(cat "$BASENAME"_gnns_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
@@ -33,7 +38,7 @@ rm "$BASENAME"_gnns_out.txt
 
 for i in $(seq 1 $K);
 do
-    echo -n "$BASENAME,$i,$MAX_MEM"
+    echo -n "gnns,$BASENAME,$i,$MAX_MEM,$STATUS"
 
     FILE="$BASENAME"_gnns_$((i - 1)).txt
     LABEL_FILE="${INPUT_FILE%.graph}.labels"

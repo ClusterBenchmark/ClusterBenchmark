@@ -1,11 +1,13 @@
 #!/bin/bash
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <path_to_graph_file>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <path_to_graph_file> <timeout_seconds> <memory_limit_gb>"
     exit 1
 fi
 
 INPUT_FILE=$1
+TIMEOUT=$2
+MEM_LIMIT=$3
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
 # If the input file path is relative, make it absolute.
@@ -18,14 +20,18 @@ cd "$(dirname "$0")"
 
 source .venv/bin/activate
 
-/usr/bin/time -v python3 run_bayan.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_bayan.txt" > "$BASENAME"_bayan_out.txt 2> "$BASENAME"_bayan_time_mem.txt
+ulimit -v $(($MEM_LIMIT * 1024 * 1024))
+
+timeout --kill-after=10s $(($TIMEOUT + 600)) /usr/bin/time -v python3 run_bayan.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_bayan.txt" > "$BASENAME"_bayan_out.txt 2> "$BASENAME"_bayan_time_mem.txt
+
+STATUS=$?
 
 PYTHON_OUT=$(cat "$BASENAME"_bayan_out.txt)
 MAX_MEM=$(cat "$BASENAME"_bayan_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
 rm "$BASENAME"_bayan_out.txt
 
-echo -n "$BASENAME,$MAX_MEM"
+echo -n "bayan,$BASENAME,$MAX_MEM,$STATUS"
 
 FILE="$BASENAME"_bayan.txt
 LABEL_FILE="${INPUT_FILE%.graph}.labels"
