@@ -23,7 +23,7 @@ ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 
 ./CONVERT_GRAPH "$INPUT_FILE" "$BASENAME".graph
 
-timeout --kill-after=10s $(($TIMEOUT * $K + 600)) /usr/bin/time -v ./streamcom -f "$BASENAME".graph --vmax-start 10000 --vmax-end 10000 -o "$BASENAME" --niter "$K" > "$BASENAME"_hollocou_out.txt 2> "$BASENAME"_hollocou_time_mem.txt
+timeout --kill-after=10s $(($TIMEOUT * $K + 1800)) /usr/bin/time -v ./streamcom -f "$BASENAME".graph --vmax-start 10000 --vmax-end 10000 -o "$BASENAME" --niter "$K" > "$BASENAME"_hollocou_out.txt 2> "$BASENAME"_hollocou_time_mem.txt
 
 STATUS=$?
 

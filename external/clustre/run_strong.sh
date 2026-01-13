@@ -23,7 +23,7 @@ ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 
 for i in $(seq 1 $K);
 do
-    timeout --kill-after=10s $(($TIMEOUT + 600)) /usr/bin/time -v ./clustre "$INPUT_FILE" --seed="$i" --one_pass_algorithm=modularity --mode=strong --ext_clustering_algorithm=VieClus --ext_algorithm_time="$TIMEOUT" > "$BASENAME"_clustre_out.txt 2> "$BASENAME"_clustre_time_mem.txt
+    timeout --kill-after=10s $(($TIMEOUT + 1800)) /usr/bin/time -v ./clustre "$INPUT_FILE" --seed="$i" --one_pass_algorithm=modularity --mode=strong --ext_clustering_algorithm=VieClus --ext_algorithm_time="$TIMEOUT" > "$BASENAME"_clustre_out.txt 2> "$BASENAME"_clustre_time_mem.txt
     MAX_MEM=$(cat "$BASENAME"_clustre_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
     STATUS=$?

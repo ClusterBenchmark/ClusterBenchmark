@@ -25,7 +25,7 @@ set -o pipefail
 
 for i in $(seq 1 $K);
 do
-    TIME=$(timeout --kill-after=10s $(($TIMEOUT + 600)) /usr/bin/time -v mpirun -n $THREADS ./vieclus "$INPUT_FILE" --time_limit="$TIMEOUT" --seed="$i" --output_filename="$BASENAME"_clustering.txt 2> "$BASENAME"_vieclus_time_mem.txt | grep 'Best solution found after' | awk '{print $5}')
+    TIME=$(timeout --kill-after=10s $(($TIMEOUT + 1800)) /usr/bin/time -v mpirun -n $THREADS ./vieclus "$INPUT_FILE" --time_limit="$TIMEOUT" --seed="$i" --output_filename="$BASENAME"_clustering.txt 2> "$BASENAME"_vieclus_time_mem.txt | grep 'Best solution found after' | awk '{print $5}')
     MAX_MEM=$(cat "$BASENAME"_vieclus_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
     STATUS=$?

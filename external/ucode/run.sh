@@ -32,7 +32,7 @@ ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 export OMP_NUM_THREADS="$THREADS"
 
 # Construct the python command
-PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 600))\" /usr/bin/time -v python3 main.py --metis_file=\"$INPUT_FILE\" --K \"$C\" --it \"$K\" --timeout=\"$TIMEOUT\" --output_file \"$BASENAME""_ucode\""
+PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 1800))\" /usr/bin/time -v python3 main.py --metis_file=\"$INPUT_FILE\" --K \"$C\" --it \"$K\" --timeout=\"$TIMEOUT\" --output_file \"$BASENAME""_ucode\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --features_file \"$FEATURES\""

@@ -23,7 +23,7 @@ source .venv/bin/activate
 
 ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 
-timeout --kill-after=10s $(($TIMEOUT * $K + 600)) /usr/bin/time -v python3 run_leiden.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_leiden_" --verbose 0 --k "$K" --timeout "$TIMEOUT" > "$BASENAME"_leiden_out.txt 2> "$BASENAME"_leiden_time_mem.txt
+timeout --kill-after=10s $(($TIMEOUT * $K + 1800)) /usr/bin/time -v python3 run_leiden.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_leiden_" --verbose 0 --k "$K" --timeout "$TIMEOUT" > "$BASENAME"_leiden_out.txt 2> "$BASENAME"_leiden_time_mem.txt
 
 STATUS=$?
 

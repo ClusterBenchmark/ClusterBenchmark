@@ -23,7 +23,7 @@ source .venv/bin/activate
 
 ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 
-timeout --kill-after=10s $(($TIMEOUT * $K + 600)) /usr/bin/time -v python3 run_louvain.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_louvain_" --verbose 0 --k "$K" --timeout "$TIMEOUT" > "$BASENAME"_louvain_out.txt 2> "$BASENAME"_louvain_time_mem.txt
+timeout --kill-after=10s $(($TIMEOUT * $K + 1800)) /usr/bin/time -v python3 run_louvain.py --input_file "$INPUT_FILE" --output_file "$BASENAME""_louvain_" --verbose 0 --k "$K" --timeout "$TIMEOUT" > "$BASENAME"_louvain_out.txt 2> "$BASENAME"_louvain_time_mem.txt
 
 STATUS=$?
 

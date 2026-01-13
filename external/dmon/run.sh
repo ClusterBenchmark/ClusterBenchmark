@@ -37,7 +37,7 @@ export OMP_NUM_THREADS="$THREADS"
 ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 
 # Construct the python command
-PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 600))\" /usr/bin/time -v python3 -m graph_embedding.dmon.train_metis --graph_path=\"$INPUT_FILE\" --n_clusters=\"$C\" --n_runs=\"$K\" --n_epochs=1000 --dropout_rate=0.5 --timeout=\"$TIMEOUT\" --n_threads=\"$THREADS\" --output_path=\"$BASENAME""_dmon_\""
+PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 1800))\" /usr/bin/time -v python3 -m graph_embedding.dmon.train_metis --graph_path=\"$INPUT_FILE\" --n_clusters=\"$C\" --n_runs=\"$K\" --n_epochs=1000 --dropout_rate=0.5 --timeout=\"$TIMEOUT\" --n_threads=\"$THREADS\" --output_path=\"$BASENAME""_dmon_\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --features_path=\"$FEATURES\""

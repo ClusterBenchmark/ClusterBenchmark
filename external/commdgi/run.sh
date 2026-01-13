@@ -37,7 +37,7 @@ ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 cd CommDGI
 
 # Construct the python command
-PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 600))\" /usr/bin/time -v python3 run_commdgi.py --metis_file \"$INPUT_FILE\" --K \"$C\" --it \"$K\" --timeout \"$TIMEOUT\" --output_file \"$BASENAME""_commdgi_\""
+PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 1800))\" /usr/bin/time -v python3 run_commdgi.py --metis_file \"$INPUT_FILE\" --K \"$C\" --it \"$K\" --timeout \"$TIMEOUT\" --output_file \"$BASENAME""_commdgi_\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --features_file \"$FEATURES\""

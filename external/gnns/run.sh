@@ -27,7 +27,7 @@ export OMP_NUM_THREADS="$THREADS"
 
 ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 
-timeout --kill-after=10s $(($TIMEOUT * $K + 600)) /usr/bin/time -v python3 gnns.py --input "$INPUT_FILE" --output "$BASENAME" --K "$K" --timeout "$TIMEOUT" --num-processes "$THREADS" > "$BASENAME"_gnns_out.txt 2> "$BASENAME"_gnns_time_mem.txt
+timeout --kill-after=10s $(($TIMEOUT * $K + 1800)) /usr/bin/time -v python3 gnns.py --input "$INPUT_FILE" --output "$BASENAME" --K "$K" --timeout "$TIMEOUT" --num-processes "$THREADS" > "$BASENAME"_gnns_out.txt 2> "$BASENAME"_gnns_time_mem.txt
 
 STATUS=$?
 

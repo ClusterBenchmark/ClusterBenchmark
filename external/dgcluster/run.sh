@@ -31,7 +31,7 @@ export OMP_NUM_THREADS="$THREADS"
 ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 
 # Construct the python command
-PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 600))\" /usr/bin/time -v python3 main.py --graph_file \"$INPUT_FILE\" --iterations \"$K\" --timelimit \"$TIMEOUT\" --output_path \"$BASENAME""_dgcluster_\""
+PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 1800))\" /usr/bin/time -v python3 main.py --graph_file \"$INPUT_FILE\" --iterations \"$K\" --timelimit \"$TIMEOUT\" --output_path \"$BASENAME""_dgcluster_\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --feature_file \"$FEATURES\""

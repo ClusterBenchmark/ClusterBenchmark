@@ -32,7 +32,7 @@ ulimit -v $(($MEM_LIMIT * 1024 * 1024))
 export OMP_NUM_THREADS="$THREADS"
 
 # Construct the python command
-PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 600))\" /usr/bin/time -v python3 train_sage.py --graph_file \"$INPUT_FILE\" --output_path \"$BASENAME\"_magi_ --iterations \"$K\" --n_clusters \"$C\" --timelimit \"$TIMEOUT\""
+PYTHON_CMD="timeout --kill-after=10s \"$(($TIMEOUT * $K + 1800))\" /usr/bin/time -v python3 train_sage.py --graph_file \"$INPUT_FILE\" --output_path \"$BASENAME\"_magi_ --iterations \"$K\" --n_clusters \"$C\" --timelimit \"$TIMEOUT\""
 
 if [ -n "$FEATURES" ]; then
     PYTHON_CMD="$PYTHON_CMD --feature_file \"$FEATURES\""
