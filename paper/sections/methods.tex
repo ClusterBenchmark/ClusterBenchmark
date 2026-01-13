@@ -1,0 +1,58 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+\subfile{../tables/methods.tex}
+
+This section contains a short description outlining the core ideas behind each clustering method. They are grouped the algorithms into categories to make it easier to navigate the survey. With in each categoriy, the algorithms are presented in order of publication date. At the top level of this taxonomy, we have \emph{Learning-based} methods and \emph{Classical modularity optimization} methods. For this distinction, \textit{Learning-based} refers to any method that train model parameters as part of the algorithm.
+
+\subsection{Classical Modularity Optimization Methods}
+
+\paragraph{CNM} A scalable greedy modularity-optimization algorithm with near-linear running time on large sparse networks and demonstrates its effectiveness on a large real-world network.
+
+\paragraph{Walktrap} Based on the idea that random walks on a graph tend to get “trapped” into densely connected parts corresponding to communities.
+
+\paragraph{Infomap} Infomap frames community detection as an information compression problem: it partitions a graph so that the expected code length of a random walk on the network is minimized, thus uncovering modules where flows concentrate. The alternative \textit{Map Equation} objective function was also introduced here.
+
+\paragraph{Louvain} The famous Louvain method, named after the location the work took place, is a multi-level approach to graph clustering. At each level, the algorithm greedily moves vertices to neighboring clusters based on the modularity delta. Once there are no improving moves, each cluster is contracted into a single vertex, and the process repeats.
+
+\paragraph{CGGCi-RG} Combination of the CGGC (Core Groups Graph Clustering) ensemble scheme with an underlying Randomized Greedy (RG) clustering algorithm. It was the best performing algorithm submitted to the 10th DIMACE Implementation Challenge.
+
+\paragraph{VNS} Variable Neighborhood Search metaheuristic that obtained the second place in the 10th DIMACS Implementation Challenge. It was a close call between VNS and CGGCi-RG.
+
+\paragraph{COMBO} TODO.
+
+\paragraph{Hollocou} Modularity optimization in the streaming setting. For each streamed edge, Hollocou employs a simple decision strategy based on a given parameter and the volumes of the communities of the two nodes.
+
+\paragraph{VieClus} A general memetic algorithm that can be adapted to optimize different
+objective functions.
+
+\paragraph{Leiden} As a direct improvement to the Louvain method, Leiden addresses a defect in the Louvain method that can lead to disconnected communities.
+
+\paragraph{Bayan} An exact algorithm for modularity optimization that uses Integer Linear Programming solvers.
+
+\paragraph{CluStRE} Improved streaming algorithm with both re-streamng and combined use of VieCLus in-memory after streaming and contraction.
+
+\paragraph{MaxSAT} An improved exact method for modularity optimization using a MaxSAT formulation.
+
+\subsection{Learning-Based Methods}
+
+Methods that find model parameters.
+
+\paragraph{DMoN}
+
+\paragraph{CommDGI}
+
+\paragraph{UCoDe}
+
+\paragraph{DGCluster}
+
+\paragraph{MAGI}
+
+\paragraph{LIM}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}

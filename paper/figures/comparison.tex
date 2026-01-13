@@ -1,0 +1,123 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+\begin{figure}
+
+    \begin{tikzpicture}[
+            paper/.style={
+                    draw,
+                    rectangle,
+                    rounded corners,
+                    align=left,
+                    font=\small,
+                    minimum width=2.5cm,
+                    minimum height=0.5cm
+                },
+            cite/.style={
+                    ->,
+                    thick,
+                    shorten >=2pt,
+                    shorten <=2pt
+                },
+            node distance=0.3cm
+        ]
+
+        % ---- Column titles ----
+        \node[font=\bfseries] (A) {Algorithm Eng.};
+        \node[font=\bfseries, right=\colsep of A] (B) {Machine Learning};
+
+        % ---- Papers: Column A ----
+        \node[paper, below=of A] (a1) {Walktrap \emph{2005}~\cite{walktrap2005}};
+        \node[paper, below=of a1] (a2) {Infomap \emph{2007}~\cite{infomap2008}};
+        \node[paper, below=of a2] (a3) {Louvain \emph{2008}~\cite{louvain2008}};
+        \node[paper, below=of a3] (a4) {VNS \emph{2012}~\cite{vns2012}};
+        \node[paper, below=of a4] (a5) {SCD \emph{2014}~\cite{scd2014}};
+        \node[paper, below=of a5] (a6) {Hollocou \emph{2017}~\cite{hollocou2017}};
+        \node[paper, below=of a6] (a7) {VieClus \emph{2018}~\cite{vieclus2018}};
+        \node[paper, below=of a7] (a8) {InfoFlow \emph{2019}~\cite{infoflow2019}};
+        \node[paper, below=of a8] (a9) {Leiden \emph{2019}~\cite{leiden2019}};
+        \node[paper, below=of a9, yshift=-3.5cm] (a10) {Bayan \emph{2024}~\cite{bayan2024}};
+        \node[paper, below=of a10, yshift=-0.9cm] (a11) {CluStRE \emph{2025}~\cite{clustre2025}};
+
+        % ---- Papers: Column B ----
+        \node[paper, below=of B, yshift=-5cm] (b1) {DANE \emph{2018}~\cite{dane2018}};
+        \node[paper, below=of b1, yshift=-1cm] (b2) {CommDGI \emph{2020}~\cite{commdgi2020}};
+        \node[paper, below=of b2] (b3) {DMoN \emph{2020}~\cite{dmon2023}};
+        \node[paper, below=of b3] (b4) {GNNS \emph{2022}~\cite{gnns2022}};
+        \node[paper, below=of b4] (b5) {UCoDe \emph{2023}~\cite{ucode2023}};
+        \node[paper, below=of b5] (b6) {DGCluster \emph{2023}~\cite{dgcluster2024}};
+        \node[paper, below=of b6] (b7) {MAGI \emph{2024}~\cite{magi2024}};
+        \node[paper, below=of b7] (b8) {Neuromap \emph{2024}~\cite{neuromap2024}};
+        \node[paper, below=of b8] (b9) {LIM \emph{2025}~\cite{lim2025}};
+
+        % ---- Within-column citations ----
+        \draw[cite, bend left=25] (a5.north west) to (a1.south west);
+        \draw[cite, bend left=25] (a5.north west) to (a2.south west);
+        \draw[cite, bend left=25] (a5.north west) to (a3.south west);
+
+        \draw[cite, bend left=25] (a6.north west) to (a1.south west);
+        \draw[cite, bend left=25] (a6.north west) to (a2.south west);
+        \draw[cite, bend left=25] (a6.north west) to (a3.south west);
+        \draw[cite] (a6) to (a5);
+
+        \draw[cite, bend right=25] (a7.north east) to (a4.south east);
+
+        \draw[cite, bend right=25] (a8.north east) to (a2.south east);
+
+        \draw[cite, bend left=15] (a9.north west) to (a3.south west);
+
+        \draw[cite] (a10) to (a9);
+        \draw[cite, bend left=10] (a10.north west) to (a1.south west);
+        \draw[cite, bend left=10] (a10.north west) to (a2.south west);
+        \draw[cite, bend left=10] (a10.north west) to (a3.south west);
+        \draw[cite, bend left=10] (a10.north west) to (a3.south west);
+
+        \draw[cite, bend left=10] (a11.north west) to (a3.south west);
+        \draw[cite, bend left=10] (a11.north west) to (a6.south west);
+        \draw[cite, bend left=10] (a11.north west) to (a7.south west);
+
+
+        \draw[cite, bend right=25] (b5.north east) to (b2.south east);
+        \draw[cite, bend right=25] (b5.north east) to (b3.south east);
+
+        \draw[cite, bend right=25] (b6.north east) to (b3.south east);
+
+        \draw[cite, bend right=25] (b7.north east) to (b2.south east);
+        \draw[cite, bend right=25] (b7.north east) to (b3.south east);
+        \draw[cite] (b7) to (b6);
+
+        \draw[cite, bend right=25] (b8.north east) to (b3.south east);
+
+        \draw[cite, bend right=25] (b9.north east) to (b2.south east);
+        \draw[cite, bend right=25] (b9.north east) to (b6.south east);
+        \draw[cite, bend right=25] (b9.north east) to (b7.south east);
+
+        % ---- Cross-column citation (intentionally rare) ----
+        \draw[cite, bend right=5] (b4.north west) to (a3.south east);
+        \draw[cite, bend right=5] (b4.north west) to (a9.south east);
+
+        \draw[cite, bend right=5] (b5.north west) to (a3.south east);
+
+        \draw[cite, bend right=5] (b8.north west) to (a2.south east);
+
+        \draw[cite, bend right=5] (b9.north west) to (a3.south east);
+
+        % % ---- Optional: shaded column backgrounds ----
+        % \node[fit=(a1)(a4), fill=blue!5, rounded corners, inner sep=6pt] {};
+        % \node[fit=(b1)(b4), fill=red!5,  rounded corners, inner sep=6pt] {};
+
+    \end{tikzpicture}
+
+    % Normal caption
+    \caption{Experimental comparisons visualized.}
+    % Description for someone who can't see (only clear text)
+    \Description{Test.}
+    \label{fig:comparisons}
+\end{figure}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}
