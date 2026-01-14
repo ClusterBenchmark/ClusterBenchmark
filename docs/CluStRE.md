@@ -19,3 +19,9 @@ The code is available at [GitHub](https://github.com/KaHIP/CluStRE).
 Issues I found:
 * Needs a newer version of CMake than what you get with sudo apt install ... (annoying)
 * Unlisted Sparsehash dependency
+
+## Experiments
+
+* Hollocou
+* Louvain
+* VieClus

@@ -2,7 +2,7 @@
 
 \begin{document}
 
-\begin{figure}
+\begin{figure*}
 
     \begin{tikzpicture}[
             paper/.style={
@@ -11,7 +11,7 @@
                     rounded corners,
                     align=left,
                     font=\small,
-                    minimum width=2.5cm,
+                    minimum width=1.5cm,
                     minimum height=0.5cm
                 },
             cite/.style={
@@ -20,88 +20,103 @@
                     shorten >=2pt,
                     shorten <=2pt
                 },
+            ae/.style={
+                    fill=cyan!50
+                },
+            ml/.style={
+                    fill=purple!50
+                },
             node distance=0.3cm
         ]
 
-        % ---- Column titles ----
-        \node[font=\bfseries] (A) {Algorithm Eng.};
-        \node[font=\bfseries, right=\colsep of A] (B) {Machine Learning};
+        \node[paper, ae] (advnds) at (1, 5) {ADVNDS};
+        \node[paper, ae] (vns) at (0, 4) {VNS~\cite{vns2012}};
+        \node[paper, ae] (cggci) at (2, 4) {CGGCi~\cite{vns2012}};
+        \node[paper, ae] (vieclus) at (1, 3) {VieClus~\cite{vieclus2018}};
+        \node[paper, ae] (maxsat) at (0, 2) {MaxSAT};
+        \node[paper, ae] (clustre) at (2, 2) {CluStRE};
+        \node[paper, ml] (gnns) at (4, 5) {GNNS};
+        \node[paper, ae] (combo) at (4, 4) {COMBO};
+        \node[paper, ae] (walktrap) at (4, 3) {Walktrap};
+        \node[paper, ae] (hollocou) at (4, 2) {Hollocou};
+        \node[paper, ae] (leiden) at (8, 5) {Leiden};
+        \node[paper, ae] (bayan) at (7.25, 4) {Bayan};
+        \node[paper, ae] (louvain) at (8, 3) {Louvain};
+        \node[paper, ae] (cnm) at (7, 2) {CNM};
+        \node[paper, ae] (wt) at (9, 2) {WT};
+        \node[paper, ml] (lim) at (11, 5) {LIM};
+        \node[paper, ml] (commdgi) at (11, 4) {CommDGI};
+        \node[paper, ml] (ucode) at (11, 3) {UCoDe};
+        \node[paper, ml] (dgcluster) at (13, 4) {DGCluster};
+        \node[paper, ml] (magi) at (14, 5) {MAGI};
+        \node[paper, ml] (dmon) at (14, 3) {DMoN};
 
-        % ---- Papers: Column A ----
-        \node[paper, below=of A] (a1) {Walktrap \emph{2005}~\cite{walktrap2005}};
-        \node[paper, below=of a1] (a2) {Infomap \emph{2007}~\cite{infomap2008}};
-        \node[paper, below=of a2] (a3) {Louvain \emph{2008}~\cite{louvain2008}};
-        \node[paper, below=of a3] (a4) {VNS \emph{2012}~\cite{vns2012}};
-        \node[paper, below=of a4] (a5) {SCD \emph{2014}~\cite{scd2014}};
-        \node[paper, below=of a5] (a6) {Hollocou \emph{2017}~\cite{hollocou2017}};
-        \node[paper, below=of a6] (a7) {VieClus \emph{2018}~\cite{vieclus2018}};
-        \node[paper, below=of a7] (a8) {InfoFlow \emph{2019}~\cite{infoflow2019}};
-        \node[paper, below=of a8] (a9) {Leiden \emph{2019}~\cite{leiden2019}};
-        \node[paper, below=of a9, yshift=-3.5cm] (a10) {Bayan \emph{2024}~\cite{bayan2024}};
-        \node[paper, below=of a10, yshift=-0.9cm] (a11) {CluStRE \emph{2025}~\cite{clustre2025}};
+        \draw[cite] (gnns.east) to[out=0, in=180, looseness=1.5] (louvain.west);
+        \draw[cite] (gnns.west) to (advnds.east);
+        \draw[cite] (gnns.east) to (leiden.west);
+        \draw[cite] (gnns.south) to (combo.north);
 
-        % ---- Papers: Column B ----
-        \node[paper, below=of B, yshift=-5cm] (b1) {DANE \emph{2018}~\cite{dane2018}};
-        \node[paper, below=of b1, yshift=-1cm] (b2) {CommDGI \emph{2020}~\cite{commdgi2020}};
-        \node[paper, below=of b2] (b3) {DMoN \emph{2020}~\cite{dmon2023}};
-        \node[paper, below=of b3] (b4) {GNNS \emph{2022}~\cite{gnns2022}};
-        \node[paper, below=of b4] (b5) {UCoDe \emph{2023}~\cite{ucode2023}};
-        \node[paper, below=of b5] (b6) {DGCluster \emph{2023}~\cite{dgcluster2024}};
-        \node[paper, below=of b6] (b7) {MAGI \emph{2024}~\cite{magi2024}};
-        \node[paper, below=of b7] (b8) {Neuromap \emph{2024}~\cite{neuromap2024}};
-        \node[paper, below=of b8] (b9) {LIM \emph{2025}~\cite{lim2025}};
+        \draw[cite] (combo.east) to[out=0, in=180, looseness=1.5] (louvain.west);
 
-        % ---- Within-column citations ----
-        \draw[cite, bend left=25] (a5.north west) to (a1.south west);
-        \draw[cite, bend left=25] (a5.north west) to (a2.south west);
-        \draw[cite, bend left=25] (a5.north west) to (a3.south west);
+        \draw[cite] (leiden.-40) to (louvain.40);
 
-        \draw[cite, bend left=25] (a6.north west) to (a1.south west);
-        \draw[cite, bend left=25] (a6.north west) to (a2.south west);
-        \draw[cite, bend left=25] (a6.north west) to (a3.south west);
-        \draw[cite] (a6) to (a5);
+        \draw[cite] (bayan.-40) to (louvain.150);
 
-        \draw[cite, bend right=25] (a7.north east) to (a4.south east);
+        \draw[cite] (walktrap) to (louvain);
 
-        \draw[cite, bend right=25] (a8.north east) to (a2.south east);
+        \draw[cite] (hollocou.east) to[out=0, in=180, looseness=1.5] (louvain.west);
 
-        \draw[cite, bend left=15] (a9.north west) to (a3.south west);
+        % % ---- Within-column citations ----
+        % \draw[cite, bend left=25] (a5.north west) to (a1.south west);
+        % \draw[cite, bend left=25] (a5.north west) to (a2.south west);
+        % \draw[cite, bend left=25] (a5.north west) to (a3.south west);
 
-        \draw[cite] (a10) to (a9);
-        \draw[cite, bend left=10] (a10.north west) to (a1.south west);
-        \draw[cite, bend left=10] (a10.north west) to (a2.south west);
-        \draw[cite, bend left=10] (a10.north west) to (a3.south west);
-        \draw[cite, bend left=10] (a10.north west) to (a3.south west);
+        % \draw[cite, bend left=25] (a6.north west) to (a1.south west);
+        % \draw[cite, bend left=25] (a6.north west) to (a2.south west);
+        % \draw[cite, bend left=25] (a6.north west) to (a3.south west);
+        % \draw[cite] (a6) to (a5);
 
-        \draw[cite, bend left=10] (a11.north west) to (a3.south west);
-        \draw[cite, bend left=10] (a11.north west) to (a6.south west);
-        \draw[cite, bend left=10] (a11.north west) to (a7.south west);
+        % \draw[cite, bend right=25] (a7.north east) to (a4.south east);
+
+        % \draw[cite, bend right=25] (a8.north east) to (a2.south east);
+
+        % \draw[cite, bend left=15] (a9.north west) to (a3.south west);
+
+        % \draw[cite] (a10) to (a9);
+        % \draw[cite, bend left=10] (a10.north west) to (a1.south west);
+        % \draw[cite, bend left=10] (a10.north west) to (a2.south west);
+        % \draw[cite, bend left=10] (a10.north west) to (a3.south west);
+        % \draw[cite, bend left=10] (a10.north west) to (a3.south west);
+
+        % \draw[cite, bend left=10] (a11.north west) to (a3.south west);
+        % \draw[cite, bend left=10] (a11.north west) to (a6.south west);
+        % \draw[cite, bend left=10] (a11.north west) to (a7.south west);
 
 
-        \draw[cite, bend right=25] (b5.north east) to (b2.south east);
-        \draw[cite, bend right=25] (b5.north east) to (b3.south east);
+        % \draw[cite, bend right=25] (b5.north east) to (b2.south east);
+        % \draw[cite, bend right=25] (b5.north east) to (b3.south east);
 
-        \draw[cite, bend right=25] (b6.north east) to (b3.south east);
+        % \draw[cite, bend right=25] (b6.north east) to (b3.south east);
 
-        \draw[cite, bend right=25] (b7.north east) to (b2.south east);
-        \draw[cite, bend right=25] (b7.north east) to (b3.south east);
-        \draw[cite] (b7) to (b6);
+        % \draw[cite, bend right=25] (b7.north east) to (b2.south east);
+        % \draw[cite, bend right=25] (b7.north east) to (b3.south east);
+        % \draw[cite] (b7) to (b6);
 
-        \draw[cite, bend right=25] (b8.north east) to (b3.south east);
+        % \draw[cite, bend right=25] (b8.north east) to (b3.south east);
 
-        \draw[cite, bend right=25] (b9.north east) to (b2.south east);
-        \draw[cite, bend right=25] (b9.north east) to (b6.south east);
-        \draw[cite, bend right=25] (b9.north east) to (b7.south east);
+        % \draw[cite, bend right=25] (b9.north east) to (b2.south east);
+        % \draw[cite, bend right=25] (b9.north east) to (b6.south east);
+        % \draw[cite, bend right=25] (b9.north east) to (b7.south east);
 
-        % ---- Cross-column citation (intentionally rare) ----
-        \draw[cite, bend right=5] (b4.north west) to (a3.south east);
-        \draw[cite, bend right=5] (b4.north west) to (a9.south east);
+        % % ---- Cross-column citation (intentionally rare) ----
+        % \draw[cite, bend right=5] (b4.north west) to (a3.south east);
+        % \draw[cite, bend right=5] (b4.north west) to (a9.south east);
 
-        \draw[cite, bend right=5] (b5.north west) to (a3.south east);
+        % \draw[cite, bend right=5] (b5.north west) to (a3.south east);
 
-        \draw[cite, bend right=5] (b8.north west) to (a2.south east);
+        % \draw[cite, bend right=5] (b8.north west) to (a2.south east);
 
-        \draw[cite, bend right=5] (b9.north west) to (a3.south east);
+        % \draw[cite, bend right=5] (b9.north west) to (a3.south east);
 
         % % ---- Optional: shaded column backgrounds ----
         % \node[fit=(a1)(a4), fill=blue!5, rounded corners, inner sep=6pt] {};
@@ -114,7 +129,7 @@
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:comparisons}
-\end{figure}
+\end{figure*}
 
 \ifSubfilesClassLoaded{%
     \bibliography{../paper.bib}%

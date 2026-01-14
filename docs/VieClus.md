@@ -15,3 +15,9 @@ Short recap:
 ## Code
 
 The code is available at [GitHub](https://github.com/VieClus/VieClus) and was easy to use.
+
+## Experiments
+
+* VNS
+* CGGC
+* ParMod (Maybe include this)

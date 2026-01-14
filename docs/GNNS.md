@@ -15,3 +15,10 @@ Short recap:
 ## Code
 
 There is an included [GitHub](https://github.com/Alexander-Belyi/GNNS) repo with the code. However, everything is in a jupyter notebook, which makes it less than ideal to use. I have not yet tried to run the code.
+
+## Experiments
+
+* Louvain
+* Leiden
+* Combo
+* ADVNDS

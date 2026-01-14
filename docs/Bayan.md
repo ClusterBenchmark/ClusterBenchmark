@@ -22,3 +22,10 @@ Issues I found:
 * Needs Gurobi license...
 * Does not respect the time_allowed option.
 * Max 3000 edges, extremely slow at those sizes
+
+## Experiments
+
+* Combo
+* Leiden
+* Walktrap
+* Louvain

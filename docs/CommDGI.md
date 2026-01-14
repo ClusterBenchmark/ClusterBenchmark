@@ -15,3 +15,7 @@ Short recap:
 ## Code
 
 There is a github [repo](https://github.com/FDUDSDE/CommDGI) for the paper. I have made this code work for METIS inputs, but there is another level to the loss function. In the code, they only use the dgi loss, while the modularity_loss is commented out. I tried changing back to the combined loss and only modularity loss. From initial testing, the pure modularity based loss seems to work best.
+
+## Experiements
+
+Not compared to other dedicated clustering algorithms

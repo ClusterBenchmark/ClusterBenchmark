@@ -24,3 +24,7 @@ clusters = wtc.as_clustering()
 print(clusters)              # Community membership
 print(clusters.modularity)   # Modularity score of the partition
 ```
+
+## Experiments
+
+No comparisons with previous methods

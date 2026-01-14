@@ -14,3 +14,9 @@
 ## Code
 
 [GitHub](https://github.com/AU-DIS/UCODE)
+
+## Experiments
+
+* Louvain
+* DMoN
+* CommDGI

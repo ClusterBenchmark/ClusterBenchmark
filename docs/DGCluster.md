@@ -18,3 +18,7 @@
 ## Usage
 
 Maybe tweak lambda to 0.0, gave best modularity results in the paper.
+
+## Experiments
+
+* DMoN

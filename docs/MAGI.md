@@ -21,3 +21,8 @@ I had a hard time making the `pip install -r requirements.txt` command work, but
 ## Further Info
 
 MAGI is not really a clustering algorithm. Instead, it performs graph embedding and then runs k-means clustering. This means the user needs to know the number of clusters upfront. They also train one model for each instance, so in a sense, the training is the algorithm. It is not intended to train a model that can then be reused. It makes some sense given the unsupervised nature (modularity based relaxation). But one downside of this is that the whole procedure is extremely slow. 
+
+## Experiments
+
+* DMoN
+* DGCluster

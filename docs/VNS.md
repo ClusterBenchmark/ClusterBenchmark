@@ -15,3 +15,7 @@ Short recap:
 ## Code
 
 There is no publically available code for this paper.
+
+## Experiments
+
+Part of the DIMACS Challange, compared against CGGCI.

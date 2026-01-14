@@ -19,11 +19,15 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 
 | Ready | Solver | Year | Place | #Cited | AE | ML | $Q$ | F1 | WCC | ME | Link | Code |
 | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
+| | [CNM](docs/CNM.md) | 2004 | |  | | | | | | | [Link]() | |
 | &#x2705; | [Walktrap](docs/Walktrap.md) | 2005 | Paris | 2860 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1007/11569596_31) | |
 | &#x2705; | [Infomap](docs/Infomap.md) | 2007 | US | 5356 | &#x2705; | | &#x2705; | | | &#x2705; | [Link](https://doi.org/10.1073/pnas.0706851105) | [GitHub](https://github.com/mapequation/infomap) |
+| | [WT](docs/WT.md) | 2007 | | | | | | | | | [Link]() | |
 |  &#x2705; | [Louvain](docs/Louvain.md) | 2008 | Belgium | 26291 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1088/1742-5468/2008/10/P10008) | [SourceForge](https://sourceforge.net/projects/louvain/) |
+| &#x274C; | [CGGCi](docs/CGGCI.md) | 2012 | | | | | | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
 | &#x274C; | [VNS](docs/VNS.md) | 2012 | Brazil | 65 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
 | &#x274C; | [SCD](docs/SCD.md) | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://doi.org/10.1145/2566486.2568010) | &#x274C; |
+| | [ADVNDS](docs/ADVNDS.md) | 2017 | | | | | | | | | [Link]() |
 | &#x2705; | [Hollocou](docs/Hollocou.md) | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.48550/arXiv.1712.04337) | [GitHub](https://github.com/ahollocou/graph-streaming)
 | &#x2705; | [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.4230/LIPIcs.SEA.2018.3) | [GitHub](https://github.com/VieClus/VieClus) |
 | &#x274C; | [DANE](docs/DANE.md) | 2018 | US | 328 | | &#x2705; | | &#x2705; | | | [Link](https://doi.org/10.24963/ijcai.2018/467) | &#x274C; |
@@ -38,7 +42,8 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [Bayan](docs/Bayan.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1103/PhysRevE.110.044315) | [GitHub](https://github.com/saref/bayan) |
 | &#x274C; | [Neuromap](docs/Neuromap.md) | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://doi.org/10.52202/079017-0554) | [GitHub](https://github.com/chrisbloecker/neuromap) | 
 | &#x2705; | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.4230/LIPIcs.SEA.2025.11) | [GitHub](https://github.com/KaHIP/CluStRE) |
-| | LIM | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://arxiv.org/abs/2501.12946) | [GitHub](https://github.com/wuanghoong/Less-is-More)
+| | [LIM](docs/LIM.md) | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1038/s41598-025-22860-z) | [GitHub](https://github.com/wuanghoong/Less-is-More)
+| | [MaxSAT](docs/MaxSAT.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link]() | [GitHub]() |
 
 
 ## Papers and solvers to check out
