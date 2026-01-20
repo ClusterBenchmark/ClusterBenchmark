@@ -19,7 +19,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 
 | Ready | Solver | Year | Place | #Cited | AE | ML | $Q$ | F1 | WCC | ME | Link | Code |
 | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- | :- |
-| | [CNM](docs/CNM.md) | 2004 | |  | | | | | | | [Link]() | |
+| &#x2705; | [CNM](docs/CNM.md) | 2004 | |  | | | | | | | [Link](https://doi.org/10.1103/PhysRevE.70.066111) | |
 | &#x2705; | [Walktrap](docs/Walktrap.md) | 2005 | Paris | 2860 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1007/11569596_31) | |
 | &#x2705; | [Infomap](docs/Infomap.md) | 2007 | US | 5356 | &#x2705; | | &#x2705; | | | &#x2705; | [Link](https://doi.org/10.1073/pnas.0706851105) | [GitHub](https://github.com/mapequation/infomap) |
 | | [WT](docs/WT.md) | 2007 | | | | | | | | | [Link]() | |
