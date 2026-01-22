@@ -22,7 +22,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [CNM](docs/CNM.md) | 2004 | |  | | | | | | | [Link](https://doi.org/10.1103/PhysRevE.70.066111) | |
 | &#x2705; | [Walktrap](docs/Walktrap.md) | 2005 | Paris | 2860 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1007/11569596_31) | |
 | &#x2705; | [Infomap](docs/Infomap.md) | 2007 | US | 5356 | &#x2705; | | &#x2705; | | | &#x2705; | [Link](https://doi.org/10.1073/pnas.0706851105) | [GitHub](https://github.com/mapequation/infomap) |
-| | [WT](docs/WT.md) | 2007 | | | | | | | | | [Link]() | |
+| &#x2705; | [WT](docs/WT.md) | 2007 | | | | | | | | | [Link](https://doi.org/10.1145/1242572.1242805) | |
 |  &#x2705; | [Louvain](docs/Louvain.md) | 2008 | Belgium | 26291 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1088/1742-5468/2008/10/P10008) | [SourceForge](https://sourceforge.net/projects/louvain/) |
 | &#x274C; | [CGGCi](docs/CGGCI.md) | 2012 | | | | | | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
 | &#x274C; | [VNS](docs/VNS.md) | 2012 | Brazil | 65 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
