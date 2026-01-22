@@ -43,7 +43,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x2705; | [Bayan](docs/Bayan.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1103/PhysRevE.110.044315) | [GitHub](https://github.com/saref/bayan) |
 | &#x274C; | [Neuromap](docs/Neuromap.md) | 2024 | Switzerland | 3 | | &#x2705; | | | | &#x2705; | [Link](https://doi.org/10.52202/079017-0554) | [GitHub](https://github.com/chrisbloecker/neuromap) | 
 | &#x2705; | [CluStRE](docs/CluStRE.md) | 2025 | Germany | 0 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.4230/LIPIcs.SEA.2025.11) | [GitHub](https://github.com/KaHIP/CluStRE) |
-| | [LIM](docs/LIM.md) | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1038/s41598-025-22860-z) | [GitHub](https://github.com/wuanghoong/Less-is-More)
+| &#x2705; | [LIM](docs/LIM.md) | 2025 | China | 0 | | &#x2705; | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.1038/s41598-025-22860-z) | [GitHub](https://github.com/wuanghoong/Less-is-More)
 | | [MaxSAT](docs/MaxSAT.md) | 2024 | Canada | 18 | &#x2705; | | &#x2705; | | | | [Link]() | [GitHub]() |
 
 
