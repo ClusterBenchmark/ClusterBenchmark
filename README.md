@@ -27,6 +27,7 @@ For more information, see the dedicated [page on objective functions](docs/Objec
 | &#x274C; | [CGGCi](docs/CGGCI.md) | 2012 | | | | | | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
 | &#x274C; | [VNS](docs/VNS.md) | 2012 | Brazil | 65 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
 | &#x274C; | [SCD](docs/SCD.md) | 2014 | Barcelona | 192 | &#x2705; | | | &#x2705; | &#x2705; | | [Link](https://doi.org/10.1145/2566486.2568010) | &#x274C; |
+| &#x2705; | [COMBO](docs/COMBO.md) | 2014 | | | | | | | | | [Link](https://doi.org/10.1103/PhysRevE.90.012811) | |
 | &#x274C; | [ADVNDS](docs/ADVNDS.md) | 2017 | | | | | | | | | [Link](https://doi.org/10.1007/s10479-017-2553-9) |
 | &#x2705; | [Hollocou](docs/Hollocou.md) | 2017 | France | 18 | &#x2705; | | &#x2705; | &#x2705; | | | [Link](https://doi.org/10.48550/arXiv.1712.04337) | [GitHub](https://github.com/ahollocou/graph-streaming)
 | &#x2705; | [VieClus](docs/VieClus.md) | 2018 | Vienna | 14 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.4230/LIPIcs.SEA.2018.3) | [GitHub](https://github.com/VieClus/VieClus) |
