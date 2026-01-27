@@ -1,0 +1,30 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+\begin{table}
+    \caption{Real-world instances with known ground truth clusters. The $|C|$ columns indicates the number of clusters.}
+    \label{tab:real_world_instances}
+    \begin{tabular}{lrrrr}
+        \toprule
+        Instance         & $n$                & $m$                 & $|\mathcal{F}|$ & $|C|$         \\
+        \midrule
+        Amazon-Computers & \numprint{13752}   & \numprint{245861}   & \numprint{767}  & \numprint{10} \\
+        Amazon-Photo     & \numprint{7650}    & \numprint{119081}   & \numprint{745}  & \numprint{8}  \\
+        Citeseer         & \numprint{3327}    & \numprint{4552}     & \numprint{3703} & \numprint{6}  \\
+        Coauthor-CS      & \numprint{18333}   & \numprint{81894}    & \numprint{6805} & \numprint{15} \\
+        Coauthor-Physics & \numprint{34493}   & \numprint{247962}   & \numprint{8415} & \numprint{5}  \\
+        Cora             & \numprint{2708}    & \numprint{5278}     & \numprint{1433} & \numprint{7}  \\
+        ogbn-Arxiv       & \numprint{169343}  & \numprint{1157799}  & \numprint{128}  & \numprint{40} \\
+        ogbn-Products    & \numprint{2449029} & \numprint{61859012} & \numprint{100}  & \numprint{47} \\
+        Pubmed           & \numprint{19717}   & \numprint{44324}    & \numprint{500}  & \numprint{3}  \\
+        Reddit           & \numprint{232965}  & \numprint{57307946} & \numprint{602}  & \numprint{41} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}

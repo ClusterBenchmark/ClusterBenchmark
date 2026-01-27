@@ -5,31 +5,31 @@
 \begin{table*}
     \caption{Comparison of the moethds included in the experimental survey. The \emph{Code Available} field is defiend as follows: $\times$ means not available, one $\star$ means code is available but not prepared for use in any way, $\star\star$ is for methods with open source implementations with well defined input/output formats, and $\star\star\star$ means the algorithm is easy to use via portable Python packages such as the CDlib package. }
     \label{tab:comp}
-    \begin{tabular}{rrrrrrrr}
+    \begin{tabular}{rrrrrrrrrr}
         \toprule
-        Method    & Year & Code Available    & Stochastic & Learning-Based & Fixed Cluster Count & Exact      & Approx. Running Time      \\
+        Method    & Year & Code Available    & Stochastic & Parallel   & Learning-Based & Features   & Fixed $|C|$ & Exact      & Approx. Running Time      \\
         \midrule
-        CNM       & 2004 & $\star\star\star$ &            &                &                     &            & $\mathcal{O}(n\log^2{}n)$ \\
-        Walktrap  & 2005 & $\star\star\star$ & \checkmark &                &                     &            & $\mathcal{O}(n^2\log{}n)$ \\
-        WT        & 2007 & $\star\star\star$ &            &                &                     &            & Improved CNM              \\
-        Louvain   & 2008 & $\star\star\star$ & \checkmark &                &                     &            & ?                         \\
-        CGGCI     & 2012 & $\times$          & ?          &                &                     &            & ?                         \\
-        VNS       & 2012 & $\times$          & \checkmark &                &                     &            & ?                         \\
-        COMBO     & 2014 & $\star\star\star$ & \checkmark &                &                     &            & ?                         \\
-        ADVNDS    & 2017 & $\times$          & \checkmark &                &                     &            & Search-based              \\
-        Hollocou  & 2017 & $\star\star$      & ?          &                &                     &            & ?                         \\
-        VieClus   & 2018 & $\star\star$      & \checkmark &                &                     &            & ?                         \\
-        Leiden    & 2019 & $\star\star\star$ & \checkmark &                &                     &            & ?                         \\
-        DMoN      & 2020 & $\star$           & ?          & \checkmark     & \checkmark          &            & ?                         \\
-        CommDGI   & 2020 & $\star$           & ?          & \checkmark     & \checkmark          &            & ?                         \\
-        GNNS      & 2022 & $\star$           & ?          & \checkmark     &                     &            & ?                         \\
-        UCoDe     & 2023 & $\star$           & ?          & \checkmark     & \checkmark          &            & ?                         \\
-        DGCluster & 2023 & $\star$           & ?          & \checkmark     &                     &            & ?                         \\
-        MAGI      & 2024 & $\star$           & ?          & \checkmark     & \checkmark          &            & ?                         \\
-        Bayan     & 2024 & $\star\star$      &            &                &                     & \checkmark & ?                         \\
-        CluStRE   & 2025 & $\star\star$      & ?          &                &                     &            & ?                         \\
-        LIM       & 2025 & $\star$           & \checkmark & \checkmark     &                     &            & ?                         \\
-        MaxSAT    & 2025 & ?                 &            &                &                     & \checkmark & ?                         \\
+        CNM       & 2004 & $\star\star\star$ &            &            &                &            &             &            & $\mathcal{O}(n\log^2{}n)$ \\
+        Walktrap  & 2005 & $\star\star\star$ & \checkmark &            &                &            &             &            & $\mathcal{O}(n^2\log{}n)$ \\
+        WT        & 2007 & $\star\star\star$ &            &            &                &            &             &            & Improved CNM              \\
+        Louvain   & 2008 & $\star\star\star$ & \checkmark &            &                &            &             &            & ?                         \\
+        CGGCI     & 2012 & $\times$          & ?          &            &                &            &             &            & ?                         \\
+        VNS       & 2012 & $\times$          & \checkmark &            &                &            &             &            & ?                         \\
+        COMBO     & 2014 & $\star\star\star$ & \checkmark &            &                &            &             &            & ?                         \\
+        ADVNDS    & 2017 & $\times$          & \checkmark &            &                &            &             &            & Search-based              \\
+        Hollocou  & 2017 & $\star\star$      & ?          &            &                &            &             &            & ?                         \\
+        VieClus   & 2018 & $\star\star$      & \checkmark &            &                &            &             &            & ?                         \\
+        Leiden    & 2019 & $\star\star\star$ & \checkmark & \checkmark &                &            &             &            & ?                         \\
+        DMoN      & 2020 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
+        CommDGI   & 2020 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
+        GNNS      & 2022 & $\star$           & \checkmark & \checkmark & \checkmark     &            &             &            & ?                         \\
+        UCoDe     & 2023 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
+        DGCluster & 2023 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark &             &            & ?                         \\
+        MAGI      & 2024 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
+        Bayan     & 2024 & $\star\star$      &            &            &                &            &             & \checkmark & ?                         \\
+        CluStRE   & 2025 & $\star\star$      & ?          &            &                &            &             &            & ?                         \\
+        LIM       & 2025 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark &             &            & ?                         \\
+        MaxSAT    & 2025 & ?                 &            &            &                &            &             & \checkmark & ?                         \\
         \bottomrule
     \end{tabular}
 \end{table*}

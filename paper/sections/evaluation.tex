@@ -1,0 +1,39 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+In the following section, we present the evaluation methodology used in this experimental survey. The main contribution is the adaptation of 18 clustering algorithms behind one unified interface. In addition to enabling the experiments presented in this survey, it will also serve as an openly available resource for future work on graph clustering, simplifying the evaluation of older methods on new data or machines. This section also includes details on the datasets we used to evaluate the clustering algorithms and the computational environment.
+
+\subsection{Implementation}
+
+As shown in Table~\ref{tab:comp}, over half of the clustering algorithms in the literature lack ready-to-use interfaces for clustering new data. Furthermore, among those with properly documented code, there are wide differences in the input graph format, output formats, and the additional information they report, such as time and memory consumption. As a result, it can take significant effort to get a particular algorithm to run and extract the results.
+
+To address this problem, we aim to provide an interface with a single common input and output format and consistent time and memory monitoring. The interface exposes a common set of inputs, while allowing solver-specific parameters to be provided when applicable.
+
+\[\textsc{Cluster}(G, T_{\max}, p, k, M_{\max}, \mathcal{F})\]
+
+Where $G$ is the input graph, $T_{\max}$ is the wall-clock time limit, $p$ is the number of threads available to the algorithm, $k$ is the number of clusters to compute, $M_{\max}$ is the memory limit in gigabytes, and $\mathcal{F}$ are the graph features.
+
+Parameters $p$, $k$, and $\mathcal{F}$ are only used by a subset of the solvers. From Table~\ref{tab:comp}, parallel solvers use $p$, those that compute a fixed number of clusters use $k$, and any solver that uses graph features can optionally accept $\mathcal{F}$. When $\mathcal{F}$ is not provided, but the solver expects features, a single 1.0 value is assigned to each vertex as the feature.
+
+Regarding code changes, we have tried to make as few modifications to the original source code as possible. Whenever possible, we use the authors' implementations or the most commonly used library implementation. The exact setup for each algorithm is described in our openly available GitHub repository\footnote{\url{https://github.com/KennethLangedal/Clustering}}. We did, however, make some deliberate changes to ensure consistent timing and quality measures.
+
+\begin{itemize}
+    \item Parsing the input and writing the output to a file is not counted in the timing of the algorithm.
+    \item For search-based algorithms that always run for the entire $T_{\max}$ duration, the recorded computation time is defined as the point in time when the best solution was found.
+    \item Learning-based methods that train a neural network as part of the algorithm will break the training loop at $T_{\max}$, and use the current model at that time to produce the final clustering.
+\end{itemize}
+
+\section{Dataset}
+
+We consider three datasets commonly used in the literature. The first set consistes of real-world instances with known ground truth clusters. These graphs are commonly used by the machine learning algorithms. Next, we consider the instances used as part of the 10th DIMACS implementaion challange on graph clustering. This dataset is popular among the classical modularity optimization methods. Finally, we use a dataset of syntetically generated graph with node features. The particual generate we use allow us to explore the algorithms sensitivity to noise in both the graph and features. (TODO, rewrite this section with more details more details).
+
+\subfile{../tables/real_world_instances.tex}
+
+\subfile{../tables/dimacs_instances.tex}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}
