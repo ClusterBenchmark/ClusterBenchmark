@@ -24,13 +24,19 @@ Regarding code changes, we have tried to make as few modifications to the origin
     \item Learning-based methods that train a neural network as part of the algorithm will break the training loop at $T_{\max}$, and use the current model at that time to produce the final clustering.
 \end{itemize}
 
-\section{Dataset}
+\subsection{Dataset}
 
 We consider three datasets commonly used in the literature. The first set consistes of real-world instances with known ground truth clusters. These graphs are commonly used by the machine learning algorithms. Next, we consider the instances used as part of the 10th DIMACS implementaion challange on graph clustering. This dataset is popular among the classical modularity optimization methods. Finally, we use a dataset of syntetically generated graph with node features. The particual generate we use allow us to explore the algorithms sensitivity to noise in both the graph and features. (TODO, rewrite this section with more details more details).
 
 \subfile{../tables/real_world_instances.tex}
 
-\subfile{../tables/dimacs_instances.tex}
+\subsection{Computational Environment}
+
+All experiments are conducted on a machine with an AMD EPYC 9754 128-core processor with 755 GB of memory, running Ubuntu 24.04.3 with Linux kernel 6.8.0-87. For algorithms with compiled software, we use GCC version 13.3.0, and for Python implementations we use Python version 3.12.3.
+
+In order to speed up experiments, we evaluate three algorithms in parallel. For parallel algorithms, we evaluate them both sequentially and using 16 threads. If an algorithm exceeds 250 GB of memory usage on an input instance, it is killed and recorded as \emph{memory limit exceeded} for that graph. Similarly, we assign each algorithm a time limit of 1 hour per input graph. Unlike the memory limitation, we are more leanint with the time limt due to the nature of some learning based algorthms that train a model for a fixed number of iterations. Only if an algorithm overshoots the time limit by more than 50\% do we kill the process and record that instance as \emph{time limit exceeded}.
+
+For algorithms that needs to be told the number of clusters, we either provide the exact number when ground truth labels are known, or 16 clusters otherwise, as is commonly used in the literature. Since several of the algorithms are Stochastic, we perform each experiemtn 5 times and take the best result.
 
 \ifSubfilesClassLoaded{%
     \bibliography{../paper.bib}%

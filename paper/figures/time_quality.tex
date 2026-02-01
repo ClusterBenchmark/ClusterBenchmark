@@ -1,0 +1,73 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+\pgfplotsset{
+cycle list/.define={my marks}{
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=square*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=triangle*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=diamond*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=halfcircle*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}, mark options={rotate=90}, scale=1.25},mark=halfsquare right*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=triangle*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=halfdiamond*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=10-pointed star\\
+}
+}
+
+\begin{figure}
+
+    \begin{tikzpicture}
+        \begin{axis}[
+                ymin=0.0, ymax=1.0,
+                height=0.3\textwidth,
+                width=0.45\textwidth,
+                xmax=20000,
+                xmode=log,
+                axis lines=middle,
+                axis x line*=bottom,
+                axis y line*=left,
+                y axis line style={-},
+                cycle list/Dark2,
+                cycle multiindex* list={
+                        my marks\nextlist
+                        Dark2\nextlist
+                        linestyles\nextlist
+                    },
+                mark size=3pt,
+                ylabel near ticks,
+                ylabel={Modularity},
+                xlabel={Microseconds per edge},
+            ]
+
+            \addplot coordinates {(57.603373500234234, 0.6883864993802071)};
+            \addplot coordinates {(1.2495166772612176, 0.7467168504587761)};
+            \addplot coordinates {(0.027657947491190934, 0.26087939419857237)};
+            \addplot coordinates {(1465.5489135683392, 0.7576061812615741)};
+            \addplot coordinates {(0.5994899748926823, 0.7545419116489159)};
+            \addplot coordinates {(948.5741023117283, 0.46336250241209953)};
+
+            \addplot coordinates {(19499.523710563695, 0.6603309780162184)};
+            \addplot coordinates {(491.6126018770638, 0.7226953377569149)};
+            \addplot coordinates {(5577.320249077162, 0.6202928248036939)};
+            \addplot coordinates {(600.0758423676816, 0.713305998339106)};
+            \addplot coordinates {(3564.772711411096, 0.6850822252894211)};
+            \addplot coordinates {(0.09458569102305557, 0.48440509988669495)};
+            ,
+
+        \end{axis}
+    \end{tikzpicture}
+
+    % Normal caption
+    \caption{ Ratio between time per edge and quality, using the geometric mean for both measures. This plot shares legend with Figure~\ref{fig:comparisons}. Parallel algorithms have two connected points, showing parallel and sequential versions. }
+    % Description for someone who can't see (only clear text)
+    \Description{Test.}
+    \label{fig:efficiency}
+\end{figure}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}

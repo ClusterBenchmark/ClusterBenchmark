@@ -4,6 +4,8 @@ bin/*
 
 external/*/.venv
 
+paper/data/.venv 
+
 .vscode/*
 .gitignore
 
@@ -16,4 +18,8 @@ FEATURE
 
 features/*
 instances*
-latex/.venv/
+latex/*
+scripts/.venv/*
+scripts/data/*
+scripts/assortativity/*
+scripts/feature_std/*

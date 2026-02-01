@@ -2,6 +2,32 @@
 
 \begin{document}
 
+\subfile{../figures/perf_quality.tex}
+
+In this section, we present the results of our experimental evaluation of the 18 algorithms with openly available implementations. This section is divided into three main parts. The first part presents results for the real-world dataset shown in Table~\ref{tab:real_world_instances}, and the instances from the 10th DIMACS implementation challenge shown in Table~\ref{tab:dimacs_instances}. The second part investigates the execution time and memory consumption, as well as the effect that parallel processing has on the algorithms that support it. And finally, the third part presents results for our syntactically generated graphs with varying amounts of noise applied to the graph structure and the node features.
+
+\subsection{State-of-the-Art Comparisons}
+
+Figure~\ref{fig:comparisons} shows the main results of our experimental comparison. The first result that stands out in terms of modularity optimization is that \textsc{VieClus} achieves the best result on \emph{all} instances when it finishes within the time and memory constraints. There are two graphs where \textsc{VieClus} exceeded the memory limit: uk-2002 and uk-2007-05, both from the DIMACS set. This result aligns with the results presented by the authors of \textsc{VieClus}, who excluded these two graphs in particular because they were too large for a memetic algorithm~\cite{vieclus2018}.
+
+(TODO, paragraph on exact solutions).
+
+For graphs with known ground-truth clusters, we observe a much more even split between the algorithms. However, the \textsc{MAGI} method stands out as the best-performing algorithm on this dataset, with consistently high F1 scores and the best worst-case performance. It is worth noting that most algorithms optimize modularity, while the ground-truth clusters could have relatively low modularity. For instance, the ground-truth clusters for the Citeseer graph have a modularity score of \numprint{0.54}, much lower than the highest recorded modularity by \textsc{VieClus} of \numprint{0.89}. In fact, all tested algorithms compute clusterings with higher modularity scores than the ground-truth clustering on this graph. One reason for this discrepancy is how the ground-truth clusters are defined. The Citeseer graph is a citation network in which vertices are scientific publications and edges represent citations. The ground-truth clusters represent categories of each publication. As Figure~\ref{fig:comparisons} would indicate, there is no guarantee that a particular publication favors citations within its own category, which would have aligned perfectly with the modularity objective.
+
+There are significant differences between learning-based methods when applied to data without vertex features. Algorithms such as \textsc{UCoDe}, which was among the strongest learning-based algorithms on real-world instances, struggle to produce meaningful clusterings on DIMACS graphs. \textsc{DMoN} and \textsc{CommDGI} perform well despite being designed for graphs with node features and a known number of clusters. Unsurprisingly, \textsc{GNNS} performs best in this category, being the only learning-based algorithm designed for graphs without features.
+
+(Streaming paragraph)
+
+(Exact paragraph)
+
+\subsection{Computational Efficiency}
+
+\subfile{../figures/time_quality.tex}
+
+Judging computational efficiency is made difficult by the wide variety of methods. Figure~\ref{fig:efficiency} shows the relation between clustering quality and computational time to highlight the main tendencies of the algorithms. Reading the figure from left to right, the streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} are by far the fastest. Next are the two closely related algorithms \textsc{Leiden} and \textsc{Louvain}, both scoring near the top in both quality and execution time, only beaten by \textsc{VieClus} in terms of solution quality. Unsurprisingly, most learning-based methods take a long time to produce a clustering, but they also achieve high solution quality.
+
+% \subfile{../tables/memory.tex}
+
 \ifSubfilesClassLoaded{%
     \bibliography{../paper.bib}%
 }{}

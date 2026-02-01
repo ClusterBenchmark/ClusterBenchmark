@@ -1,0 +1,23 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+\newcommand{\myrotate}[1]{\rotatebox[origin=b]{90}{\textsc{#1}}}
+
+\begin{table}
+    \caption{Memory consumption of different algorithms on the Reddit graph. All values are in gigabytes.}
+    \label{tab:memory}
+    \begin{tabular}{cccccccccccc}
+        \toprule
+        \myrotate{Walktrap} & \myrotate{Louvain} & \myrotate{Hollocou} & \myrotate{VieClus} & \myrotate{Leiden} & \myrotate{DMoN} & \myrotate{CommDGI} & \myrotate{GNNS} & \myrotate{UCoDe} & \myrotate{DGCluster} & \myrotate{MAGI} & \myrotate{CluStRE} \\
+        \midrule
+        DNF & \numprint{9.01} & \numprint{0.91} & \numprint{9.60} & \numprint{9.01} & \numprint{67.00} & DNF & \numprint{26.37} & DNF & \numprint{150.63} & \numprint{50.74} & \numprint{0.01} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}

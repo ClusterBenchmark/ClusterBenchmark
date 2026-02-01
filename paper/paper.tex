@@ -51,6 +51,12 @@
 %\usepackage[T1]{fontenc} % for textsc alg names
 \usetikzlibrary{arrows.meta, positioning, fit}
 
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\usepgfplotslibrary{groupplots}
+\usetikzlibrary{pgfplots.colorbrewer}
+
 \usepackage{subfiles}
 \usepackage{hyperref}
 \usepackage{numprint}
@@ -267,17 +273,16 @@ Over the past two decades, a wide range of algorithms have been proposed to opti
 
 %%
 %% If your work has an appendix, this is the place to put it.
+
 \appendix
 
-\section{Research Methods}
+\pagebreak
 
-\subsection{Part One}
+\section{Instances}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi
-malesuada, quam in pulvinar varius, metus nunc fermentum urna, id
-sollicitudin purus odio sit amet enim. Aliquam ullamcorper eu ipsum
-vel mollis. Curabitur quis dictum nisl. Phasellus vel semper risus, et
-lacinia dolor. Integer ultricies commodo sem nec semper.
+Test.
+
+\subfile{tables/dimacs_instances.tex}
 
 \end{document}
 \endinput

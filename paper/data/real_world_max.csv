@@ -1,0 +1,107 @@
+clustre_fast  , amazon_computers,    491722, 0.422191758, 0.0208268
+clustre_fast  , amazon_photo    ,    238162, 0.544859091, 0.0107212
+clustre_fast  , citeseer        ,      9104, 0.612045613, 0.00384617
+clustre_fast  , coauthor_cs     ,    163788, 0.415641829, 0.0187578
+clustre_fast  , coauthor_physics,    495924, 0.371750763, 0.040261
+clustre_fast  , cora            ,     10556, 0.549598858, 0.00247502
+clustre_fast  , pubmed          ,     88648, 0.386423199, 0.0171599
+clustre_fast  , reddit          , 114615892, 0.65616307 , 2.16015
+clustre_strong, amazon_computers,    491722, 0.634244938, 1.2737992
+clustre_strong, amazon_photo    ,    238162, 0.731797355, .1589991
+clustre_strong, citeseer        ,      9104, 0.88855673 , 1.69786347
+clustre_strong, coauthor_cs     ,    163788, 0.747701212, 263.1020729
+clustre_strong, coauthor_physics,    495924, 0.68081536 , 3575.0928969
+clustre_strong, cora            ,     10556, 0.818323279, 18.15157907
+clustre_strong, pubmed          ,     88648, 0.77875866 , 960.6847208
+clustre_strong, reddit          , 114615892, 0.737884966, 3.356914
+commdgi       , citeseer        ,      9104, 0.715894715, 294.8418
+commdgi       , coauthor_cs     ,    163788, 0.705570616, 3600.4678
+commdgi       , coauthor_physics,    495924, 0.59646853 , 3612.2276
+commdgi       , cora            ,     10556, 0.724556887, 141.1745
+commdgi       , pubmed          ,     88648, 0.575120294, 3603.6155
+dgcluster     , amazon_computers,    491722, 0.610752976, 193.01263618469238
+dgcluster     , amazon_photo    ,    238162, 0.711606171, 100.02480173110962
+dgcluster     , citeseer        ,      9104, 0.859176744, 25.09064221382141
+dgcluster     , coauthor_cs     ,    163788, 0.726288279, 140.04956459999084
+dgcluster     , coauthor_physics,    495924, 0.661414734, 324.57446026802063
+dgcluster     , cora            ,     10556, 0.791214193, 16.71747136116028
+dgcluster     , pubmed          ,     88648, 0.69809051 , 115.01106071472168
+dgcluster     , reddit          , 114615892, 0.67644189 , 3688.6916315555573
+dmon          , amazon_computers,    491722, 0.125124026, 354.2581
+dmon          , amazon_photo    ,    238162, 0.219122473, 184.6342
+dmon          , citeseer        ,      9104, 0.763763021, 49.8726
+dmon          , coauthor_cs     ,    163788, 0.728462195, 206.5750
+dmon          , coauthor_physics,    495924, 0.629492034, 498.1204
+dmon          , cora            ,     10556, 0.739348494, 42.6382
+dmon          , pubmed          ,     88648, 0.564055321, 113.0006
+dmon          , reddit          , 114615892, 0.530655509, 3764.6030
+gnns          , amazon_computers,    491722, 0.630312988, 115.7638144493103
+gnns          , amazon_photo    ,    238162, 0.719154288, 42.915297746658325
+gnns          , citeseer        ,      9104, 0.850357787, 12.016194581985474
+gnns          , coauthor_cs     ,    163788, 0.715088946, 162.3801109790802
+gnns          , coauthor_physics,    495924, 0.648922312, 361.39847135543823
+gnns          , cora            ,     10556, 0.766331778, 9.522939443588257
+gnns          , pubmed          ,     88648, 0.73628731 , 258.75208282470703
+gnns          , reddit          , 114615892, 0.737301434, 3671.0715403556824
+hollocou      , amazon_computers,    491722, 0.193813089, 0.006
+hollocou      , amazon_photo    ,    238162, 0.431133334, 0.003
+hollocou      , citeseer        ,      9104, 0.677438927, 0.001
+hollocou      , coauthor_cs     ,    163788, 0.311998716, 0.003
+hollocou      , coauthor_physics,    495924, 0.252556919, 0.007
+hollocou      , cora            ,     10556, 0.424614564, 0.001
+hollocou      , pubmed          ,     88648, 0.3534877  , 0.002
+hollocou      , reddit          , 114615892, 0.032045872, 4.207
+infomap       , amazon_computers,    491722, 0.45041905 , 1.1528
+infomap       , amazon_photo    ,    238162, 0.597620743, 0.4766
+infomap       , citeseer        ,      9104, 0.853654972, 0.0892
+infomap       , coauthor_cs     ,    163788, 0.688317158, 1.1035
+infomap       , coauthor_physics,    495924, 0.591980033, 2.4165
+infomap       , cora            ,     10556, 0.796185173, 0.0694
+infomap       , pubmed          ,     88648, 0.730840118, 0.7074
+infomap       , reddit          , 114615892, 0.115525353, 318.4420
+leiden        , amazon_computers,    491722, 0.640530584, 0.1467
+leiden        , amazon_photo    ,    238162, 0.739704749, 0.0690
+leiden        , citeseer        ,      9104, 0.89320732 , 0.0149
+leiden        , coauthor_cs     ,    163788, 0.752612347, 0.1068
+leiden        , coauthor_physics,    495924, 0.689482756, 0.2842
+leiden        , cora            ,     10556, 0.822761633, 0.0133
+leiden        , pubmed          ,     88648, 0.784011838, 0.0690
+leiden        , reddit          , 114615892, 0.741694388, 36.8832
+louvain       , amazon_computers,    491722, 0.639175781, 0.5517
+louvain       , amazon_photo    ,    238162, 0.738866445, 0.1692
+louvain       , citeseer        ,      9104, 0.889921693, 0.0121
+louvain       , coauthor_cs     ,    163788, 0.739079505, 0.4388
+louvain       , coauthor_physics,    495924, 0.670667437, 0.7451
+louvain       , cora            ,     10556, 0.815674762, 0.0121
+louvain       , pubmed          ,     88648, 0.771245789, 0.1510
+louvain       , reddit          , 114615892, 0.737566793, 81.7973
+magi          , amazon_computers,    491722, 0.610044907, 1574.9176161289215
+magi          , amazon_photo    ,    238162, 0.720153439, 540.3123333454132
+magi          , citeseer        ,      9104, 0.767810157, 66.82488179206848
+magi          , coauthor_cs     ,    163788, 0.732217767, 3446.430565595627
+magi          , coauthor_physics,    495924, 0.623985487, 3614.3608219623566
+magi          , cora            ,     10556, 0.744562266, 57.65014028549194
+magi          , pubmed          ,     88648, 0.612748762, 1631.5064148902893
+magi          , reddit          , 114615892, 0.690085153, 3635.4516050815582
+ucode         , amazon_computers,    491722, 0.510270397, 1142.2530891895294
+ucode         , amazon_photo    ,    238162, 0.564476477, 297.462828874588
+ucode         , citeseer        ,      9104, 0.703479452, 61.09968018531799
+ucode         , coauthor_cs     ,    163788, 0.674652705, 2321.447016477585
+ucode         , coauthor_physics,    495924, 0.591990072, 3606.1646847724915
+ucode         , cora            ,     10556, 0.691104936, 31.95202875137329
+ucode         , pubmed          ,     88648, 0.631743787, 2449.8089146614075
+vieclus       , amazon_computers,    491722, 0.641693834, 2767.64
+vieclus       , amazon_photo    ,    238162, 0.74009936 , 6.73889
+vieclus       , citeseer        ,      9104, 0.894192542, 3.02283
+vieclus       , coauthor_cs     ,    163788, 0.759402775, 2136.36
+vieclus       , coauthor_physics,    495924, 0.695842093, 3588.81
+vieclus       , cora            ,     10556, 0.825492104, 47.1501
+vieclus       , pubmed          ,     88648, 0.789904602, 3285.09
+vieclus       , reddit          , 114615892, 0.741700707, 2952.37
+walktrap      , amazon_computers,    491722, 0.596771289, 35.5146
+walktrap      , amazon_photo    ,    238162, 0.702927141, 7.9361
+walktrap      , citeseer        ,      9104, 0.826243862, 0.1247
+walktrap      , coauthor_cs     ,    163788, 0.68563213 , 20.1718
+walktrap      , coauthor_physics,    495924, 0.56690509 , 94.2728
+walktrap      , cora            ,     10556, 0.764567195, 0.2075
+walktrap      , pubmed          ,     88648, 0.711185271, 12.2969

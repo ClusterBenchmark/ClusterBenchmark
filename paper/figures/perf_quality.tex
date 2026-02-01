@@ -1,0 +1,135 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+\pgfplotsset{
+cycle list/.define={my marks}{
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=square*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=triangle*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=diamond*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=halfcircle*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}, mark options={rotate=90}, scale=1.25},mark=halfsquare right*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=triangle*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=halfdiamond*\\
+every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=10-pointed star\\
+},
+perf/.style={
+        ymin=0, ymax=1, xmax=1, xmin=0.0,
+        axis lines=middle,
+        axis x line*=bottom,
+        axis y line*=left,
+        cycle list/Dark2,
+        cycle multiindex* list={
+                my marks\nextlist
+                Dark2\nextlist
+                linestyles\nextlist
+            },
+        mark list fill={.!75!white},
+        tick label style={font=\footnotesize},
+        x dir=reverse,
+        x axis line style={-},
+        y axis line style={-}
+    }
+}
+
+\begin{figure*}
+
+    \begin{tikzpicture}
+        \begin{groupplot}[
+                group style={
+                        group size=4 by 1,
+                        horizontal sep=0cm
+                    },
+                height=0.3\textwidth,
+                perf,
+                legend style={
+                        draw=none,
+                        legend columns=6
+                    }
+            ]
+
+            \nextgroupplot[
+                width=0.35\textwidth,
+                xmin=0.9,
+                ylabel near ticks,
+                ylabel={Fraction of instances},
+                title={Real-World -- F1 Scores},
+                title style={xshift=1.5cm, yshift=0.06cm}
+            ]
+
+            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustrefast}{
+                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/real_world_perf.csv};
+                }
+
+            \nextgroupplot[
+                width=0.25\textwidth,
+                xmax=0.9,
+                yticklabels=\empty,
+                xtick={0.6, 0.3, 0.0},
+                xlabel={$\tau$}
+            ]
+
+            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustrefast}{
+                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/real_world_perf.csv};
+                }
+
+            \nextgroupplot[
+                xshift=1.5cm,
+                width=0.25\textwidth,
+                xmin=0.96,
+                xtick={1.0, 0.98, 0.96},
+                ylabel near ticks,
+                ylabel={Fraction of instances},
+                title={10th DIMACS -- Modularity},
+                title style={xshift=2cm}
+            ]
+
+            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustre_fast}{
+                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/dimacs_perf.csv};
+                }
+
+            \nextgroupplot[
+                legend to name=sharedlegend,
+                width=0.35\textwidth,
+                xmax=0.96,
+                yticklabels=\empty,
+                xtick={0.8, 0.6, 0.4, 0.2, 0.0},
+                xlabel={$\tau$}
+            ]
+
+            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustre_fast}{
+                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/dimacs_perf.csv};
+                }
+
+            \addlegendentry{Walktrap}
+            \addlegendentry{Louvain}
+            \addlegendentry{Hollocou}
+            \addlegendentry{VieClus}
+            \addlegendentry{Leiden}
+            \addlegendentry{DMoN}
+            \addlegendentry{CommDGI}
+            \addlegendentry{GNNS}
+            \addlegendentry{UCoDe}
+            \addlegendentry{DGCluster}
+            \addlegendentry{MAGI}
+            \addlegendentry{CluStRE}
+
+        \end{groupplot}
+    \end{tikzpicture}
+
+    \vspace{0.5em}
+    \ref{sharedlegend}
+
+    % Normal caption
+    \caption{Performance profiles for our first two datasets, the real-world graphs and the instances from the 10th DIMACS implementation challenge. For real-world instances, we use F1 scores to measure solution quality, and for the DIMACS instances, we use modularity. To improve readability, we split the x-axis to highlight the differences between the best algorithms near 1. }
+    % Description for someone who can't see (only clear text)
+    \Description{Test.}
+    \label{fig:perf_quality}
+\end{figure*}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}
