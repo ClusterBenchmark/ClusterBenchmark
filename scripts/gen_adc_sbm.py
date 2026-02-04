@@ -95,7 +95,7 @@ def main():
     parser.add_argument("--n", type=int, default=1000)
     parser.add_argument("--k", type=int, default=4)
     parser.add_argument("--avg_degree", type=float, default=20)
-    parser.add_argument("--assortativity", type=float, default=0.9)
+    parser.add_argument("--assortativity", type=float, default=0.8)
     parser.add_argument("--feature_dim", type=int, default=32)
     parser.add_argument("--feature_signal", type=float, default=3.0)
     parser.add_argument("--feature_std", type=float, default=1.0)

@@ -19,6 +19,11 @@ if [[ "$INPUT_FILE" != /* ]]; then
     INPUT_FILE="$(pwd)/$INPUT_FILE"
 fi
 
+# If the feature file path is relative, make it absolute.
+if [[ -n "$FEATURES" && "$FEATURES" != /* ]]; then
+    FEATURES="$(pwd)/$FEATURES"
+fi
+
 # Make sure we are in the script's directory, so we can find the executables.
 cd "$(dirname "$0")"
 
@@ -49,7 +54,7 @@ do
     PYTHON_OUT=$(cat "$BASENAME"_lim_out.txt)
     MAX_MEM=$(cat "$BASENAME"_lim_time_mem.txt | grep 'Maximum resident set size' | awk '{print $6}')
 
-    rm "$BASENAME"_lim_out.txt
+    # rm "$BASENAME"_lim_out.txt
 
     echo -n "lim,$BASENAME,$i,$MAX_MEM,$STATUS"
 
@@ -70,5 +75,5 @@ do
 done
 
 # echo "5. Cleaning up..."
-rm -rf "$BASENAME"_dgcluster_*.txt
-rm -rf "best_model_"$BASENAME".pkl"
+rm -rf "$BASENAME"_lim*.txt
+rm -rf best_model_*

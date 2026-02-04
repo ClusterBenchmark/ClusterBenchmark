@@ -1,5 +1,5 @@
 diff --git a/main.py b/main.py
-index 6963ecb..b9e6b64 100644
+index 6963ecb..9f71410 100644
 --- a/main.py
 +++ b/main.py
 @@ -7,11 +7,12 @@ import time
@@ -173,14 +173,15 @@ index 6963ecb..b9e6b64 100644
 -    print('result of r_assign is:')
 -    count(r_assign)
 -    r_nmi, r_ac, r_f1, r_ari, q = result(graph, r_assign, label)
+-    DBI = davies_bouldin_score(node_emb, r_assign)
+-    print("New Center Metrics: ", r_nmi, r_ac, r_f1, r_ari, DBI, q)
+-    return node_emb, r_assign, r_nmi, r_ac, r_f1, r_ari, DBI, q
 +    # print('label is:')
 +    # count(label)
 +    # print('result of r_assign is:')
 +    # count(r_assign)
 +    q = result(graph, r_assign)
-     DBI = davies_bouldin_score(node_emb, r_assign)
--    print("New Center Metrics: ", r_nmi, r_ac, r_f1, r_ari, DBI, q)
--    return node_emb, r_assign, r_nmi, r_ac, r_f1, r_ari, DBI, q
++    # DBI = davies_bouldin_score(node_emb, r_assign)
 +    # print("New Center Metrics: ", q)
 +    return node_emb, r_assign, q
  
@@ -363,10 +364,3 @@ index 6963ecb..b9e6b64 100644
 +# print(f"The running time:{running_time}s")
 +# file = open(file_name, "a+")
 +# print(f"The running time:{running_time}s", file=file)
-diff --git a/result.csv b/result.csv
-deleted file mode 100644
-index 8b13789..0000000
---- a/result.csv
-+++ /dev/null
-@@ -1 +0,0 @@
--

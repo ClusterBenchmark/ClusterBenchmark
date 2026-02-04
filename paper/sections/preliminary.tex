@@ -4,6 +4,12 @@
 
 We use the term algorithm to denote a concrete computational procedure. Except where explicitly stated, the algorithms considered here are heuristics for modularity maximization and do not guarantee optimality.
 
+Let $G = (V, E)$ be an undirected simple graph, with vertex set $V$ and edge set $E$. We use $n := |V|$ and $m := |E|$ to denote the number of vertices and edges. The \emph{neighborhood} of $u$ is $N(u) := \{v : \{u, v\} \in E\}$ and the \emph{degree} is $d(u) := |N(u)|$. A \textit{clustering} $C$ of a graph is the partition of the nodes $V$ into $k$ disjoint blocks $V_1,...,V_k$ such that the union $V_1 \cup ... \cup V_k = V$.
+
+The \emph{modularity} score of a clustering is the fraction of edges that are within one cluster minus the expected fraction if the edges were distributed at random. Let $L_i := |\{\{u, v\} \in E : \{u, v\} \subseteq V_i \}|$ be the set of edges within block $i$. With that, we can define modularity as:
+
+\[Q(C) := \sum_{i = 1}^{k}{\left(\frac{L_i}{m} - \left(\sum_{u \in V_i}{\frac{d(u)}{2m}}\right)^2 \right)} \]
+
 \ifSubfilesClassLoaded{%
     \bibliography{../paper.bib}%
 }{}

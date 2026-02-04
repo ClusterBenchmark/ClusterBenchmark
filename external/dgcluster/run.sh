@@ -19,6 +19,11 @@ if [[ "$INPUT_FILE" != /* ]]; then
     INPUT_FILE="$(pwd)/$INPUT_FILE"
 fi
 
+# If the feature file path is relative, make it absolute.
+if [[ -n "$FEATURES" && "$FEATURES" != /* ]]; then
+    FEATURES="$(pwd)/$FEATURES"
+fi
+
 # Make sure we are in the script's directory, so we can find the executables.
 cd "$(dirname "$0")"
 

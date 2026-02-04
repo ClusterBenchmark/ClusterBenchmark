@@ -15,13 +15,18 @@ FEATURES=${7:-} # Set to empty if not provided
 
 BASENAME=$(basename "$INPUT_FILE" .graph)
 
-# Make sure we are in the script's directory, so we can find the executables.
-cd "$(dirname "$0")"
-
 # If the input file path is relative, make it absolute.
 if [[ "$INPUT_FILE" != /* ]]; then
     INPUT_FILE="$(pwd)/$INPUT_FILE"
 fi
+
+# If the feature file path is relative, make it absolute.
+if [[ -n "$FEATURES" && "$FEATURES" != /* ]]; then
+    FEATURES="$(pwd)/$FEATURES"
+fi
+
+# Make sure we are in the script's directory, so we can find the executables.
+cd "$(dirname "$0")"
 
 cd MAGI/
 
@@ -71,4 +76,4 @@ do
 done
 
 # echo "5. Cleaning up..."
-rm -rf "$BASENAME"_magi_*.txt
+# rm -rf "$BASENAME"_magi_*.txt
