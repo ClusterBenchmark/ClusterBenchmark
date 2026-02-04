@@ -45,7 +45,7 @@ perf/.style={
                 perf,
                 legend style={
                         draw=none,
-                        legend columns=6
+                        legend columns=8
                     }
             ]
 
@@ -58,8 +58,9 @@ perf/.style={
                 title style={xshift=1.5cm, yshift=0.06cm}
             ]
 
-            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustrefast}{
+            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
                     \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/real_world_perf.csv};
+                    \label{\alg}
                 }
 
             \nextgroupplot[
@@ -70,55 +71,59 @@ perf/.style={
                 xlabel={$\tau$}
             ]
 
-            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustrefast}{
+            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
                     \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/real_world_perf.csv};
                 }
 
             \nextgroupplot[
                 xshift=1.5cm,
                 width=0.25\textwidth,
-                xmin=0.96,
-                xtick={1.0, 0.98, 0.96},
+                xmin=0.90,
+                xtick={1.0, 0.95, 0.90},
                 ylabel near ticks,
                 ylabel={Fraction of instances},
                 title={10th DIMACS -- Modularity},
                 title style={xshift=2cm}
             ]
 
-            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustre_fast}{
+            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
                     \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/dimacs_perf.csv};
                 }
 
             \nextgroupplot[
                 legend to name=sharedlegend,
                 width=0.35\textwidth,
-                xmax=0.96,
+                xmax=0.90,
                 yticklabels=\empty,
                 xtick={0.8, 0.6, 0.4, 0.2, 0.0},
                 xlabel={$\tau$}
             ]
 
-            \foreach \alg in {walktrap,louvain,hollocou,vieclus,leiden,dmon,commdgi,gnns,ucode,dgcluster,magi,clustre_fast}{
+            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
                     \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/dimacs_perf.csv};
                 }
 
-            \addlegendentry{Walktrap}
-            \addlegendentry{Louvain}
-            \addlegendentry{Hollocou}
             \addlegendentry{VieClus}
             \addlegendentry{Leiden}
-            \addlegendentry{DMoN}
-            \addlegendentry{CommDGI}
+            \addlegendentry{Louvain}
+            \addlegendentry{COMBO}
             \addlegendentry{GNNS}
-            \addlegendentry{UCoDe}
-            \addlegendentry{DGCluster}
-            \addlegendentry{MAGI}
+            \addlegendentry{WT}
+            \addlegendentry{CNM}
+            \addlegendentry{Walktrap}
+            \addlegendentry{CommDGI}
             \addlegendentry{CluStRE}
+            \addlegendentry{DMoN}
+            \addlegendentry{LIM}
+            \addlegendentry{Hollocou}
+            \addlegendentry{MAGI}
+            \addlegendentry{DGCluster}
+            \addlegendentry{UCoDe}
 
         \end{groupplot}
     \end{tikzpicture}
 
-    \vspace{0.5em}
+    % \vspace{0.5em}
     \ref{sharedlegend}
 
     % Normal caption

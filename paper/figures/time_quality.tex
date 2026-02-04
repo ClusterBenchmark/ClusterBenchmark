@@ -41,26 +41,24 @@ every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},
                 xlabel={Microseconds per edge},
             ]
 
-            \addplot coordinates {(57.603373500234234, 0.6883864993802071)};
-            \addplot coordinates {(1.2495166772612176, 0.7467168504587761)};
-            \addplot coordinates {(0.027657947491190934, 0.26087939419857237)};
-            \addplot coordinates {(1465.5489135683392, 0.7576061812615741)};
-            \addplot coordinates {(0.5994899748926823, 0.7545419116489159)};
-            \addplot coordinates {(948.5741023117283, 0.46336250241209953)};
-
-            \addplot coordinates {(19499.523710563695, 0.6603309780162184)};
-            \addplot coordinates {(491.6126018770638, 0.7226953377569149)};
-            \addplot coordinates {(5577.320249077162, 0.6202928248036939)};
-            \addplot coordinates {(600.0758423676816, 0.713305998339106)};
-            \addplot coordinates {(3564.772711411096, 0.6850822252894211)};
-            \addplot coordinates {(0.09458569102305557, 0.48440509988669495)};
-            ,
+            \addplot[refstyle={clustre_fast}] coordinates {(0.09458569102305557, 0.48440509988669495)};
+            \addplot[refstyle={commdgi}] coordinates {(19499.523710563695, 0.6603309780162184)};
+            \addplot[refstyle={dgcluster}] coordinates {(600.0758423676816, 0.713305998339106)};
+            \addplot[refstyle={dmon}] coordinates {(948.5741023117283, 0.46336250241209953)};
+            \addplot[refstyle={gnns}] coordinates {(491.6126018770638, 0.7226953377569149)};
+            \addplot[refstyle={hollocou}] coordinates {(0.027657947491190934, 0.26087939419857237)};
+            \addplot[refstyle={leiden}] coordinates {(0.5994899748926823, 0.7545419116489159)};
+            \addplot[refstyle={louvain}] coordinates {(1.2495166772612176, 0.7467168504587761)};
+            \addplot[refstyle={magi}] coordinates {(3564.772711411096, 0.6850822252894211)};
+            \addplot[refstyle={ucode}] coordinates {(5577.320249077162, 0.6202928248036939)};
+            \addplot[refstyle={vieclus}] coordinates {(1465.5489135683392, 0.7576061812615741)};
+            \addplot[refstyle={walktrap}] coordinates {(57.603373500234234, 0.6883864993802071)};
 
         \end{axis}
     \end{tikzpicture}
 
     % Normal caption
-    \caption{ Ratio between time per edge and quality, using the geometric mean for both measures. This plot shares legend with Figure~\ref{fig:comparisons}. Parallel algorithms have two connected points, showing parallel and sequential versions. }
+    \caption{ Ratio between time per edge and quality, using the geometric mean for both measures. This plot shares legend with Figure~\ref{fig:perf_quality}. Parallel algorithms have two connected points, showing parallel and sequential versions. }
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:efficiency}
