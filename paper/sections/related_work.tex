@@ -6,11 +6,13 @@
 
 The overview and taxonomy of the clustering algorithms included in this survey follow in Section~\ref{sec:methods}. First, we provide a brief overview of relevant objective functions, algorithms, and survey papers. The main motivation for this survey, and reason for focusing primarily on modularity optimization, is highlighted in Figure~\ref{fig:comparisons}. Despite high interest from multiple scientific communities and the rapid development of new methods, comparisons between methods remain fragmented. This is a problem for both practitioners who want the best algorithm and for future researchers who need to decide which baseline algorithms to use.
 
-Mention WCD, ME, Conductance, Performance, Coverage, NMI, F1, etc.
-Other surveys.
-DIMACS Implementation challange.
-Related methods that did not make it in.
-Editing distance.
+While modularity has attracted significant interest, it is not without its flaws. The most well-known problem is the resolution limit~\cite{resolution2007}. In extreme cases, this can cause small communities with few edges connecting them to appear as one larger community. As a result, several algorithms provide a \textsc{resolution} parameter to detect smaller communities in large graphs~\cite{louvain2008, leiden2019}.
+
+There have also been entirely new objective functions with implemented algorithms available. One such example is the \textit{Weighted Community Cluster} (WCC), which maximizes the number of triangles within each community~\cite{wcc2012}. The \textsc{Scalable Community Detection} algorithm was later developed for the WCC objective~\cite{scd2014}. Another objective function is the \textit{Map Equation} that measures the expected description length of a random walk~\cite{infomap2008}. Several algorithms have been developed for the map equation objective, such as \textsc{Infomap}~\cite{infomap2008}, \textsc{Infoflow}~\cite{infoflow2019}, and the very recent learning-based \textsc{Neuromap}~\cite{neuromap2024}.
+
+There have also been similar experimental surveys looking at modularity. A study by Aref et al.~\cite{survey2023} found that modularity-optimizing heuristics rarely find optimal solutions. That claim was later disputed by Ans{\'o}tegui et al.~\cite{maxsat2025} who found that the \textsc{VieClus} heuristic routinely computes optimal solutions on small to medium-sized graphs.
+
+% Maybe mention editing distance
 
 \ifSubfilesClassLoaded{%
     \bibliography{../paper.bib}%

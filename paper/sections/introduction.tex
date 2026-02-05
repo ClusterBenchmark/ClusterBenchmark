@@ -1,13 +1,13 @@
 \documentclass[../paper.tex]{subfiles}
 
 \begin{document}
-Networks are useful in modeling complex systems across the natural sciences, social sciences, and engineering. Such systems are naturally represented as graphs, where vertices denote entities and edges encode interactions between them. Prominent examples include online social networks, communication infrastructures, biological interaction networks, financial systems, and information networks. A common structural property of many real-world graphs is the presence of \emph{community structure}, where vertices organize into groups that are more densely connected internally than externally. 
+Networks are useful in modeling complex systems across the natural sciences, social sciences, and engineering. Such systems are naturally represented as graphs, where vertices denote entities and edges encode interactions between them. Prominent examples include online social networks, communication infrastructures, biological interaction networks, financial systems, and information networks. A common structural property of many real-world graphs is the presence of \emph{community structure}, where vertices organize into groups that are more densely connected internally than externally.
 
 The task of identifying these groups, commonly referred to as \emph{graph clustering} or \emph{community detection}, is central to network analysis. Community detection supports a wide range of applications, including the analysis of social and political behavior, fraud detection~\cite{Akoglu2015}, protein interaction analysis and gene expression~\cite{Cai2011, Xu2002}, program optimization~\cite{Demme2012,McFarling89}, and epidemic modeling~\cite{Newman2003}. Beyond application-specific insights, community structure offers a lens into the organization of networks, highlighting cohesive substructures, boundary vertices, and inter-community connectivity patterns. Despite extensive research, it is well understood that no single clustering method dominates across all network types, motivating continued investigation into algorithmic design and comparative evaluation.
 
 Most community-detection algorithms model clustering as an optimization problem over partitions of the vertex set, assigning a quality score to each candidate clustering. The goal is to identify a partition that optimizes this score, often under stringent computational constraints. For many commonly used objectives, finding an optimal clustering is NP-hard, and practical methods therefore rely on heuristic or approximate algorithms.
 
-Among the many objectives proposed for graph clustering, \emph{modularity}, introduced by Girvan and Newman~\cite{girvan2002}, remains one of the most widely adopted. Modularity quantifies the density of edges within clusters compared to those between clusters, while accounting for random chance, with the goal of maximizing densely connected communities while penalizing excessive inter-community connectivity~\cite{girvan2002,Newman2006}. Optimizing modularity is strongly NP-complete, and consequently a wide variety of heuristic algorithms have been proposed. 
+Among the many objectives proposed for graph clustering, \emph{modularity}, introduced by Girvan and Newman~\cite{girvan2002}, remains one of the most widely adopted. Modularity quantifies the density of edges within clusters compared to those between clusters, while accounting for random chance, with the goal of maximizing densely connected communities while penalizing excessive inter-community connectivity~\cite{girvan2002,Newman2006}. Optimizing modularity is strongly NP-complete, and consequently a wide variety of heuristic algorithms have been proposed.
 %These range from greedy agglomerative and local-search methods to multilevel, metaheuristic, streaming, and exact optimization approaches. In parallel, modularity has also been incorporated into learning-based frameworks, where it serves as an optimization target or training signal within neural architectures. 
 Given the common use of modularity in the literature, this survey focuses primarily on modularity-based approaches, though we include a small number of widely used non-modularity community-detection baselines. While alternative paradigms, such as spectral clustering or probabilistic generative models, are important in the broader literature, modularity provides a common objective that enables meaningful comparison across different algorithmic strategies.
 
@@ -15,24 +15,25 @@ Within modularity-based community detection, two broad classes of algorithms are
 
 Several challenges continue to shape the design and evaluation of clustering algorithms, driven by the scale, complexity and frequently-updating content of real-world graphs. Clustering algorithms must balance high-solution quality in contexts where data may be noisy or ground-truth communities unknown, with scalability in memory usage and runtime. Additionally, many algorithms are sensitive to pre-set parameters, such as assumed cluster counts, which complicates deployment in practice. There remains a need to systemally address how existing clustering algorithms balance trade-offs given these challenges.
 
-Although numerous community-detection algorithms and surveys exist, there is currently no comprehensive experimental study that evaluates classical and learning-based modularity optimization methods together under a unified framework. There are limited claims about their relative strengths in the literature, and those that exist vary, particularly regarding scalability. This paper   addresses this gap by providing a systematic experimental survey of modularity-based graph clustering algorithms across both classical and learning-based paradigms. Rather than advocating a single best method, this survey aims to clarify the landscape of modularity-based clustering by highlighting the strengths, limitations, and trade-offs of different algorithmic approaches across diverse settings.
+Although numerous community-detection algorithms and surveys exist, there is currently no comprehensive experimental study that evaluates classical and learning-based modularity optimization methods together under a unified framework. There are limited claims about their relative strengths in the literature, and those that exist vary, particularly regarding scalability. This paper   addresses this gap by providing a systematic experimental survey of modularity-based graph clustering algorithms across both classical and learning-based paradigms. Rather than advocating a single best method, this survey aims to clarify the landscape of modularity-based clustering by highlighting the strengths, limitations, and trade-offs of different algorithmic approaches across \hbox{diverse settings.}
 
-In this study, we contribute the following:
+\subsection*{Contributions} In this study, we contribute the following:
+
 \begin{itemize}
     \item A taxonomy of modularity-based clustering algorithms, organizing methods by algorithmic paradigm and optimization strategy.
     \item A systematic review of 18 representative algorithms, covering greedy, multilevel, metaheuristic, streaming, exact, and learning-based approaches.
-   \item The first large-scale experimental comparison of classical and learning-based modularity optimization methods, analyzing their relative performance, scalability, and trade-offs.
-   \item A unified open-source experimental framework, including the adaptation of all evaluated algorithms behind a common interface, to facilitate future benchmarking and reproducibility in graph clustering research.
+    \item The first large-scale experimental comparison of classical and learning-based modularity optimization methods, analyzing their relative performance, scalability, and trade-offs.
+    \item A unified open-source experimental framework, including the adaptation of all evaluated algorithms behind a common interface, to facilitate future benchmarking and reproducibility in graph clustering research.
 
 \end{itemize}
 
 
 %Community detection in graphs.
 %\begin{itemize}
-    %\item Problem definition
-    %\item Why modularity?
-   % \item State why this survey is needed, missing comparisons in the literature
-   % \item At the end, list of contributions (experimental survey stuff)
+%\item Problem definition
+%\item Why modularity?
+% \item State why this survey is needed, missing comparisons in the literature
+% \item At the end, list of contributions (experimental survey stuff)
 %\end{itemize}
 
 \ifSubfilesClassLoaded{%

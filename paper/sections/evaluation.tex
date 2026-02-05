@@ -24,6 +24,30 @@ Regarding code changes, we have tried to make as few modifications to the origin
     \item Learning-based methods that train a neural network as part of the algorithm will break the training loop at $T_{\max}$, and use the current model at that time to produce the final clustering.
 \end{itemize}
 
+\subsection{Parameter Settings}
+
+As much as possible, we try to use the default configurations for all algorithms tested. In the following we detail the exact parameters chosen for each algorithm. Algorithms that are not listed do not expose any parameters.
+
+\begin{itemize}
+    \item \textsc{Walktrap}: The length of random walks is set to \numprint{4}.
+    \item \textsc{Louvain}: The resolution limit is set to \numprint{1}.
+    \item \textsc{Hollocou}: We set $v_{max} = \textsc{10000}$.
+    \item \textsc{VieClus}: The timelimit is set to one hour.
+    \item \textsc{Leiden}: The resolution limt is set to \numprint{1}, $\beta = \numprint{0.02}$, and number of iterations is set to \numprint{2}.
+    \item \textsc{DMoN}: We use one hidden layer with 64 neurons and train for \numprint{1000} epoch with learning rate \numprint{0.001}.
+    \item \textsc{CommDGI}: We use one hidden layer with 512 neurons and train for \numprint{1000} epoch with learning rate \numprint{0.001}.
+    \item \textsc{GNNS}: We use the version \textsc{GNNS100}.
+    \item \textsc{UCoDe}: We use two hidden layers with 256 neurons and train for \numprint{1000} epoch with learning rate \numprint{0.001}.
+    \item \textsc{DGCluster}: We use one hidden layer with 256 neurons followed by another hidden layer with 128 neurons and train for \numprint{300} epoch with learning rate \numprint{0.001}.
+    \item \textsc{MAGI}: We use one hidden layer with 512 neurons followed by another hidden layer with 256 neurons and train for \numprint{100} epoch with learning rate \numprint{0.01}.
+    \item \textsc{Bayan}: We use the Gurobi optimizer for ILP solving~\cite{gurobi}, acceptable optimality gap of \numprint{0.0001}, and a resolution limit set to 1.
+    \item \textsc{CluStRE}: We use the light mode with the modularity objective function.
+    \item \textsc{LIM}: We use one hidden layer with 512 neurons and train for \numprint{1000} epoch with patience 200 and a learning rate of \numprint{0.001}.
+\end{itemize}
+
+
+For stochastic algorithms with an explicitly specified seed, we use the run ID as the seed for each of the five runs. While many of these algorithms include multiple configurations, we try to use the best configuration proposed by the authors, and when there is no such clear choice, we use the default configuration included with the implementation.
+
 \subsection{Dataset}
 
 We consider three datasets commonly used in the literature. The first set consists of 10 real-world instances with known ground-truth clusters; we call this dataset \textsc{Ground-Truth} graphs. The machine learning algorithms commonly use these graphs, and the details of the instances are shown in Table~\ref{tab:ground_truth_graphs}. Next, we consider the instances used in the 10th DIMACS implementation challenge on graph clustering; we call this dataset \textsc{DIMACS} graphs. This dataset is popular among the classical modularity optimization methods, and the details of these graphs are shown in Table~\ref{tab:dimacs_instances} in the appendix. Finally, we use a dataset of synthetically generated graphs with node features generated using the attributed, degree-corrected stochastic block model~\cite{adcsbm2022} (ADC-SBM). This generator allows us to explore the algorithm's sensitivity to noise in both the graph and features.
@@ -36,7 +60,7 @@ All experiments are conducted on a machine with an AMD EPYC 9754 128-core proces
 
 In order to speed up experiments, we evaluate three algorithms in parallel. For parallel algorithms, we evaluate them both sequentially and using 16 threads. If an algorithm exceeds 250 GB of memory usage on an input instance, it is killed and recorded as \emph{memory limit exceeded} for that graph. Similarly, we assign each algorithm a time limit of 1 hour per input graph. Unlike the memory limitation, we are more leanint with the time limt due to the nature of some learning based algorthms that train a model for a fixed number of iterations. Only if an algorithm overshoots the time limit by more than 50\% do we kill the process and record that instance as \emph{time limit exceeded}.
 
-For algorithms that needs to be told the number of clusters, we either provide the exact number when ground truth labels are known, or 16 clusters otherwise, as is commonly used in the literature. Since several of the algorithms are Stochastic, we perform each experiemtn 5 times and take the best result.
+For algorithms that needs to be told the number of clusters, we either provide the exact number when ground truth labels are known, or 16 clusters otherwise, as is commonly used in the literature. Since several of the algorithms are Stochastic, we perform each experiemtn 5 times and take the best result. In addition to measuring modularity as defined in Section~\ref{sec:preliminary}, we aslo use Normalized Mutual Information (NMI) between the computed clusters and ground-truth labels and F1 scores between adjacent pairs of vertices.
 
 \subsection{Performance Profiles}
 
