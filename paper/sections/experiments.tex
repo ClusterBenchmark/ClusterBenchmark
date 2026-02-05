@@ -16,13 +16,15 @@ The streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} perform similarl
 
 The exact algorithm \textsc{Bayan} is not included in the performance profiles, as it terminated on only the eight smallest instances from the \textsc{DIMACS} dataset. Among these eight instances, \textsc{VieClus} found the optimal clustering for all of them, \textsc{Leiden} for 7/8, \textsc{GNNS} for 5/8, \textsc{COMBO} for 4/8, and \textsc{Louvain} for 3/8. The remaining algorithms did not find any known optimal solutions.
 
+\subfile{../figures/time_quality.tex}
+
 \subsection{Computational Efficiency}
+
+\subfile{../figures/adcsbm_plot.tex}
 
 Judging computational efficiency is made difficult by the wide variety of methods. Figure~\ref{fig:efficiency} shows the relation between clustering quality and computational time to highlight the main tendencies of the algorithms. Reading the figure from left to right, the streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} are by far the fastest. Next are the two closely related algorithms \textsc{Leiden} and \textsc{Louvain}, both scoring near the top in both quality and execution time, only beaten by \textsc{VieClus} in terms of solution quality. Both \textsc{WT} and \textsc{Walktrap} take longer and produce lower-quality solutions than \textsc{Leiden} and \textsc{Louvain}. Unsurprisingly, most learning-based methods take a long time to produce a clustering. Still, they also achieve generally high solution quality.
 
 In terms of parallel scalability, all the tested algorithms benefit from having access to more computing resources. The algorithms \textsc{VieClus}, \textsc{GNNS}, and \textsc{MAGI} achieve very similar solution qualities in parallel and sequential runs, but run faster in parallel. While \textsc{DMoN}, \textsc{UCoDe}, \textsc{LIM}, and \textsc{CommDGI} both run faster and produce higher quality solutions. The difference is especially noticeable for \textsc{CommDGI}, who struggle to finish enough training iterations within the one-hour time limit sequentially.
-
-\subfile{../figures/time_quality.tex}
 
 \subfile{../tables/memory.tex}
 
@@ -34,11 +36,7 @@ To further evaluate the impact and sensitivity of graph features across clusteri
 
 We conduct two sets of experiments with the ADC-SBM generator. First, we generate a sequence of graphs with gradually higher $d_{out}$, causing the graph structure to carry less information about the original $k$ clusters. And second, we generate graphs with strong community structure as we gradually increase the cluster center variance $\sigma_c$, leading the graph features to carry less information about the clusters.
 
-\subfile{../figures/adcsbm_plot.tex}
-
-Figure~\ref{fig:adcsbm} shows the results of our two experiments with the ADC-SBM graph generator. Since this experiment aims to show how feature-aware methods respond to scenarios in which either the graph or the feature signal is distorted, we evaluate only methods that accept graph features as input. For reference, we also include \textsc{VieClus}, which performed best among the pure modularity-optimizing methods. When the feature signal is strong, \textsc{MAGI} and \textsc{DMoN} are the best performers, and at around $d_{out}=11$, all the feature-aware methods perform better than \textsc{VieClus}. It is also clear from this point of view that \textsc{MAGI} relies more on graph features than the graph structure, evident by the strong performance when the graph structure is distorted, and weak performance when the feature signal is distorted.
-
-\textsc{DMoN} performs well in both scenarios, demonstrating its ability to capture community structure in both the graph and the features without relying too heavily on either one. Similarly, \textsc{CommDGI} displays similar performance, but is noticeably worse than \textsc{DMoN} across the board. \textsc{DGCluster} is somewhat opposite to \textsc{MAGI}, favoring the graph structure over the features. The same holds for \textsc{UCoDe}, but to a lesser extent.
+Figure~\ref{fig:adcsbm} shows the results of our two experiments with the ADC-SBM graph generator. Since this experiment aims to show how feature-aware methods respond to scenarios in which either the graph or the feature signal is distorted, we evaluate only methods that accept graph features as input. For reference, we also include \textsc{VieClus}, which performed best among the pure modularity-optimizing methods. When the feature signal is strong, \textsc{MAGI} and \textsc{DMoN} are the best performers, and at around $d_{out}=11$, all the feature-aware methods perform better than \textsc{VieClus}. It is also clear from this point of view that \textsc{MAGI} relies more on graph features than the graph structure, evident by the strong performance when the graph structure is distorted, and weak performance when the feature signal is distorted. \textsc{DMoN} performs well in both scenarios, demonstrating its ability to capture community structure in both the graph and the features without relying too heavily on either one. Similarly, \textsc{CommDGI} displays similar performance, but is noticeably worse than \textsc{DMoN} across the board. \textsc{DGCluster} is somewhat opposite to \textsc{MAGI}, favoring the graph structure over the features. The same holds for \textsc{UCoDe}, but to a lesser extent. We excluded \textsc{LIM} from this figure because it failed to compute more than a single cluster for these generated graphs, resulting in a constant zero NMI score across configurations.
 
 \ifSubfilesClassLoaded{%
     \bibliography{../paper.bib}%
