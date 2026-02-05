@@ -2,11 +2,11 @@
 
 \begin{document}
 
-In the following section, we present the evaluation methodology used in this experimental survey. The main contribution is the adaptation of 18 clustering algorithms behind one unified interface. In addition to enabling the experiments presented in this survey, it will also serve as an openly available resource for future work on graph clustering, simplifying the evaluation of older methods on new data or machines. This section also includes details on the datasets we used to evaluate the clustering algorithms and the computational environment.
+In the following section, we present the evaluation methodology used in this experimental survey. The main contribution is the adaptation of 17 clustering algorithms behind one unified interface. In addition to enabling the experiments presented in this survey, it will also serve as an openly available resource for future work on graph clustering, simplifying the evaluation of older methods on new data or machines. This section also includes details on the datasets we used to evaluate the clustering algorithms and the computational environment.
 
 \subsection{Implementation}
 
-As shown in Table~\ref{tab:comp}, over half of the clustering algorithms in the literature lack ready-to-use interfaces for clustering new data. Furthermore, among those with properly documented code, there are wide differences in the input graph format, output formats, and the additional information they report, such as time and memory consumption. As a result, it can take significant effort to get a particular algorithm to run and extract the results.
+As shown in Table~\ref{tab:comp}, over half of the clustering algorithms in the literature lack ready-to-use interfaces for clustering new data. Furthermore, among those with properly documented code, there are wide differences in the input graph format, output formats, and the additional information they report, such as time and memory consumption. As a result, it can take significant effort to get a particular algorithm to run and extract the desired measurements.
 
 To address this problem, we aim to provide an interface with a single common input and output format and consistent time and memory monitoring. The interface exposes a common set of inputs, while allowing solver-specific parameters to be provided when applicable.
 
@@ -26,9 +26,9 @@ Regarding code changes, we have tried to make as few modifications to the origin
 
 \subsection{Dataset}
 
-We consider three datasets commonly used in the literature. The first set consistes of real-world instances with known ground truth clusters. These graphs are commonly used by the machine learning algorithms. Next, we consider the instances used as part of the 10th DIMACS implementaion challange on graph clustering. This dataset is popular among the classical modularity optimization methods. Finally, we use a dataset of syntetically generated graph with node features. The particual generate we use allow us to explore the algorithms sensitivity to noise in both the graph and features. (TODO, rewrite this section with more details more details).
+We consider three datasets commonly used in the literature. The first set consists of 10 real-world instances with known ground-truth clusters; we call this dataset \textsc{Ground-Truth} graphs. The machine learning algorithms commonly use these graphs, and the details of the instances are shown in Table~\ref{tab:ground_truth_graphs}. Next, we consider the instances used in the 10th DIMACS implementation challenge on graph clustering; we call this dataset \textsc{DIMACS} graphs. This dataset is popular among the classical modularity optimization methods, and the details of these graphs are shown in Table~\ref{tab:dimacs_instances} in the appendix. Finally, we use a dataset of synthetically generated graphs with node features generated using the attributed, degree-corrected stochastic block model~\cite{adcsbm2022} (ADC-SBM). This generator allows us to explore the algorithm's sensitivity to noise in both the graph and features.
 
-\subfile{../tables/real_world_instances.tex}
+\subfile{../tables/ground_truth_graphs.tex}
 
 \subsection{Computational Environment}
 
@@ -37,6 +37,10 @@ All experiments are conducted on a machine with an AMD EPYC 9754 128-core proces
 In order to speed up experiments, we evaluate three algorithms in parallel. For parallel algorithms, we evaluate them both sequentially and using 16 threads. If an algorithm exceeds 250 GB of memory usage on an input instance, it is killed and recorded as \emph{memory limit exceeded} for that graph. Similarly, we assign each algorithm a time limit of 1 hour per input graph. Unlike the memory limitation, we are more leanint with the time limt due to the nature of some learning based algorthms that train a model for a fixed number of iterations. Only if an algorithm overshoots the time limit by more than 50\% do we kill the process and record that instance as \emph{time limit exceeded}.
 
 For algorithms that needs to be told the number of clusters, we either provide the exact number when ground truth labels are known, or 16 clusters otherwise, as is commonly used in the literature. Since several of the algorithms are Stochastic, we perform each experiemtn 5 times and take the best result.
+
+\subsection{Performance Profiles}
+
+For the main comparison between algorithms, we use performance profiles~\cite{perf2002}. A performance profile assigns each included algorithm a non-decreasing, piecewise-constant function. The y-axis represents the fraction of graphs where the objective value is better than or equal to $\tau$ times the best observed objective function value from any algorithm. Reading a performance profile, an algorithm performs well if it achieves lower $\tau$ values for higher fractions of instances.
 
 \ifSubfilesClassLoaded{%
     \bibliography{../paper.bib}%

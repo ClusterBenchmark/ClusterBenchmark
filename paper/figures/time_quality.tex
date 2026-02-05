@@ -23,7 +23,7 @@ every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},
                 ymin=0.0, ymax=1.0,
                 height=0.3\textwidth,
                 width=0.45\textwidth,
-                xmax=20000,
+                xmax=40000,
                 xmode=log,
                 axis lines=middle,
                 axis x line*=bottom,
@@ -39,26 +39,77 @@ every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},
                 ylabel near ticks,
                 ylabel={Modularity},
                 xlabel={Microseconds per edge},
+                legend style={
+                        draw=none,
+                        legend columns=4,,
+                        legend cell align=left,
+                        at={(-0.2,-0.7)}, anchor=south west
+                    }
             ]
 
-            \addplot[refstyle={clustre_fast}] coordinates {(0.09458569102305557, 0.48440509988669495)};
-            \addplot[refstyle={commdgi}] coordinates {(19499.523710563695, 0.6603309780162184)};
-            \addplot[refstyle={dgcluster}] coordinates {(600.0758423676816, 0.713305998339106)};
-            \addplot[refstyle={dmon}] coordinates {(948.5741023117283, 0.46336250241209953)};
-            \addplot[refstyle={gnns}] coordinates {(491.6126018770638, 0.7226953377569149)};
-            \addplot[refstyle={hollocou}] coordinates {(0.027657947491190934, 0.26087939419857237)};
+            \addplot[refstyle={vieclus}] coordinates {
+                    (1465.5489135683392, 0.7576061812615741)
+                    (4078.604966535935, 0.7549795127640108)
+                };
             \addplot[refstyle={leiden}] coordinates {(0.5994899748926823, 0.7545419116489159)};
             \addplot[refstyle={louvain}] coordinates {(1.2495166772612176, 0.7467168504587761)};
-            \addplot[refstyle={magi}] coordinates {(3564.772711411096, 0.6850822252894211)};
-            \addplot[refstyle={ucode}] coordinates {(5577.320249077162, 0.6202928248036939)};
-            \addplot[refstyle={vieclus}] coordinates {(1465.5489135683392, 0.7576061812615741)};
+            \addplot[refstyle={combo}] coordinates {(2820.7939174904686,0.766180333291874)};
+            \addplot[refstyle={gnns}] coordinates {
+                    (491.6126018770638, 0.7226953377569149)
+                    (2631.2928227955117,0.7145962072191263)
+                };
+            \addplot[refstyle={wt}] coordinates {(8.508028153036554,0.6722183517846467)};
+            \addplot[refstyle={cnm}] coordinates {(660.5783649792988,0.6758815349295846)};
             \addplot[refstyle={walktrap}] coordinates {(57.603373500234234, 0.6883864993802071)};
+            \addplot[refstyle={commdgi}] coordinates {
+                    (19499.523710563695, 0.6603309780162184)
+                    (34530.666718242006,0.1824213613903851)
+                };
+            \addplot[refstyle={clustre_fast}] coordinates {(0.09458569102305557, 0.48440509988669495)};
+            \addplot[refstyle={dmon}] coordinates {
+                    (948.5741023117283, 0.46336250241209953)
+                    (3610.5988228589604,0.3915598314524056)
+                };
+            \addplot[refstyle={lim}] coordinates {
+                    (8692.783865262756, 0.6680899707353964)
+                    (23943.646482474527, 0.49384740349006245)
+                };
+            \addplot[refstyle={hollocou}] coordinates {(0.027657947491190934, 0.26087939419857237)};
+            \addplot[refstyle={magi}] coordinates {
+                    (3564.772711411096, 0.6850822252894211)
+                    (11169.446305071211,0.6914347687834753)
+                };
+            \addplot[refstyle={dgcluster}] coordinates {
+                    (600.0758423676816, 0.713305998339106)
+                    (3242.607283338099,0.7200954104528288)
+                };
+            \addplot[refstyle={ucode}] coordinates {
+                    (5577.320249077162, 0.6202928248036939)
+                    (13784.267073268536,0.5860629974003225)
+                };
+
+            \addlegendentry{VieClus}
+            \addlegendentry{Leiden}
+            \addlegendentry{Louvain}
+            \addlegendentry{COMBO}
+            \addlegendentry{GNNS}
+            \addlegendentry{WT}
+            \addlegendentry{CNM}
+            \addlegendentry{Walktrap}
+            \addlegendentry{CommDGI}
+            \addlegendentry{CluStRE}
+            \addlegendentry{DMoN}
+            \addlegendentry{LIM}
+            \addlegendentry{Hollocou}
+            \addlegendentry{MAGI}
+            \addlegendentry{DGCluster}
+            \addlegendentry{UCoDe}
 
         \end{axis}
     \end{tikzpicture}
 
     % Normal caption
-    \caption{ Ratio between time per edge and quality, using the geometric mean for both measures. This plot shares legend with Figure~\ref{fig:perf_quality}. Parallel algorithms have two connected points, showing parallel and sequential versions. }
+    \caption{ Ratio between time per edge and quality, using the geometric mean for both measures. Parallel algorithms have two connected points, showing parallel and sequential versions. For all the tested algorithms, the parallel versions had lower running times than the sequential versions, so the leftmost mark is always the parallel version. }
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:efficiency}

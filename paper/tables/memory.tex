@@ -2,16 +2,22 @@
 
 \begin{document}
 
-\newcommand{\myrotate}[1]{\rotatebox[origin=b]{90}{\textsc{#1}}}
+% \setlength{\tabcolsep}{1.6pt}
+\npdecimalsign{.}
 
 \begin{table}
-    \caption{Memory consumption of different algorithms on the Reddit graph. All values are in gigabytes.}
+    \caption{Memory consumption of different algorithms on the Coauthor-Physics graph. Note that this graph has $n=\numprint{34493}$, $m=\numprint{247962}$, and $|\mathcal{F}|=\numprint{8415}$. }
     \label{tab:memory}
-    \begin{tabular}{cccccccccccc}
+    \begin{tabular}{l|l|l}
         \toprule
-        \myrotate{Walktrap} & \myrotate{Louvain} & \myrotate{Hollocou} & \myrotate{VieClus} & \myrotate{Leiden} & \myrotate{DMoN} & \myrotate{CommDGI} & \myrotate{GNNS} & \myrotate{UCoDe} & \myrotate{DGCluster} & \myrotate{MAGI} & \myrotate{CluStRE} \\
+        Alg. \hfill Mem.                           & Alg. \hfill Mem.                           & Alg. \hfill Mem.                             \\
         \midrule
-        DNF & \numprint{9.01} & \numprint{0.91} & \numprint{9.60} & \numprint{9.01} & \numprint{67.00} & DNF & \numprint{26.37} & DNF & \numprint{150.63} & \numprint{50.74} & \numprint{0.01} \\
+        \textsc{VieClus} \hfill \numprint{0.1} GB  & \textsc{Leiden} \hfill \numprint{61.4} MB  & \textsc{Louvain} \hfill \numprint{61.4} MB   \\
+        \textsc{COMBO} \hfill \numprint{18.8} GB   & \textsc{GNNS} \hfill \numprint{8.1} GB     & \textsc{WT} \hfill \numprint{61.4} MB        \\
+        \textsc{CNM} \hfill \numprint{0.4} GB      & \textsc{Walktrap} \hfill \numprint{4.4} GB & \textsc{CommDGI} \hfill \numprint{31.1} GB   \\
+        \textsc{CluStRE} \hfill \numprint{6.1} KB  & \textsc{DMoN} \hfill\numprint{7.4} GB      & \textsc{LIM} \hfill \numprint{24.5} GB       \\
+        \textsc{Hollocou} \hfill \numprint{8.1} KB & \textsc{MAGI} \hfill \numprint{15.7} GB    & \textsc{DGCluster} \hfill \numprint{13.2} GB \\
+        \textsc{UCoDe} \hfill \numprint{24.2} GB   &                                            &                                              \\
         \bottomrule
     \end{tabular}
 \end{table}

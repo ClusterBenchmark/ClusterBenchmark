@@ -45,7 +45,8 @@ perf/.style={
                 perf,
                 legend style={
                         draw=none,
-                        legend columns=8
+                        legend columns=8,
+                        legend cell align=left
                     }
             ]
 
@@ -54,7 +55,7 @@ perf/.style={
                 xmin=0.9,
                 ylabel near ticks,
                 ylabel={Fraction of instances},
-                title={Real-World -- F1 Scores},
+                title={\textsc{Ground-Truth} Set -- F1 Scores},
                 title style={xshift=1.5cm, yshift=0.06cm}
             ]
 
@@ -82,7 +83,7 @@ perf/.style={
                 xtick={1.0, 0.95, 0.90},
                 ylabel near ticks,
                 ylabel={Fraction of instances},
-                title={10th DIMACS -- Modularity},
+                title={\textsc{DIMACS} Set -- Modularity},
                 title style={xshift=2cm}
             ]
 
