@@ -6,7 +6,7 @@
 This section briefly summarizes the clustering algorithms evaluated in our experimental survey.
 We organize methods primarily by \emph{optimization paradigm}, distinguishing between \emph{classical} combinatorial optimization methods and \emph{learning-based} approaches with trainable parameters.
 Classical methods are further grouped according to their dominant optimization mechanism (e.g., greedy agglomeration, multilevel local optimization, and metaheuristics/ensembles), as well as by computational setting or guarantees (streaming algorithms and exact solvers).
-Learning-based methods are grouped by the role modularity plays in training, distinguishing between methods that directly optimize differentiable relaxations of modularity and those that use modularity as a guiding signal within contrastive or infomax objectives.
+Learning-based methods are grouped by the role modularity plays in training, distinguishing between methods that directly optimize continuous or differentiable relaxations of modularity and those that use modularity as a guiding signal within contrastive or infomax objectives.
 Within each subgroup, algorithms are listed chronologically.
 Unless stated otherwise, methods aim to maximize modularity; we additionally include a small number of widely used non-modularity baselines (e.g., random-walk- and flow-based methods) for contextual comparison.
 
@@ -114,41 +114,48 @@ Solving the resulting MaxSAT instance yields a clustering with provably optimal 
 
 \subsection{Learning-Based Methods}
 
-\subsubsection{Differentiable modularity maximization}
+\subsubsection{Continuous/Differentiable modularity maximization}
 
-\textsc{DMoN} (Deep Modularity Networks) introduces an unsupervised modularity-based objective and realizes it using a graph neural network (GNN) for graph clustering.
-A GNN followed by a softmax function produces soft cluster assignments, which are optimized using a fully differentiable objective whose main term corresponds to modularity in spectral form.
+\paragraph{\textsc{DMoN} (Deep Modularity Networks)} \textsc{DMoN} introduces an unsupervised modularity-based objective and realizes it using a GNN for graph clustering. 
+A GNN followed by a softmax function produces soft cluster assignments, which are optimized using a fully differentiable objective whose main term corresponds to modularity in spectral form. 
 The objective further includes a \emph{collapse regularization} term that prevents trivial solutions in which all nodes are assigned to the same cluster.
+
+\paragraph{\textsc{GNNS}.}
+\textsc{GNNS} is a GNN-style method for unsupervised network clustering via modularity optimization, inspired by recurrent GNN models.
+Unlike discrete modularity heuristics, \textsc{GNNS} formulates community detection as a continuous optimization process over soft cluster assignments.
+Starting from random initial assignments, the algorithm iteratively updates each node’s soft cluster assignment by combining its previous assignment with aggregated assignment information from neighboring nodes, weighted by the modularity matrix.
+Each update is followed by a normalization step to maintain valid assignment distributions, and simple activation functions are used to amplify assignments supported by positive modularity contributions while suppressing weaker ones.
+The procedure is repeated for multiple random initializations and parameter choices; intermediate solutions are filtered based on achieved modularity, and the final clustering is obtained by discretizing the converged soft cluster assignments.
 
 \paragraph{\textsc{DGCluster}}
 \textsc{DGCluster} is a fully differentiable method for deep graph clustering based on graph structure and node attributes. Unlike most learning-based approaches including \textsc{DMoN}, \textsc{DGCluster} does not require the number of communities to be predefined. 
 It first computes node embeddings using a GNN that incorporates graph structure and node attributes.
-Pairwise similarities between node embeddings are then interpreted as soft community memberships and used to parameterize the modularity objective.
+Similarities between node embeddings are then interpreted as soft pairwise community assignments and used to parameterize the modularity objective.
 This objective is optimized in a differentiable manner to train the GNN parameters, after which final community assignments are obtained by clustering the learned node embeddings using another algorithm called \textsc{BIRCH}. The overall complexity scales linearly with the graph size. 
 
 \paragraph{\textsc{LIM}}
 \textsc{LIM} (Less Is More) is a learning-based community detection method that integrates global structural information, local graph structure, and node attributes within a modularity maximization framework.
 It first performs community pre-detection using a \textsc{Louvain} to extract global structural communities, which are summarized as structural community centers in a feature space.
 Additionally, a graph convolutional network is used to learn node representations that capture local structural information and node attributes.
-Soft cluster memberships are then computed by measuring similarity between node representations and the structural community centers, integrating global structure with local structural and attribute information.
+Soft cluster assignments are then computed by measuring similarity between node representations and the structural community centers, integrating global structure with local structural and attribute information.
 Finally, a modularity maximization objective defined over these soft cluster memberships is optimized to obtain the final community assignment.
 
 \subsubsection{Contrastive / infomax objectives aligned with modularity}
 
-\paragraph{\textsc{CommDGI}.}
-\textsc{CommDGI} (Community Deep Graph Infomax) is a representation-learning approach to community detection that learns community-aware node representations by maximizing mutual information.
+\paragraph{\textsc{CommDGI}}
+\textsc{CommDGI} (Community Deep Graph Infomax) is a representation-learning approach to community detection that learns soft community assignments by maximizing mutual information.
 Building on Deep Graph Infomax, it jointly maximizes \emph{graph mutual information} between node and graph representations and \emph{community mutual information} between node and community (subgraph) representations to encode the graph and clustering feature of each node.
 A trainable clustering layer is integrated into the GNN, enabling end-to-end training for community detection.
 Unlike learning-based methods that directly optimize modularity (e.g., \textsc{DMoN}, \textsc{DGCluster}, \textsc{LIM}), modularity is used here as an auxiliary objective together with mutual information, via a soft $k$-means–style clustering layer, to further encourage structurally coherent communities.
 
-\paragraph{\textsc{UCoDe}.}
+\paragraph{\textsc{UCoDe}}
 \textsc{UCoDe} (Unified Community Detection) is a GNN-based community detection method that jointly supports non-overlapping and overlapping communities within a single unsupervised framework.
 Like \textsc{DMoN} and \textsc{DGCluster}, it represents communities through soft cluster assignments produced by a GNN, but unlike these methods it does not rely on direct modularity maximization alone.
 Instead, \textsc{UCoDe} optimizes a single contrastive objective derived from the modularity matrix, which simultaneously encourages high intra-community similarity and low inter-community similarity at the community level.
 This contrastive formulation allows \textsc{UCoDe} to recover non-overlapping communities while naturally supporting overlap, without requiring separate objectives or post-processing.
 Compared to combined-objective methods such as \textsc{CommDGI}, \textsc{UCoDe} uses a single, interpretable loss and requires minimal hyperparameter tuning.
 
-\paragraph{\textsc{MAGI}.}
+\paragraph{\textsc{MAGI}}
 \textsc{MAGI} establishes a formal connection between modularity maximization and graph contrastive learning by showing that modularity naturally defines positive and negative node pairs via the sign of the modularity matrix.
 Specifically, node pairs with positive modularity coefficients are treated as positive samples, while pairs with non-positive coefficients are treated as negatives, yielding a contrastive objective equivalent to relaxed modularity maximization.
 Based on this insight, \textsc{MAGI} uses modularity maximization as a community-aware pretext task to train a GNN encoder with a softmax-based SimCLR contrastive loss, without relying on graph augmentations.
