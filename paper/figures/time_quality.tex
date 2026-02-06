@@ -109,7 +109,7 @@ every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},
     \end{tikzpicture}
 
     % Normal caption
-    \caption{ Ratio between time per edge and quality, using the geometric mean for both measures. Parallel algorithms have two connected points, showing parallel and sequential versions. For all the tested algorithms, the parallel versions had lower running times than the sequential versions, so the leftmost mark is always the parallel version. }
+    \caption{ Scatter plot showing the ratio between running time and solution quality, using the geometric mean for both measures. To normalize the running time for each graph, we divide the running time by the number of edges, resulting in a measure of time per edge. Each tested parallel algorithm is represented by two points: one for the parallel version and one for the sequential version. For all the algorithms tested, the parallel versions consistently demonstrated lower running times than their sequential counterparts, meaning the leftmost point on the graph always represents the parallel version. }
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:efficiency}
