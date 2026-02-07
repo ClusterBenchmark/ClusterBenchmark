@@ -33,7 +33,7 @@ perf/.style={
     }
 }
 
-\begin{figure*}
+\begin{figure*}[!ht]
 
     \begin{tikzpicture}
         \begin{groupplot}[
@@ -128,7 +128,7 @@ perf/.style={
     \ref{sharedlegend}
 
     % Normal caption
-    \caption{Performance profiles for our first two datasets, the real-world graphs and the instances from the 10th DIMACS implementation challenge. For real-world instances, we use F1 scores to measure solution quality, and for the DIMACS instances, we use modularity. To improve readability, we split the x-axis to highlight the differences between the best algorithms near 1. }
+    \caption{Performance profiles for our first two datasets. We use F1 scores for the \textsc{Ground-Truth} set and modularity for the \textsc{DIMACS} instances. For clarity, we split the x-axis to highlight the differences between the best algorithms near one. }
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:perf_quality}
