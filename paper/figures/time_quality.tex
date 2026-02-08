@@ -47,48 +47,84 @@ every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},
                     }
             ]
 
-            \addplot[refstyle={vieclus}] coordinates {(1465.5489135683392, 0.7576061812615741)};
-            \addplot[refstyle={leiden}] coordinates {(0.5994899748926823, 0.7545419116489159)};
-            \addplot[refstyle={louvain}] coordinates {(1.2495166772612176, 0.7467168504587761)};
-            \addplot[refstyle={combo}] coordinates {(2820.7939174904686,0.764180333291874)};
-            \addplot[refstyle={gnns}] coordinates {(491.6126018770638, 0.7226953377569149)};
-            \addplot[refstyle={wt}] coordinates {(8.508028153036554,0.6722183517846467)};
-            \addplot[refstyle={cnm}] coordinates {(660.5783649792988,0.6758815349295846)};
-            \addplot[refstyle={walktrap}] coordinates {(57.603373500234234, 0.6883864993802071)};
-            \addplot[refstyle={commdgi}] coordinates {(19499.523710563695, 0.6603309780162184)};
-            \addplot[refstyle={clustre_fast}] coordinates {(0.09458569102305557, 0.48440509988669495)};
-            \addplot[refstyle={dmon}] coordinates {(948.5741023117283, 0.46336250241209953)};
-            \addplot[refstyle={lim}] coordinates {(8692.783865262756, 0.6680899707353964)};
-            \addplot[refstyle={hollocou}] coordinates {(0.027657947491190934, 0.26087939419857237)};
-            \addplot[refstyle={magi}] coordinates {(3564.772711411096, 0.6850822252894211)};
-            \addplot[refstyle={dgcluster}] coordinates {(600.0758423676816, 0.713305998339106)};
-            \addplot[refstyle={ucode}] coordinates {(5577.320249077162, 0.6202928248036939)};
+            \addplot[refstyle={vieclus}] coordinates {(1726.3660110940255,0.7531085752527071)};
+            \node at (1700, 0.82) {\scriptsize \textsc{VieClus}};
 
-            \addlegendentry{VieClus}
-            \addlegendentry{Leiden}
-            \addlegendentry{Louvain}
-            \addlegendentry{COMBO}
-            \addlegendentry{GNNS}
-            \addlegendentry{WT}
-            \addlegendentry{CNM}
-            \addlegendentry{Walktrap}
-            \addlegendentry{CommDGI}
-            \addlegendentry{CluStRE}
-            \addlegendentry{DMoN}
-            \addlegendentry{LIM}
-            \addlegendentry{Hollocou}
-            \addlegendentry{MAGI}
-            \addlegendentry{DGCluster}
-            \addlegendentry{UCoDe}
+            \addplot[refstyle={leiden}] coordinates {(0.6239696880930304,0.7621314735947818)};
+            \node at (0.6, 0.85) {\scriptsize \textsc{Leiden}};
+
+            \addplot[refstyle={louvain}] coordinates {(1.4013229432695928,0.7547851126538677)};
+            \node at (1.4, 0.69) {\scriptsize \textsc{Louvain}};
+
+            \addplot[refstyle={combo}] coordinates {(2820.7939174904686,0.766180333291874)};
+            \node at (3820, 0.87) {\scriptsize \textsc{COMBO}};
+
+            \addplot[refstyle={gnns}] coordinates {(559.3278503834495,0.7178744368397761)};
+            \node at (350, 0.8) {\scriptsize \textsc{GNNS}};
+
+            \addplot[refstyle={wt}] coordinates {(12.771122157737215,0.6642441446299415)};
+            \node at (12.7, 0.75) {\scriptsize \textsc{WT}};
+
+            \addplot[refstyle={cnm}] coordinates {(660.5783649792988,0.6758815349295846)};
+            \node at (600, 0.6) {\scriptsize \textsc{CNM}};
+
+            \addplot[refstyle={walktrap}] coordinates {(86.36169664105313,0.6727992787112209)};
+            \node at (86.4, 0.75) {\scriptsize \textsc{Walktrap}};
+
+            \addplot[refstyle={commdgi}] coordinates {(19499.523710563695, 0.6603309780162184)};
+            \node at (8000, 0.45) {\scriptsize \textsc{CommDGI}};
+            \draw (14000, 0.5) -- (17000, 0.6);
+
+            \addplot[refstyle={clustre_fast}] coordinates {(0.08779015323918948,0.49019129511178766)};
+            \node at (0.1, 0.4) {\scriptsize \textsc{CluStRE}};
+
+            \addplot[refstyle={dmon}] coordinates {(648.5178048996712,0.45727461117777635)};
+            \node at (648, 0.38) {\scriptsize \textsc{DMoN}};
+
+            \addplot[refstyle={lim}] coordinates {(8692.783865262756,0.6680899707353964)};
+            \node at (8700, 0.75) {\scriptsize \textsc{LIM}};
+
+            \addplot[refstyle={hollocou}] coordinates {(0.02831508257184716,0.2385322144468167)};
+            \node at (0.1, 0.238) {\scriptsize \textsc{Hollocou}};
+
+            \addplot[refstyle={magi}] coordinates {(3564.7727114111008,0.6850822252894211)};
+            \node at (2000, 0.63) {\scriptsize \textsc{MAGI}};
+
+            \addplot[refstyle={dgcluster}] coordinates {(600.0758423676813,0.713305998339106)};
+            \node at (100, 0.55) {\scriptsize \textsc{DGCluster}};
+            \draw (200, 0.6) -- (400, 0.675);
+
+            \addplot[refstyle={ucode}] coordinates {(5577.320249077159,0.6202928248036939)};
+            \node at (5000, 0.56) {\scriptsize \textsc{UCoDe}};
+
+
+            % \addlegendentry{VieClus}
+            % \addlegendentry{Leiden}
+            % \addlegendentry{Louvain}
+            % \addlegendentry{COMBO}
+            % \addlegendentry{GNNS}
+            % \addlegendentry{WT}
+            % \addlegendentry{CNM}
+            % \addlegendentry{Walktrap}
+            % \addlegendentry{CommDGI}
+            % \addlegendentry{CluStRE}
+            % \addlegendentry{DMoN}
+            % \addlegendentry{LIM}
+            % \addlegendentry{Hollocou}
+            % \addlegendentry{MAGI}
+            % \addlegendentry{DGCluster}
+            % \addlegendentry{UCoDe}
 
         \end{axis}
     \end{tikzpicture}
 
     % Normal caption
-    \caption{ Scatter plot showing the ratio between running time and solution quality, using the geometric mean for both measures. To normalize the running time for each graph, we divide it by the number of edges, yielding a time-per-edge measure. }
+    \vspace{-0.7em}
+    \caption{ Scatter plot showing the ratio between running time and solution quality, using the geometric mean for both measures. To normalize the running time per graph, we divide it by the number of edges, yielding a time-per-edge measure. }
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:efficiency}
+    \vspace{-1em}
 \end{figure}
 
 \ifSubfilesClassLoaded{%

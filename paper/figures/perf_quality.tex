@@ -41,7 +41,7 @@ perf/.style={
                         group size=4 by 1,
                         horizontal sep=0cm
                     },
-                height=0.3\textwidth,
+                height=0.25\textwidth,
                 perf,
                 legend style={
                         draw=none,
@@ -124,14 +124,15 @@ perf/.style={
         \end{groupplot}
     \end{tikzpicture}
 
-    % \vspace{0.5em}
     \ref{sharedlegend}
 
+    \vspace{-0.7em}
     % Normal caption
     \caption{Performance profiles for our first two datasets. We use F1 scores for the \textsc{Ground-Truth} set and modularity for the \textsc{DIMACS} instances. For clarity, we split the x-axis to highlight the differences between the best algorithms near one. }
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:perf_quality}
+    \vspace{-1em}
 \end{figure*}
 
 \ifSubfilesClassLoaded{%
