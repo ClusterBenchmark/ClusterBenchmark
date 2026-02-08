@@ -1,0 +1,32 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+% \setlength{\tabcolsep}{7pt}
+
+\begin{table}[H]
+    \caption{Parallel and sequential running times for six instances from the \textsc{Ground-Truth} dataset. Only the parallel methods are included in the table. The $t_1$ column gives the sequential running time in seconds, while the $t_{16}$ column displays the running time with 16 threads. }
+    \label{tab:par-seq}
+    \small
+    \begin{tabular}{l|rr|rr|rr|rr|rr|rr}
+        \toprule
+                           & \multicolumn{2}{c|}{Cora} & \multicolumn{2}{c|}{Citeseer} & \multicolumn{2}{c|}{Amz-Photo} & \multicolumn{2}{c|}{Amz-Comp} & \multicolumn{2}{c|}{CoAuth-CS} & \multicolumn{2}{c}{CoAuth-Phys}                                                                                                                                                                                    \\ \cline{2-13}
+        Method             & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$}      & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$}      & \multicolumn{1}{c|}{$t_{16}$}   & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c}{$t_{16}$} \\
+        \midrule
+        \textsc{VieClus}   & 276.55                    & 83.31                         & 8.29                           & 5.19                          & 93.29                          & 16.25                           & 2\,804.96                 & 2\,476.70                     & 2\,811.52                 & 2\,897.85                     & 3\,511.06                 & 3\,562.30                    \\
+        \textsc{GNNS}      & 36.40                     & 9.41                          & 48.44                          & 11.90                         & 231.92                         & 43.46                           & 592.24                    & 115.08                        & 668.79                    & 162.44                        & 1\,906.75                 & 363.04                       \\
+        \textsc{CommDGI}   & 936.72                    & 140.64                        & 2\,046.85                      & 288.34                        & 3\,606.69                      & 1\,284.26                       & 3\,616.27                 & 3\,416.34                     & 3\,613.43                 & 3\,602.34                     & 3\,664.35                 & 3\,610.59                    \\
+        \textsc{DMoN}      & 55.60                     & 42.19                         & 100.31                         & 50.01                         & 312.63                         & 184.55                          & 658.25                    & 352.90                        & 868.59                    & 212.61                        & 2\,060.92                 & 498.45                       \\
+        \textsc{LIM}       & 811.90                    & 97.63                         & 1\,218.18                      & 185.00                        & 3\,605.01                      & 618.07                          & 3\,614.08                 & 1\,909.42                     & 3\,633.77                 & 2\,130.90                     & TLE                       & TLE                          \\
+        \textsc{MAGI}      & 119.29                    & 56.88                         & 215.38                         & 66.44                         & 1\,445.31                      & 535.17                          & 3\,605.81                 & 1\,572.78                     & 3\,635.58                 & 3\,414.73                     & 3\,691.43                 & 3\,614.21                    \\
+        \textsc{DGCluster} & 44.78                     & 17.40                         & 91.01                          & 23.75                         & 301.28                         & 98.98                           & 594.48                    & 193.56                        & 833.56                    & 140.19                        & 1\,961.84                 & 307.94                       \\
+        \textsc{UCoDe}     & 223.57                    & 32.04                         & 460.72                         & 62.13                         & 1\,305.44                      & 298.82                          & 3\,603.07                 & 1\,136.63                     & 3\,607.82                 & 2\,287.33                     & 3\,625.18                 & 3\,607.02                    \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}
