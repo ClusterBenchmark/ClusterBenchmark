@@ -23,134 +23,116 @@ Within each subgroup, algorithms are listed chronologically.
 
 \subsection{Classical Modularity Optimization Methods}
 
-\subsubsection{\textbf{Greedy agglomeration and multilevel local search}}
+\subsubsection{Greedy agglomeration and multilevel local search}
 
 Early approaches to modularity maximization focused on greedy agglomeration, merging communities to directly increase modularity.
 Subsequent work identified limitations of purely agglomerative strategies, notably unbalanced merges and poor scalability, shifting toward multilevel formulations based on local vertex moves.
 
-\paragraph{Clauset--Newman--Moore (\textsc{CNM})~\cite{cnm2004}}
-\textsc{CNM} is a hierarchical agglomerative algorithm that greedily maximizes modularity.
+\textbf{Clauset--Newman--Moore (\textsc{CNM})}~\cite{cnm2004} is a hierarchical agglomerative algorithm that greedily maximizes modularity.
 Starting from singleton communities (each vertex assigned to its own cluster), it repeatedly merges the pair of communities with the largest modularity gain.
 The algorithm produces a dendrogram representing the full merge hierarchy and returns the clustering attaining maximum modularity. Its running time is $O(md \log n)$, where $d$ is the dendrogram depth.
 
-\paragraph{Wakita--Tsurumi (\textsc{WT})~\cite{wt2007}}
-\textsc{WT} refines \textsc{CNM} by addressing its tendency to produce highly unbalanced merges that degrade scalability on large graphs.
+\textbf{Wakita--Tsurumi (\textsc{WT})}~\cite{wt2007} refines \textsc{CNM} by addressing its tendency to produce highly unbalanced merges that degrade scalability on large graphs.
 While preserving the same agglomerative structure, \textsc{WT} modifies merge selection to account for both modularity gain and a community-size ratio, biasing the process toward more balanced agglomerations and improving scalability.
 
-\paragraph{\textsc{Louvain}~\cite{louvain2008}}
-\textsc{Louvain} replaces community-pair merging with greedy local vertex moves.
+\textbf{\textsc{Louvain}}~\cite{louvain2008} replaces community-pair merging with greedy local vertex moves.
 Vertices are iteratively moved to neighboring communities whenever the induced modularity gain is positive.
 Once no improving move exists, communities are contracted into supernodes and the process is repeated, yielding a multilevel optimization scheme.
 Each local-moving phase runs in time linear in the number of edges, and the number of multilevel passes is typically small, resulting in near-linear runtime in practice.
 
-\paragraph{\textsc{Leiden}~\cite{leiden2019}}
-\textsc{Leiden} addresses \textsc{Louvain}'s tendency to produce disconnected communities by introducing a refinement phase before contraction.
+\textbf{\textsc{Leiden}}~\cite{leiden2019} addresses \textsc{Louvain}'s tendency to produce disconnected communities by introducing a refinement phase before contraction.
 This phase splits and restructures communities through probabilistic, non-greedy merges, while guaranteeing that resulting communities are connected and locally optimal.
 
-\subsubsection{\textbf{Non-modularity baselines}}
+\subsubsection{Non-modularity baselines}
 
 We include two widely used non-modularity baselines which rely on random walks to model how information or flow propagates through the network, providing an alternative perspective to modularity optimization.
 
-\paragraph{\textsc{WalkTrap}~\cite{walktrap2005}}
-\textsc{Walktrap} performs hierarchical clustering based on the intuition that random walks on a graph tend to get "trapped" into densely connected regions corresponding to communities. 
+\textbf{\textsc{WalkTrap}}~\cite{walktrap2005} performs hierarchical clustering based on the intuition that random walks on a graph tend to get "trapped" into densely connected regions corresponding to communities. 
 Each vertex is characterized by the probability distribution over vertices reached by a random walk starting from it, and a structural similarity distance between vertices (and communities) is defined by comparing these distributions. Communities are then obtained by agglomerative merging of the closest pairs under this distance, producing a dendrogram similar to \textsc{CNM}. The algorithm runs in $O(m n d)$ time, where $d$ is the depth of the resulting dendrogram.
 
-\paragraph{\textsc{Infomap}~\cite{infomap2008}}
-Unlike prior approaches, \textsc{Infomap} formulates community detection as an information-theoretic problem, seeking a clustering that minimizes the expected description length of a random walk under the map equation.
-It uses a greedy multilevel search inspired by \textsc{Louvain}, augmented with additional fine- and coarse-tuning steps to escape local minima, similar to \textsc{Leiden}.
+\textbf{\textsc{Infomap}}~\cite{infomap2008} formulates community detection as an information-theoretic problem, seeking a clustering that minimizes the expected description length of a random walk under the map equation.
+It uses a \textsc{Louvain} inspired greedy multilevel search, augmented with fine- and coarse-tuning steps to escape local minima like \textsc{Leiden}.
 
-\subsubsection{\textbf{Metaheuristics and ensemble/hybrid search}}
+\subsubsection{Metaheuristics and ensemble/hybrid search}
 
 Beyond greedy and multilevel heuristics, several methods apply metaheuristic or ensemble-learning strategies to modularity maximization.
 Representative examples include Variable Neighborhood Search (\textsc{VNS})~\cite{vns2012}, which systematically perturbs the current clustering to escape local optima, and ensemble-based approaches such as \textsc{CGGCi-RG}~\cite{cggci_rg2012}, which stabilize modularity optimization by consolidating recurring community structures across multiple runs.
 These methods combine diversification mechanisms (e.g., randomized perturbations or multiple initializations) with intensification via modularity-based local refinement.
 While more computationally expensive than purely greedy algorithms, such strategies often achieve higher modularity by exploring a larger search space.
 
-\paragraph{\textsc{COMBO}~\cite{combo2014}}
-Instead of relocating individual vertices as in \textsc{Louvain}, \textsc{COMBO} considers pairs of communities and evaluates full redistributions of vertices between them using Kernighan--Lin–style refinements.
+\textbf{\textsc{COMBO}}~\cite{combo2014} considers pairs of communities and evaluates full redistributions of vertices between them using Kernighan--Lin–style refinements, instead of relocating individual vertices as in \textsc{Louvain}.
 By unifying merges, splits, and partial recombinations, \textsc{COMBO} can escape local optima that trap multilevel greedy methods, at the cost of higher computational complexity. The algorithm runs in $O(n^2 C)$ time, where $C$ is the number of clusters.
 
-\paragraph{\textsc{VieClus}~\cite{vieclus2018}}
-\textsc{VieClus} further extends ensemble-based optimization by adopting a memetic (evolutionary) framework.
+\textbf{\textsc{VieClus}}~\cite{vieclus2018} further extends ensemble-based optimization by adopting a memetic (evolutionary) framework.
 Rather than refining a single partition, it maintains a population of clusterings and generates new solutions through recombination and mutation.
 Recombination exploits agreement between high-quality solutions via overlay clustering, where two vertices are grouped together only if they co-occur in both parent solutions, while mutation introduces controlled perturbations to preserve diversity.
 Each offspring is refined using \textsc{Louvain} or multilevel local search and retained only if it improves modularity. After a set time limit, \textsc{VieClus} returns the best clustering found thus far. 
 
-\subsubsection{\textbf{Streaming algorithms}}
+\subsubsection{Streaming algorithms}
 
 Most classical modularity algorithms assume random access to the full graph, which becomes infeasible for large or dynamically generated networks.
 Streaming algorithms address this limitation by processing the graph incrementally under strict memory constraints, typically allowing only a single or few passes over the data.
 
-\paragraph{\textsc{Hollocou}~\cite{hollocou2017}}
-\textsc{Hollocou} is a one-pass edge-streaming algorithm based on the observation that, under random stream orderings, intra-community edges tend to arrive earlier than inter-community edges.
+\textbf{\textsc{Hollocou}}~\cite{hollocou2017} is a one-pass edge-streaming algorithm.
 The algorithm starts from the singleton clustering and processes edges sequentially.
 For an arriving edge $(u,v)$, \textsc{Hollocou} decides whether to merge the communities of $u$ and $v$ based on their current community volumes.
 If both volumes are below a fixed threshold, the node belonging to the smaller-volume community joins the other.
-The authors show that this local, volume-based merging rule corresponds to a greedy optimization of modularity in the streaming setting.
+The authors show that under random stream orderings, this local, volume-based merging rule corresponds to a greedy optimization of modularity in the streaming setting.
 
-\paragraph{\textsc{CluStRE}~\cite{clustre2025}}
-\textsc{CluStRE} follows the node-streaming model unlike the edge-streaming model of \textsc{Hollocou}. Here, nodes arrive sequentially together with their neighborhood lists.
+\textbf{\textsc{CluStRE}}~\cite{clustre2025} follows the node-streaming model unlike the edge-streaming model of \textsc{Hollocou}. Here, nodes arrive sequentially together with their neighborhood lists.
 Starting from singleton clustering, each node is assigned to the cluster among its neighbors that maximizes the modularity gain similar to a \textsc{Louvain} local move.
 During streaming, a quotient graph is constructed whose nodes represent clusters and whose weighted edges summarize inter- and intra-cluster connectivity, preserving modularity exactly.
 This quotient graph is optionally refined using \textsc{VieClus}.
-The graph may be re-streamed to perform further local improvements, iterating until modularity converges.
+The graph may be re-streamed to perform further improvements until convergence.
 
-\subsubsection{\textbf{Exact solvers}}
+\subsubsection{Exact solvers}
 
 In contrast to heuristic approaches, exact solvers provably compute globally optimal modularity clusters.
 Since modularity maximization is NP-hard~\cite{Brandes2008}, these methods rely on exponential-time search augmented with bounding techniques or logical formulations such as weighted partial MaxSAT~\cite{maxsat2025}, and are therefore limited to small or medium-sized graphs.
 
-\paragraph{\textsc{Bayan}~\cite{bayan2024}}
-\textsc{Bayan} is an exact branch-and-cut algorithm for modularity maximization.
+\textbf{\textsc{Bayan}}~\cite{bayan2024} is an exact branch-and-cut algorithm for modularity maximization.
 It formulates modularity as an integer program with binary co-membership variables and enforces consistency via triangular constraints on node triples, which branch on whether three nodes must belong to the same community or cannot all be clustered together.
 Upper bounds are obtained by solving linear programming relaxations, while lower bounds are computed from feasible clusterings produced by \textsc{COMBO}.
 Branching decisions either contract node triples into supernodes or discourage their co-assignment, and the algorithm terminates once optimality is certified or a prescribed optimality gap is reached.
 
 \subsection{Learning-Based Methods}
 
-\subsubsection{\textbf{Continuous and differentiable modularity maximization}}
+\subsubsection{Continuous and differentiable modularity maximization}
 
 These approaches replace discrete community assignments with continuous representations, often learned using GNNs, expressing modularity as a continuous or differentiable objective optimized over node representations or soft cluster assignments.
 
-\paragraph{\textsc{DMoN}~\cite{dmon2023}}
-\textsc{DMoN} introduces a differentiable relaxation of modularity and realizes it using a GNN.
+\textbf{\textsc{DMoN}}~\cite{dmon2023} introduces a differentiable relaxation of modularity and realizes it using a GNN.
 A GNN followed by a softmax function produces soft cluster assignments, which are optimized using an objective whose main term corresponds to modularity in spectral form. 
 The objective further includes a \emph{collapse regularization} term that prevents trivial solutions in which all nodes are assigned to the same cluster.
 
-\paragraph{\textsc{GNNS}~\cite{gnns2022}}
-\textsc{GNNS} formulates modularity maximization as a continuous optimization process over soft cluster assignments.
+\textbf{\textsc{GNNS}}~\cite{gnns2022} formulates modularity maximization as a continuous optimization process over soft cluster assignments.
 Starting from random assignments, node assignments are iteratively updated by combining previous assignments with modularity-weighted aggregation of neighboring assignments.
 Activation functions and normalization steps amplify valid assignments supported by positive modularity contributions.
 The procedure is repeated for multiple random initializations and parameter choices, and the best converged solution is discretized to obtain the final clustering.
 
-\paragraph{\textsc{DGCluster}~\cite{dgcluster2024}}
-Most learning-based modularity methods, including \textsc{DMoN}, require the number of communities to be specified a priori (see Table~\ref{tab:comp}). \textsc{DGCluster} eliminates this requirement by learning node embeddings with a GNN and clustering implicitly through a joint optimization objective.
+Most learning-based modularity methods, including \textsc{DMoN}, require the number of communities to be specified a priori. \textbf{\textsc{DGCluster}}~\cite{dgcluster2024} eliminates this requirement by learning node embeddings with a GNN and clustering implicitly through a joint optimization objective.
 Node embeddings learned by a GNN induce soft pairwise community assignments, which parameterize a differentiable modularity objective.
 A secondary loss incorporates auxiliary local information, such as partial labels or clusterings from classical heuristics, by aligning embedding similarities with a pairwise similarity matrix.
 After end-to-end optimization, final communities are obtained by clustering the learned embeddings using \textsc{BIRCH}~\cite{birch1996}.
 
-\paragraph{\textsc{LIM} (Less Is More)~\cite{lim2025}}
 While \textsc{DGCluster} removes the need to predefine the number of communities, it relies on jointly optimizing multiple objectives which increases model and training complexity.
-\textsc{LIM} addresses this trade-off with a single-objective formulation that still does not require prior specification of the number of communities.
+\textbf{\textsc{LIM}}~\cite{lim2025} addresses this trade-off with a single-objective formulation that still does not require prior specification of the number of communities.
 The method first applies \textsc{Louvain} to extract coarse global communities, which are summarized as structural community centers in a feature space.
 A graph convolutional network then learns node representations that capture local structural information and node attributes.
 Soft cluster assignments are computed by measuring similarity between node representations and the structural centers, and a single modularity objective defined over these assignments is optimized to obtain the final clustering.
 
-\subsubsection{\textbf{Contrastive/infomax objectives}}
+\subsubsection{Contrastive/infomax objectives}
 
 These methods do not optimize modularity directly, but instead use it to guide representation learning through alternative objectives.
 
-\paragraph{\textsc{CommDGI} (Community Deep Graph Infomax)~\cite{commdgi2020}}
-\textsc{CommDGI} learns community-aware node representations by jointly maximizing mutual information between nodes and the graph and between nodes and their communities.
+\textbf{Community Deep Graph Infomax (\textsc{CommDGI})}~\cite{commdgi2020} learns community-aware node representations by jointly maximizing mutual information between nodes and the graph and between nodes and their communities.
 Unlike other methods that directly optimize modularity, modularity is used here as an auxiliary objective together with mutual information, via a soft $k$-means–style clustering layer, to encourage structurally coherent communities.
 
-\paragraph{\textsc{UCoDe} (Unified Community Detection)~\cite{ucode2023}}
-\textsc{UCoDe} optimizes a single contrastive objective derived from the modularity matrix, encouraging high similarity within communities and low similarity across communities.
+\textbf{Unified Community Detection (\textsc{UCoDe})}~\cite{ucode2023} optimizes a single contrastive objective derived from the modularity matrix, encouraging high similarity within communities and low similarity across communities.
 This contrastive formulation allows \textsc{UCoDe} to recover non-overlapping communities while naturally supporting overlap, without requiring separate objectives or post-processing.
 Compared to combined-objective methods such as \textsc{CommDGI}, \textsc{UCoDe} uses a single, interpretable loss and requires minimal hyperparameter tuning.
 
-\paragraph{\textsc{MAGI}~\cite{magi2024}}
-\textsc{MAGI} establishes a formal connection between modularity maximization and graph contrastive learning by showing that modularity naturally defines positive and negative node pairs via the sign of the modularity matrix.
+\textbf{\textsc{MAGI}}~\cite{magi2024} establishes a formal connection between modularity maximization and graph contrastive learning by showing that modularity naturally defines positive and negative node pairs via the sign of the modularity matrix.
 Specifically, node pairs with positive modularity coefficients are treated as positive samples, while pairs with non-positive coefficients are treated as negatives, yielding a contrastive objective equivalent to relaxed modularity maximization.
 A GNN encoder is trained using a community-aware contrastive loss, with mini-batch modularity matrices constructed via random-walk sampling for scalability.
 
