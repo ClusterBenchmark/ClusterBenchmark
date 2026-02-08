@@ -2,22 +2,32 @@
 
 \begin{document}
 
-% \setlength{\tabcolsep}{1.6pt}
-\npdecimalsign{.}
+\setlength{\tabcolsep}{4.5pt}
 
-\begin{table}
-    \caption{Memory consumption of different algorithms on the Coauthor-Physics graph. Note that this graph has $n=\numprint{34493}$, $m=\numprint{247962}$, and $|\mathcal{F}|=\numprint{8415}$. }
+\begin{table}[H]
+    \caption{Memory consumption of the evaluated algorithms on the \textsc{Ground-Truth} dataset. Values are reported in human-readable units. Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 250~GB memory limit. }
     \label{tab:memory}
-    \begin{tabular}{l|l|l}
+    \small
+    \begin{tabular}{l|rrrrrrrrrr}
         \toprule
-        Alg. \hfill Mem.                           & Alg. \hfill Mem.                           & Alg. \hfill Mem.                             \\
+        Method             & Cora      & Citeseer  & Amz-Photo & Amz-Comp  & CoAuth-CS & Pubmed    & CoAuth-Phys & ogbn-Arxiv & Reddit    & ogbn-Prod \\
         \midrule
-        \textsc{VieClus} \hfill \numprint{0.1} GB  & \textsc{Leiden} \hfill \numprint{61.4} MB  & \textsc{Louvain} \hfill \numprint{61.4} MB   \\
-        \textsc{COMBO} \hfill \numprint{18.8} GB   & \textsc{GNNS} \hfill \numprint{8.1} GB     & \textsc{WT} \hfill \numprint{61.4} MB        \\
-        \textsc{CNM} \hfill \numprint{0.4} GB      & \textsc{Walktrap} \hfill \numprint{4.4} GB & \textsc{CommDGI} \hfill \numprint{31.1} GB   \\
-        \textsc{CluStRE} \hfill \numprint{6.1} KB  & \textsc{DMoN} \hfill\numprint{7.4} GB      & \textsc{LIM} \hfill \numprint{24.5} GB       \\
-        \textsc{Hollocou} \hfill \numprint{8.1} KB & \textsc{MAGI} \hfill \numprint{15.7} GB    & \textsc{DGCluster} \hfill \numprint{13.2} GB \\
-        \textsc{UCoDe} \hfill \numprint{24.2} GB   &                                            &                                              \\
+        \textsc{VieClus}   & 22.53~MB  & 22.53~MB  & 64.91~MB  & 130.24~MB & 58.7~MB   & 44.94~MB  & 134.75~MB   & 497.74~MB  & 9.6~GB    & TLE       \\
+        \textsc{Leiden}    & 20.48~MB  & 20.48~MB  & 38.91~MB  & 59.39~MB  & 34.82~MB  & 26.62~MB  & 61.44~MB    & 211.36~MB  & 9.01~GB   & 9.83~GB   \\
+        \textsc{Louvain}   & 20.48~MB  & 20.48~MB  & 38.91~MB  & 59.39~MB  & 32.77~MB  & 28.67~MB  & 61.44~MB    & 210.32~MB  & 9.01~GB   & 9.83~GB   \\
+        \textsc{COMBO}     & 255.58~MB & 314.59~MB & 1.09~GB   & 3.17~GB   & 5.42~GB   & TLE       & TLE         & MLE        & MLE       & MLE       \\
+        \textsc{GNNS}      & 1.35~GB   & 1.75~GB   & 5.49~GB   & 8.1~GB    & 8.28~GB   & 8.31~GB   & 8.11~GB     & 6.09~GB    & 26.37~GB  & MLE       \\
+        \textsc{WT}        & 20.48~MB  & 20.48~MB  & 38.91~MB  & 59.39~MB  & 34.82~MB  & 28.67~MB  & 61.44~MB    & 211.36~MB  & TLE       & TLE       \\
+        \textsc{CNM}       & 192.51~MB & 179.96~MB & 253.07~MB & 372.06~MB & 234.14~MB & 210.71~MB & 398.65~MB   & TLE        & TLE       & TLE       \\
+        \textsc{Walktrap}  & 27.32~MB  & 20.48~MB  & 418.48~MB & 1.47~GB   & 935.16~MB & 488.84~MB & 4.36~GB     & 99.06~GB   & MLE       & MLE       \\
+        \textsc{CommDGI}   & 735.03~MB & 857.03~MB & 2.05~GB   & 5.34~GB   & 9.54~GB   & 9.82~GB   & 31.09~GB    & MLE        & MLE       & MLE       \\
+        \textsc{CluStRE}   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB     & 8.19~MB    & 8.19~MB   & 22.53~MB  \\
+        \textsc{DMoN}      & 664.01~MB & 863.31~MB & 778~MB    & 987.44~MB & 3.5~GB    & 809.3~MB  & 7.39~GB     & 735.92~MB  & 67~GB     & 77.26~GB  \\
+        \textsc{LIM}       & 674.08~MB & 741.17~MB & 1.92~GB   & 4.67~GB   & 7.45~GB   & TLE       & TLE         & MLE        & MLE       & MLE       \\
+        \textsc{Hollocou}  & 2.05~MB   & 2.05~MB   & 4.1~MB    & 6.14~MB   & 4.1~MB    & 4.1~MB    & 8.19~MB     & 32.39~MB   & 912.7~MB  & 1.15~GB   \\
+        \textsc{MAGI}      & 807.82~MB & 992.96~MB & 1.55~GB   & 2.56~GB   & 6.15~GB   & 2.22~GB   & 15.66~GB    & TLE        & 50.74~GB  & MLE       \\
+        \textsc{DGCluster} & 548.86~MB & 917.5~MB  & 879.83~MB & 1.39~GB   & 5.84~GB   & 1.07~GB   & 13.2~GB     & 624.64~MB  & 150.63~GB & TLE       \\
+        \textsc{UCoDe}     & 576.89~MB & 771.56~MB & 1.7~GB    & 4.32~GB   & 7.69~GB   & 6.94~GB   & 24.23~GB    & MLE        & MLE       & MLE       \\
         \bottomrule
     \end{tabular}
 \end{table}

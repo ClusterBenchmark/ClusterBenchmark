@@ -40,7 +40,7 @@ perf/.style={
                         group size=2 by 1,
                         horizontal sep=1.5cm
                     },
-                height=0.3\textwidth,
+                height=0.25\textwidth,
                 width=0.5\textwidth,
                 perf,
                 legend style={
@@ -52,7 +52,7 @@ perf/.style={
 
             \nextgroupplot[xmax=14, xmin=1.0,
                 xlabel=$d_{out}$,
-                xlabel near ticks,
+                xlabel style={xshift=-2.4cm},
                 ylabel=NMI,
                 ylabel near ticks]
 
@@ -64,7 +64,6 @@ perf/.style={
 
             \nextgroupplot[xmode=log, legend to name=sharedlegend2,
                 xlabel=$\sigma_c$,
-                xlabel near ticks,
                 ylabel=NMI,
                 ylabel near ticks]
 

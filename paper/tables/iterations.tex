@@ -1,0 +1,29 @@
+\documentclass[../paper.tex]{subfiles}
+
+\begin{document}
+
+\setlength{\tabcolsep}{4.5pt}
+
+\begin{table}[H]
+    \caption{Number of finished training iterations of the evaluated algorithms on the \textsc{Ground-Truth} dataset. Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 250~GB memory limit. }
+    \label{tab:iterations}
+    \small
+    \begin{tabular}{l|rrrrrrrrrr}
+        \toprule
+        Method             & Cora                            & Citeseer                        & Amz-Photo                       & Amz-Comp                        & CoAuth-CS                       & Pubmed                          & CoAuth-Phys                     & ogbn-Arxiv                      & Reddit             & ogbn-Prod          \\
+        \midrule
+        \textsc{CommDGI}   & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{628}/\numprint{1000}  & \numprint{708}/\numprint{1000}  & 224/\numprint{1000}             & MLE                             & MLE                & MLE                \\
+        \textsc{DMoN}      & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & 24/\numprint{1000} & 17/\numprint{1000} \\
+        \textsc{LIM}       & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{874}/\numprint{1000}  & 552/\numprint{1000}             & TLE                             & TLE                             & MLE                             & MLE                & MLE                \\
+        \textsc{MAGI}      & 100/100                         & 100/100                         & 100/100                         & 100/100                         & 100/100                         & 100/100                         & 31/100                          & TLE                             & 18/100             & MLE                \\
+        \textsc{DGCluster} & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 34/300             & TLE                \\
+        \textsc{UCoDe}     & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & 450/\numprint{1000}             & MLE                             & MLE                & MLE                \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\ifSubfilesClassLoaded{%
+    \bibliography{../paper.bib}%
+}{}
+
+\end{document}

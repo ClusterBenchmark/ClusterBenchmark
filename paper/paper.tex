@@ -60,6 +60,8 @@
 \usepackage{subfiles}
 \usepackage{hyperref}
 \usepackage{numprint}
+\usepackage{placeins}
+\usepackage{float}
 
 %%
 %% \BibTeX command to typeset BibTeX logo in the docs
@@ -185,7 +187,7 @@
 
 \begin{abstract}
   Community detection methods commonly optimize modularity, an objective function designed to maximize intra-community connectivity while penalizing inter-community connectivity relative to random expectation.
-  Over the past two decades, a wide range of algorithms have been proposed to optimize modularity, spanning classical heuristic and exact methods as well as more recent machine learning-based approaches that incorporate node attributes. Yet, survey literature and experimental evaluations remain fragmented, often confined to narrow subsets of algorithms or a single paradigm, limiting insight into relative strengths and trade-offs in practice. In this work, we present the first systematic experimental survey of modularity-based graph clustering algorithms that jointly evaluates classical and learning-based approaches. We study 17 representative algorithms spanning greedy, multilevel, metaheuristic, streaming, exact, and neural paradigms, and organize them within a unified taxonomy grounded in their algorithmic design principles. Through a consistent experimental evaluation across multiple datasets and evaluation criteria, we analyze empirical trade-offs in solution quality and scalability, providing comparative insight rather than identifying a single best method. We additionally contribute a unified, open-source framework for the implementation of all 17 evaluated clustering algorithms, supporting reproducibility and future benchmarking.
+  Over the past two decades, a wide range of algorithms have been proposed to optimize modularity, spanning classical heuristic and exact methods as well as more recent machine learning-based approaches that incorporate node attributes. Yet, survey literature and experimental evaluations remain fragmented, often confined to narrow subsets of algorithms or a single paradigm, limiting insight into relative strengths and trade-offs in practice. In this work, we present the first systematic experimental survey of modularity-based graph clustering algorithms that jointly evaluates classical and learning-based approaches. We study 17 representative algorithms spanning greedy, multilevel, metaheuristic, streaming, exact, and neural paradigms, and organize them within a unified taxonomy grounded in their algorithmic design principles. Through a consistent experimental evaluation across multiple datasets and evaluation criteria, we analyze empirical trade-offs in solution quality and scalability, providing comparative insight rather than identifying a single best method. We additionally contribute a unified, open-source framework for interfacing all 17 evaluated clustering algorithms, supporting reproducibility and future benchmarking.
 
   %There has been a wide veriety of community detection methods prposed over the last two decades that optimize the modularity objective. Despite this abundance of methods, comparative experimental evaluations remain fragmented: most studies consider only a small subset of available algorithms. As a result, it is often unclear how different modularity-based methods relate to one another in practice, or under which conditions specific design choices are most effective. Most notably, the body of work can largely be devided in two main categories based on whether they use machine learning or not.
 
@@ -273,18 +275,42 @@
 
 \appendix
 
+\setcounter{topnumber}{5}
+\setcounter{bottomnumber}{5}
+\setcounter{totalnumber}{10}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.8}
+
 \pagebreak
 
 \section{Instances}
 \label{sec:instances}
+\FloatBarrier
+
+\subfile{tables/dimacs_instances.tex}
+
+\vfill
+\clearpage
+
+\onecolumn
 
 \section{Memory Usage}
 \label{sec:memory}
 
-\section{Parallel-sequential Comparison}
-\label{sec:par-seq}
+\subfile{tables/memory.tex}
+\subfile{tables/iterations.tex}
 
-\subfile{tables/dimacs_instances.tex}
+\clearpage
+
+\twocolumn
+
+\section{Parallel-Sequential Comparison}
+\label{sec:par-seq}
+\FloatBarrier
+
+\clearpage
 
 \end{document}
 \endinput
