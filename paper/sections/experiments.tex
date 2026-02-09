@@ -4,7 +4,7 @@
 
 \subfile{../figures/perf_quality.tex}
 
-In this section, we present benchmark results obtained using our unified benchmarking interface described in Section~\ref{sec:evaluation}. We report results on real-world graphs with and without ground-truth labels, as well as synthetically generated graphs with controlled noise in structure and features. Rather than exhaustively ranking algorithms, these experiments aim to illustrate how different algorithmic design choices behave under a standardized benchmarking setup.
+In this section, we present benchmark results obtained using the unified benchmarking interface described in Section~\ref{sec:evaluation}. We report results on real-world graphs with and without ground-truth labels, as well as on synthetically generated graphs with controlled structural and feature noise. Rather than exhaustively ranking algorithms, these experiments illustrate how different algorithmic design choices behave under a standardized benchmarking setup. To support this, we also provide a dynamic website reporting updated results\footnote{\url{https://clusterbenchmark.github.io/}}.
 
 \subsection{Computational Environment}
 
@@ -16,11 +16,11 @@ For algorithms requiring a prescribed number of clusters, we provide the ground-
 
 \paragraph*{\textbf{Performance Profiles}}
 
-Performance profiles are well suited for benchmarking multiple algorithms, as they summarize relative performance across instances without requiring direct aggregation of objective values~\cite{perf2002}. A performance profile assigns each included algorithm a non-decreasing, piecewise-constant function. The y-axis represents the fraction of graphs where the objective value is better than or equal to $\tau$ times the best observed objective function value from any algorithm. Reading a performance profile, an algorithm performs well if it achieves lower $\tau$ values for higher fractions of instances.
+Performance profiles are well-suited for benchmarking multiple algorithms, as they summarize relative performance across instances without requiring direct aggregation of objective values~\cite{perf2002}. A performance profile assigns each algorithm a non-decreasing, piecewise-constant function. The y-axis represents the fraction of graphs where the objective value is better than or equal to $\tau$ times the best observed objective value from any algorithm. Reading a performance profile, an algorithm performs well if it achieves lower $\tau$ values for higher fractions of instances.
 
 \subsection{State-of-the-Art Comparisons}
 
-Figure~\ref{fig:perf_quality} shows the main results of our experimental comparison. Across both datasets, \textsc{VieClus} achieves the highest modularity whenever it completes within the imposed resource limits, consistent with prior findings~\cite{vieclus2018,maxsat2025}. As expected for a memetic search-based method, it exceeds the memory limit on the two largest \hbox{DIMACS instances.}
+Figure~\ref{fig:perf_quality} shows the main results of the experimental comparison. Across both datasets, \textsc{VieClus} achieves the highest modularity whenever it completes within the imposed resource limits, consistent with prior findings~\cite{vieclus2018,maxsat2025}. As expected for a memetic search-based method, it exceeds the memory limit on the two largest \hbox{DIMACS instances.}
 
 On the \textsc{Ground-Truth} dataset, many methods achieve similarly high F1 scores. Among them, \textsc{MAGI} achieves the strongest and most stable performance. This highlights a general mismatch between modularity optimization and externally defined communities. For example, the Citeseer ground-truth clustering has a modularity of 0.54, whereas all methods produce clusterings with modularity above 0.54. This discrepancy reflects the fact that citation behavior does not necessarily align with categorical labels, as Figure~\ref{fig:comparisons} \hbox{also indicates.}
 
