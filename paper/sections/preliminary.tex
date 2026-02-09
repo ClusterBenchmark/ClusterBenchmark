@@ -5,14 +5,14 @@
 %We use the term \emph{algorithm} to denote a concrete computational procedure. Except where explicitly stated, the algorithms considered here are heuristics for modularity maximization and do not guarantee optimality.
 
 \paragraph*{\textbf{Graphs and clusterings}.}
-An \emph{(attributed) graph} is defined as $G = (V, E, X)$, where $V = \{v_1, v_2, \dots, v_n\}$ is a set of $n$ vertices, $E \subseteq V \times V$ is the set of undirected edges, and $X = \{x_1, x_2, \dots, x_n\}$ denotes node attributes, with each $x_i \in \mathbb{R}^f$ an attribute vector associated with vertex $v_i$, and $f$ the attribute dimension.
+An \emph{(attributed) graph} is defined as $G = (V, E, \mathcal{F})$, where $V = \{v_1, v_2, \dots, v_n\}$ is a set of $n$ vertices, $E \subseteq V \times V$ is the set of undirected edges, and $\mathcal{F} = \{f_1, f_2, \dots, f_n\}$ denotes node attributes, with each $f_i \in \mathbb{R}^x$ an attribute vector associated with vertex $v_i$, and $x$ the attribute dimension.
 We write $n := |V|$ and $m := |E|$ for the number of vertices and edges, respectively.
 For a vertex $u \in V$, its \emph{neighborhood} is $N(u) := \{v \in V : \{u,v\} \in E\}$, and its \emph{degree} is $deg(u) := |N(u)|$.
 Let $A \in \{0,1\}^{n \times n}$ denote the adjacency matrix of $G$, where $A_{ij} = 1$ if $\{v_i,v_j\} \in E$ and $A_{ij} = 0$ otherwise.
 Let $\mathbf{d} \in \mathbb{R}^n$ denote the degree vector with $\mathbf{d}_i = \deg(v_i)$.
 
 A \emph{clustering} $C$ of $G$ is a partition of the vertex set $V$ into $k$ disjoint blocks $V_1, \dots, V_k$ such that $V_1 \cup \cdots \cup V_k = V$.
-Classical algorithms operate solely on the graph structure $(V,E)$, while learning-based methods additionally exploit node attributes $X$. 
+Classical algorithms operate solely on the graph structure $(V,E)$, while learning-based methods additionally exploit node attributes $\mathcal{F}$. 
 Learning-based approaches often aim to discover communities that are coherent both in terms of graph connectivity and attribute similarity.
 
 \paragraph*{\textbf{Modularity}.}

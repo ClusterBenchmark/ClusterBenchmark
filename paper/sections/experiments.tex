@@ -22,7 +22,7 @@ Performance profiles are well suited for benchmarking multiple algorithms, as th
 
 Figure~\ref{fig:perf_quality} shows the main results of our experimental comparison. Across both datasets, \textsc{VieClus} achieves the highest modularity whenever it completes within the imposed resource limits, consistent with prior findings~\cite{vieclus2018,maxsat2025}. As expected for a memetic search-based method, it exceeds the memory limit on the largest \hbox{DIMACS instances.}
 
-On the \textsc{Ground-Truth} dataset, many methods achieve similar high F1 scores. Among them, \textsc{MAGI} achieves the strongest and most stable performance. This highlights a general mismatch between modularity optimization and externally defined communities. For example, the Citeseer ground-truth clustering has a modularity of 0.54, whereas all methods produce clusterings with modularity above 0.54. This discrepancy reflects the fact that citation behavior does not necessarily align with categorical labels, as Figure~\ref{fig:comparisons} \hbox{also indicates.}
+On the \textsc{Ground-Truth} dataset, many methods achieve similarly high F1 scores. Among them, \textsc{MAGI} achieves the strongest and most stable performance. This highlights a general mismatch between modularity optimization and externally defined communities. For example, the Citeseer ground-truth clustering has a modularity of 0.54, whereas all methods produce clusterings with modularity above 0.54. This discrepancy reflects the fact that citation behavior does not necessarily align with categorical labels, as Figure~\ref{fig:comparisons} \hbox{also indicates.}
 
 For the \textsc{DIMACS} graphs, differences between methods are more pronounced, with modularity-focused algorithms clearly outperforming learning-based approaches. Among learning-based methods, performance varies substantially depending on whether the method is designed to operate without node features, with \textsc{GNNS} performing best in this setting.
 
@@ -32,15 +32,15 @@ The streaming methods \textsc{Hollocou} and \textsc{CluStRE} trade solution qual
 
 \subfile{../figures/time_quality.tex}
 
-\subsection{Quality-Efficiency Tradeoffs}
+\subsection{Quality--Efficiency Tradeoffs}
 
 Figure~\ref{fig:efficiency} summarizes the tradeoff between clustering quality and execution time using geometric means across instances. Streaming methods occupy the extreme low-latency regime, while greedy modularity methods (\textsc{Louvain}, \textsc{Leiden}) achieve a favorable balance between quality and efficiency. The search-based algorithm \textsc{VieClus} achieves the highest quality, but at a substantially higher computational cost. Similarly, learning-based methods generally attain high solution qualities at substantially higher \hbox{computational cost.}
 
-Peak memory usage varies significantly across methods, and detailed measurements for the \textsc{Ground-Truth} dataset are presented in Appendix~\ref{sec:memory}. This appendix also offers insights into the number of training iterations completed by each learning-based algorithm. Although the largest instances often face memory or time constraints, most algorithms complete all training iterations, showing that GPUs or other accelerators would not have improved the results for those smaller graphs. We also evaluate the parallel algorithms sequentially to analyze how additional computing resources affect their performance; detailed measurements are presented in Appendix~\ref{sec:par-seq}.
+Peak memory usage varies significantly across methods, and detailed measurements for the \textsc{Ground-Truth} dataset are presented in Appendix~\ref{sec:memory}. This appendix also offers insights into the number of training iterations completed by each learning-based algorithm. Although the largest instances often face memory or time constraints, most algorithms complete all training iterations, showing that GPUs or other accelerators would not have improved the results for those smaller graphs. We also evaluate the parallel algorithms sequentially to analyze how additional computing resources affect their performance; detailed measurements are presented \hbox{in Appendix~\ref{sec:par-seq}.}
 
 % \subfile{../tables/memory.tex}
 
-\subsection{Syntetic Graphs}
+\subsection{Synthetic Graphs}
 
 To further evaluate the impact and sensitivity of graph features across clustering algorithms, we include experiments with syntactically generated graphs with vertex features. These experiments illustrate how feature-aware methods respond to controlled degradation of structural and attribute signals, rather than ranking the methods. For reference, we also include \textsc{VieClus}, which performed best among the pure modularity-optimizing methods. We conduct two sets of experiments with the ADC-SBM generator. First, we generate a sequence of graphs with gradually higher $d_{out}$, causing the graph structure to carry less information about the original $k$ clusters. And second, we generate graphs with strong community structure as we gradually increase the cluster center variance $\sigma_c$, leading the graph features to carry less information \hbox{about the clusters.}
 
