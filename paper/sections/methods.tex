@@ -88,7 +88,7 @@ The graph may be re-streamed to perform further improvements until convergence.
 
 \subsubsection{Exact solvers}
 
-In contrast to heuristic approaches, exact solvers provably compute globally optimal modularity clusters.
+In contrast to heuristic approaches, exact algorithms provably compute globally optimal modularity clusters.
 Since modularity maximization is NP-hard~\cite{Brandes2008}, these methods rely on exponential-time search augmented with bounding techniques or logical formulations such as weighted partial MaxSAT~\cite{maxsat2025}, and are therefore limited to small or medium-sized graphs.
 
 \textbf{\textsc{Bayan}}~\cite{bayan2024} is an exact branch-and-cut algorithm for modularity maximization.
@@ -98,9 +98,9 @@ Branching decisions either contract node triples into supernodes or discourage t
 
 \subsection{Learning-Based Methods}
 
-\subsubsection{Continuous and differentiable modularity maximization}
+\subsubsection{Continuous and differentiable modularity maximization}\hfill
 
-These approaches replace discrete community assignments with continuous representations, often learned using GNNs, expressing modularity as a continuous or differentiable objective optimized over node representations or soft cluster assignments.
+\noindent These approaches replace discrete community assignments with continuous representations, often learned using GNNs, expressing modularity as a continuous or differentiable objective optimized over node representations or soft cluster assignments.
 
 \textbf{\textsc{DMoN}}~\cite{dmon2023} introduces a differentiable relaxation of modularity and realizes it using a GNN.
 A GNN followed by a softmax function produces soft cluster assignments, which are optimized using an objective whose main term corresponds to modularity in spectral form. 
