@@ -14,7 +14,7 @@ To accelerate the overall benchmarking process, we evaluate up to three algorith
 
 For algorithms requiring a prescribed number of clusters, we provide the ground-truth value when available and set $k=16$ otherwise, following common practice. For stochastic methods, we report the best result over five independent runs. In addition to modularity (Section~\ref{sec:preliminary}), we evaluate clustering quality using Normalized Mutual Information (NMI) and an edge-restricted pairwise F1 score. The NMI score measures the level of agreement between the predicted clusters and the ground-truth clusters. For more detailed information, refer to Danon et al.~\cite{danon2005comparing}. The F1 score is computed over adjacent vertex pairs: an edge $(u,v)$ is a true positive (TP) if $u$ and $v$ are assigned to the same cluster by the algorithm as well as in the ground-truth clusters. Similarly, we define false positives (FP), true negatives (TN), and false negatives (FN). The F1 score is then calculated using the formula:  $F1 := \frac{2TP}{2TP + FP + FN}$.
 
-\paragraph*{\textbf{Performance Profiles}}
+\paragraph*{\textbf{Performance profiles}}
 
 Performance profiles are well-suited for benchmarking multiple algorithms, as they summarize relative performance across instances without requiring direct aggregation of objective values~\cite{perf2002}. A performance profile assigns each algorithm a non-decreasing, piecewise-constant function. The y-axis represents the fraction of graphs where the objective value is better than or equal to $\tau$ times the best observed objective value from any algorithm. Reading a performance profile, an algorithm performs well if it achieves lower $\tau$ values for higher fractions of instances.
 
