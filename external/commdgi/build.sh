@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+cd "$(dirname "$0")"
+
 set -e
 
 git clone https://github.com/FDUDSDE/CommDGI.git

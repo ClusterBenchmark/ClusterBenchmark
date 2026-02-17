@@ -43,10 +43,10 @@ do
         MOD=$(echo "$PYTHON_OUT" | awk -F',' -v var="$((i * 2))" '{print $var}')
         if [ -f $LABEL_FILE ]; then
             EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE" "$LABEL_FILE")
-            echo ",$TIME,""$EVAL_OUT"
+            echo ",$TIME,0,""$EVAL_OUT"
         else
             EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE")
-            echo ",$TIME,""$EVAL_OUT"
+            echo ",$TIME,0,""$EVAL_OUT"
         fi
     else
         echo ""

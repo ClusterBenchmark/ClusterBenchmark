@@ -42,10 +42,10 @@ do
 
         if [ -f $LABEL_FILE ]; then
             EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE".txt "$LABEL_FILE")
-            echo ",$TIME,""$EVAL_OUT"
+            echo ",$TIME,0,""$EVAL_OUT"
         else
             EVAL_OUT=$(../../EVAL "$INPUT_FILE" "$FILE".txt)
-            echo ",$TIME,""$EVAL_OUT"
+            echo ",$TIME,0,""$EVAL_OUT"
         fi
     else
         echo ""
