@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <omp.h>
 
@@ -80,6 +81,92 @@ graph *graph_parse(FILE *f)
 
     graph *g = malloc(sizeof(graph));
     *g = (graph){.n = n, .m = m, .V = V, .E = E, .VW = VW, .EW = EW};
+
+    return g;
+}
+
+graph *graph_parse_csr(FILE *f)
+{
+    char magic[GRAPH_CSR_MAGIC_LEN];
+    long long n, m;
+    int flags, reserved;
+
+    if (fread(magic, 1, GRAPH_CSR_MAGIC_LEN, f) != GRAPH_CSR_MAGIC_LEN ||
+        fread(&n, sizeof(long long), 1, f) != 1 ||
+        fread(&m, sizeof(long long), 1, f) != 1 ||
+        fread(&flags, sizeof(int), 1, f) != 1 ||
+        fread(&reserved, sizeof(int), 1, f) != 1)
+    {
+        fprintf(stderr, "Truncated CSR header\n");
+        return NULL;
+    }
+
+    if (n < 0 || m < 0)
+    {
+        fprintf(stderr, "Invalid CSR header: n=%lld m=%lld\n", n, m);
+        return NULL;
+    }
+
+    long long *V = malloc(sizeof(long long) * (n + 1));
+    int *E = malloc(sizeof(int) * (m > 0 ? m : 1));
+
+    long long *EW = NULL, *VW = NULL;
+    if (flags & GRAPH_CSR_FLAG_EDGE_WEIGHTS)
+        EW = malloc(sizeof(long long) * (m > 0 ? m : 1));
+    if (flags & GRAPH_CSR_FLAG_VERTEX_WEIGHTS)
+        VW = malloc(sizeof(long long) * (n > 0 ? n : 1));
+
+    int ok = (V != NULL && E != NULL);
+    ok = ok && fread(V, sizeof(long long), n + 1, f) == (size_t)(n + 1);
+    ok = ok && fread(E, sizeof(int), m, f) == (size_t)m;
+    if (ok && EW != NULL)
+        ok = fread(EW, sizeof(long long), m, f) == (size_t)m;
+    if (ok && VW != NULL)
+        ok = fread(VW, sizeof(long long), n, f) == (size_t)n;
+
+    if (!ok)
+    {
+        fprintf(stderr, "Truncated CSR payload\n");
+        free(V);
+        free(E);
+        free(EW);
+        free(VW);
+        return NULL;
+    }
+
+    graph *g = malloc(sizeof(graph));
+    *g = (graph){.n = n, .m = m, .V = V, .E = E, .VW = VW, .EW = EW};
+
+    return g;
+}
+
+graph *graph_load(const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    if (f == NULL)
+    {
+        fprintf(stderr, "Failed to open graph file %s\n", path);
+        return NULL;
+    }
+
+    char magic[GRAPH_CSR_MAGIC_LEN];
+    size_t got = fread(magic, 1, GRAPH_CSR_MAGIC_LEN, f);
+    rewind(f);
+
+    graph *g;
+    if (got == GRAPH_CSR_MAGIC_LEN &&
+        memcmp(magic, GRAPH_CSR_MAGIC, strlen(GRAPH_CSR_MAGIC)) == 0)
+    {
+        g = graph_parse_csr(f);
+        fclose(f);
+    }
+    else
+    {
+        g = graph_parse(f);
+        fclose(f);
+        if (g != NULL)
+            graph_sort_edges(g);
+    }
 
     return g;
 }
