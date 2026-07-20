@@ -19,7 +19,10 @@ FEATURE
 features/*
 instances*
 latex/*
+scripts/.venv
 scripts/.venv/*
 scripts/data/*
+__pycache__/
+.cb_work/
 scripts/assortativity/*
 scripts/feature_std/*

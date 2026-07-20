@@ -1,0 +1,32 @@
+{
+  "name": "louvain",
+  "class": "classical",
+  "reference": "python-igraph community_multilevel",
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_louvain.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "resolution": {
+      "flag": "--resolution",
+      "default": 1.0,
+      "type": "float",
+      "range": [0.2, 3.0],
+      "scale": "linear",
+      "doc": "Modularity resolution gamma. 1.0 is the standard definition."
+    }
+  }
+}
