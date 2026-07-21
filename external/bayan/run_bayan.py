@@ -1,95 +1,117 @@
-import sys
-import networkx as nx
-import bayanpy
+"""Bayan clustering via bayanpy, on the shared harness.
+
+Bayan (Aref, Mostajabdaveh, Chheda, "Bayan: exact and approximate community
+detection", 2024) maximises modularity with a branch-and-cut integer program
+solved by Gurobi. It is exact/near-exact and therefore does not scale: it needs a
+Gurobi licence, and on graphs beyond a few thousand edges it will run out of time
+or memory building/solving the program -- which is a result to report, so unlike
+the old driver we do not refuse large graphs, we let them fail honestly.
+
+bayanpy has a native time budget (`time_allowed`, the Gurobi time limit) that we
+map to the per-run `--time`; on timeout it returns the best partition found with a
+positive optimality gap, which we record. The graph is loaded from binary CSR via
+scripts/graphio.py and each run writes a JSON report. The pre-migration version is
+kept as run_bayan_legacy.py.
+"""
+
 import argparse
-import multiprocessing
-import gc
+import json
+import signal
+import sys
 import time
+from pathlib import Path
 
-def read_metis_graph(filename):
-    """
-    Reads an undirected graph in METIS format.
-    Returns an igraph.Graph object.
-    """
-    with open(filename, "r") as f:
-        # Skip comment lines
-        first_line = ""
-        for line in f:
-            if line.strip() and not line.startswith('%'):
-                first_line = line.strip()
-                break
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"))
 
-        parts = first_line.split()
-        n_vertices = int(parts[0])
-        n_edges = int(parts[1])
-        t = 0
-        if (len(parts) > 2):
-            t = int(parts[2])
+import networkx as nx  # noqa: E402
+import bayanpy  # noqa: E402
 
-        vertex_weights = (t == 10 or t == 11)
-        edge_weights = (t == 1 or t == 11)
+import graphio  # noqa: E402
 
-        edges = []
-        edge_attr = []
 
-        for u, line in enumerate(f):
-            if not line.strip() or line.startswith('%'):
-                continue
+class RunTimeout(Exception):
+    pass
 
-            N = list(map(int, line.split()))
-            if vertex_weights:
-                N = N[1:]
 
-            if edge_weights:
-                N = zip(N[::2], N[1::2])
-                for v, w in N:
-                    if v - 1 > u:  # only add each edge once
-                        edges.append((u, v - 1))
-                        edge_attr.append(w)
-            else:
-                for v in N:
-                    if v - 1 > u:  # only add each edge once
-                        edges.append((u, v - 1))
+def _alarm(signum, frame):
+    raise RunTimeout()
 
-        g = nx.Graph(edges)
-
-    del edges
-    del edge_attr
-
-    gc.collect()
-
-    return g
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Bayan clustering.")
-    parser.add_argument("--input_file", help="Path to the input graph file in METIS format.")
-    parser.add_argument("--output_file", help="Base name for output cluster files.")
-    args = parser.parse_args()
+    p = argparse.ArgumentParser(description="Run Bayan clustering.")
+    p.add_argument("--graph", required=True, help="binary CSR graph file")
+    p.add_argument("--output-prefix", required=True)
+    p.add_argument("--runs", type=int, default=1)
+    p.add_argument("--time", type=float, default=0.0, help="per-run limit -> Gurobi time budget")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--resolution", type=float, default=1.0)
+    p.add_argument("--threshold", type=float, default=0.001, help="optimality-gap tolerance")
+    args = p.parse_args()
 
-    print(f"Reading graph from {args.input_file} ...")
-    
-    g = read_metis_graph(args.input_file)
+    t0 = time.perf_counter()
+    csr = graphio.load_csr(args.graph)
+    n = csr.n
+    G = nx.Graph()
+    G.add_nodes_from(range(n))
+    G.add_edges_from(csr.edges_upper().tolist())
+    parse_seconds = time.perf_counter() - t0
 
-    if g.number_of_edges() > 3000:
-        print(f"Too many vertices")
-        return 0
+    # Bayan's branch-and-cut takes a wall-clock budget for the solve; use the
+    # per-run limit. The model-building phase before it is not time-bounded, so a
+    # SIGALRM (slightly above the budget) backstops a runaway build on a graph too
+    # large for the exact program, marking it tle instead of waiting for the
+    # harness's much longer outer timeout.
+    time_allowed = int(args.time) if args.time > 0 else 3600
+    signal.signal(signal.SIGALRM, _alarm)
 
-    print("Running Bayan clustering ...")
+    for i in range(args.runs):
+        report = {
+            "run": i,
+            "seed": args.seed + i,
+            "parse_seconds": round(parse_seconds, 6),
+            "resolution": args.resolution,
+            "threshold": args.threshold,
+        }
 
-    modularity, optimality_gap, community, modeling_time, solve_time = bayanpy.bayan(g, threshold=0.001, time_allowed=3600, resolution=1)
+        if args.time > 0:
+            signal.setitimer(signal.ITIMER_REAL, args.time + 60)
 
-    print(f"Elapsed {solve_time + modeling_time:.4f}")
+        start = time.perf_counter()
+        try:
+            modularity, optimality_gap, community, modeling_time, solve_time = bayanpy.bayan(
+                G, threshold=args.threshold, time_allowed=time_allowed, resolution=args.resolution
+            )
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "ok"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
+            report["modularity"] = modularity
+            report["optimality_gap"] = optimality_gap
+            report["modeling_time"] = modeling_time
+            report["gurobi_solve_time"] = solve_time
+            report["n_clusters"] = len(community)
+            report["iterations"] = {"done": 1, "requested": 1}
 
-    membership = [0 for _ in range(g.number_of_nodes())]
-    for c in range(len(community)):
-        for u in community[c]:
-            membership[u] = c
+            membership = [0] * n
+            for c, comm in enumerate(community):
+                for u in comm:
+                    membership[u] = c
+            graphio.write_clustering(f"{args.output_prefix}{i}.txt", membership)
+        except RunTimeout:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "tle"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
+        except Exception as exc:  # noqa: BLE001 - reported, not swallowed
+            # Gurobi licence/size limits and modelling blow-ups land here.
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "error"
+            report["error"] = f"{type(exc).__name__}: {exc}"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
 
-    with open(args.output_file, "w") as out:
-        for u in range(g.number_of_nodes()):
-            out.write(f"{membership[u]}\n")
+        with open(f"{args.output_prefix}{i}.json", "w") as f:
+            json.dump(report, f)
 
-    print("Done.")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

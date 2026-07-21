@@ -1,0 +1,39 @@
+{
+  "name": "bayan",
+  "class": "classical",
+  "reference": "Aref, Mostajabdaveh, Chheda. Bayan algorithm: exact and approximate community detection via modularity maximization. 2024. (bayanpy, Gurobi)",
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_bayan.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "resolution": {
+      "flag": "--resolution",
+      "default": 1.0,
+      "type": "float",
+      "range": [0.2, 3.0],
+      "scale": "linear",
+      "doc": "Modularity resolution gamma. 1.0 is standard modularity; tuned as the granularity knob, like Louvain."
+    },
+    "threshold": {
+      "flag": "--threshold",
+      "default": 0.001,
+      "type": "float",
+      "tunable": false,
+      "doc": "Optimality-gap tolerance: Bayan stops once the branch-and-cut proves it is within this of optimal. A quality/time tolerance, not a tuned hyperparameter; set-only."
+    }
+  }
+}

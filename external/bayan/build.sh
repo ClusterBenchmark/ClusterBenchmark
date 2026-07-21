@@ -13,9 +13,8 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-pip install gurobipy
-pip install networkx
-pip install bayanpy
-pip install scipy
+# bayanpy solves the modularity ILP with Gurobi (gurobipy); numpy backs graphio's
+# CSR memmap. Gurobi needs a licence for anything beyond tiny graphs.
+pip install gurobipy networkx bayanpy scipy numpy
 
 echo "Environment setup complete."
