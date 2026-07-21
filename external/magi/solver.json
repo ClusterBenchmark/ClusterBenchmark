@@ -11,6 +11,7 @@
   "cwd": "MAGI",
   "venv": "MAGI/.venv",
   "entry": "python3 run_magi.py",
+  "cluster_policy": "exact",
   "capabilities": {
     "features": true,
     "clusters": true,
@@ -34,7 +35,12 @@
       "flag": "--hidden",
       "default": "512",
       "type": "categorical",
-      "choices": ["128", "256", "512", "512,512"],
+      "choices": [
+        "128",
+        "256",
+        "512",
+        "512,512"
+      ],
       "tunable": false,
       "doc": "GNN encoder widths (comma-separated for multiple layers). Settable per graph class but excluded from tuning."
     },
@@ -42,7 +48,12 @@
       "flag": "--feature-kind",
       "default": "ldp+rni",
       "type": "categorical",
-      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "choices": [
+        "ones",
+        "ldp",
+        "rni",
+        "ldp+rni"
+      ],
       "doc": "Synthetic node representation used only when the instance has no real features."
     },
     "learning_rate": {
@@ -56,7 +67,10 @@
       "flag": "--tau",
       "default": 0.3,
       "type": "float",
-      "range": [0.05, 1.0],
+      "range": [
+        0.05,
+        1.0
+      ],
       "scale": "log",
       "doc": "Contrastive loss temperature. Paper sweeps it (Fig 5, optimum ~0.5); tunable."
     },
@@ -64,7 +78,10 @@
       "flag": "--wt",
       "default": 100,
       "type": "int",
-      "range": [10, 100],
+      "range": [
+        10,
+        100
+      ],
       "scale": "log",
       "doc": "Number of random walks. Paper sweeps #walks in Fig 4 (1-100); tunable."
     },
@@ -72,7 +89,10 @@
       "flag": "--wl",
       "default": 2,
       "type": "int",
-      "range": [1, 10],
+      "range": [
+        1,
+        10
+      ],
       "scale": "linear",
       "doc": "Random-walk depth. A headline sensitivity knob (Fig 4, l in {1,3,5,10}, optimum ~5); tunable."
     }

@@ -11,6 +11,7 @@
   "cwd": "MAGI",
   "venv": "MAGI/.venv",
   "entry": "python3 run_magi_sage.py",
+  "cluster_policy": "exact",
   "capabilities": {
     "features": true,
     "clusters": true,
@@ -34,7 +35,11 @@
       "flag": "--hidden-channels",
       "default": "256,256",
       "type": "categorical",
-      "choices": ["256,256", "256,128", "256,256,256"],
+      "choices": [
+        "256,256",
+        "256,128",
+        "256,256,256"
+      ],
       "tunable": false,
       "doc": "Per-layer encoder widths. Paper (Table 5) uses width 256 for every SAGE dataset (ogbn-products has 3 layers). Must match the length of size; settable per graph class but excluded from tuning."
     },
@@ -42,7 +47,11 @@
       "flag": "--size",
       "default": "10,10",
       "type": "categorical",
-      "choices": ["10,10", "15,10", "10,10,10"],
+      "choices": [
+        "10,10",
+        "15,10",
+        "10,10,10"
+      ],
       "tunable": false,
       "doc": "Per-layer neighbour sample sizes. Must match the length of hidden_channels."
     },
@@ -50,7 +59,12 @@
       "flag": "--feature-kind",
       "default": "ldp+rni",
       "type": "categorical",
-      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "choices": [
+        "ones",
+        "ldp",
+        "rni",
+        "ldp+rni"
+      ],
       "doc": "Synthetic node representation used only when the instance has no real features."
     },
     "learning_rate": {
@@ -64,7 +78,10 @@
       "flag": "--tau",
       "default": 0.5,
       "type": "float",
-      "range": [0.05, 1.0],
+      "range": [
+        0.05,
+        1.0
+      ],
       "scale": "log",
       "doc": "Contrastive loss temperature. Paper sweeps it (Fig 5, optimum ~0.5); tunable."
     },
@@ -72,7 +89,10 @@
       "flag": "--wt",
       "default": 20,
       "type": "int",
-      "range": [10, 100],
+      "range": [
+        10,
+        100
+      ],
       "scale": "log",
       "doc": "Number of random walks. Paper sweeps #walks in Fig 4 (1-100); tunable."
     },
@@ -80,7 +100,10 @@
       "flag": "--wl",
       "default": 4,
       "type": "int",
-      "range": [1, 10],
+      "range": [
+        1,
+        10
+      ],
       "scale": "linear",
       "doc": "Random-walk depth. A headline sensitivity knob (Fig 4, optimum ~5; SAGE datasets use 3-5); tunable."
     }

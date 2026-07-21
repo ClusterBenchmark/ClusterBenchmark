@@ -13,6 +13,7 @@
   "cwd": ".",
   "venv": ".venv",
   "entry": "python3 run_gnns.py",
+  "cluster_policy": "overprovision",
   "capabilities": {
     "features": false,
     "clusters": true,
@@ -35,9 +36,12 @@
       "flag": "--num-random-configs",
       "default": 100,
       "type": "int",
-      "range": [100, 25000],
+      "range": [
+        100,
+        25000
+      ],
       "scale": "log",
-      "doc": "Number of random GNNS configurations sampled per run; the paper's sole tuning axis (GNNS100 / GNNS2500 / GNNS25000, §Training). Tunable over the tiers the authors ran."
+      "doc": "Number of random GNNS configurations sampled per run; the paper's sole tuning axis (GNNS100 / GNNS2500 / GNNS25000, \u00a7Training). Tunable over the tiers the authors ran."
     },
     "fraction_to_keep": {
       "flag": "--fraction-to-keep",
@@ -50,7 +54,11 @@
       "flag": "--iterations-per-stage",
       "default": "auto",
       "type": "categorical",
-      "choices": ["auto", "10,10,30", "10,10,30,100"],
+      "choices": [
+        "auto",
+        "10,10,30",
+        "10,10,30,100"
+      ],
       "tunable": false,
       "doc": "Iterations per refinement stage. 'auto' follows Algorithm 1: [10,10,30] for S<=1000, [10,10,30,100] for S>1000. Coupled to the config count, not an independent knob."
     }

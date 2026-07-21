@@ -12,6 +12,7 @@
   "cwd": "UCODE",
   "venv": "UCODE/.venv",
   "entry": "python3 run_ucode.py",
+  "cluster_policy": "overprovision",
   "capabilities": {
     "features": true,
     "clusters": true,
@@ -35,14 +36,23 @@
       "flag": "--hid-dimension",
       "default": "256",
       "type": "categorical",
-      "choices": ["128", "256", "512"],
-      "doc": "Hidden width of the GCN encoder. Default 256 (paper's non-overlapping value, §5.1/§5.4). The hidden dimension is the paper's one sensitivity sweep (Fig 4/6, {8..512}), so it is tunable; choices span the useful plateau."
+      "choices": [
+        "128",
+        "256",
+        "512"
+      ],
+      "doc": "Hidden width of the GCN encoder. Default 256 (paper's non-overlapping value, \u00a75.1/\u00a75.4). The hidden dimension is the paper's one sensitivity sweep (Fig 4/6, {8..512}), so it is tunable; choices span the useful plateau."
     },
     "feature_kind": {
       "flag": "--feature-kind",
       "default": "ldp+rni",
       "type": "categorical",
-      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "choices": [
+        "ones",
+        "ldp",
+        "rni",
+        "ldp+rni"
+      ],
       "doc": "Synthetic node representation used only when the instance has no real features."
     },
     "learning_rate": {
@@ -50,14 +60,14 @@
       "default": 0.001,
       "type": "float",
       "tunable": false,
-      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (§5.1, 'no hyperparameter tuning'); set-only."
+      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (\u00a75.1, 'no hyperparameter tuning'); set-only."
     },
     "weight_decay": {
       "flag": "--weight-decay",
       "default": 0.1,
       "type": "float",
       "tunable": false,
-      "doc": "Adam weight decay. Paper uses 0.1 (non-overlapping, §5.1); 0.01 for overlapping. Never swept, so set-only."
+      "doc": "Adam weight decay. Paper uses 0.1 (non-overlapping, \u00a75.1); 0.01 for overlapping. Never swept, so set-only."
     }
   }
 }

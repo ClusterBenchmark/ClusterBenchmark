@@ -85,8 +85,7 @@ def run_once(solver_path, graph, config, args, jsonl_path):
         "--workdir",
         str(args.workdir),
     ]
-    if args.clusters:
-        argv += ["--clusters", str(args.clusters)]
+    argv += ["--clusters", str(args.clusters)]
     if args.features_suffix:
         candidate = Path(str(graph).rsplit(".", 1)[0] + args.features_suffix)
         if candidate.exists():
@@ -144,7 +143,7 @@ def main():
     p.add_argument("--time", type=float, default=3600.0, help="per-run limit")
     p.add_argument("--memory", type=float, default=250.0)
     p.add_argument("--threads", type=int, default=16)
-    p.add_argument("--clusters", type=int, default=0)
+    p.add_argument("--clusters", default="auto", help="cluster count or 'auto' (harness derives from cluster_policy)")
     p.add_argument("--device", default="cpu", choices=("cpu", "cuda"))
     p.add_argument("--features-suffix", default=None, help="e.g. .features")
     p.add_argument("--workdir", default=".cb_work")

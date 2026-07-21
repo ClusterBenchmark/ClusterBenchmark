@@ -22,6 +22,7 @@ covered, and copy-on-write pages are not double counted.
 import argparse
 import glob
 import json
+import math
 import os
 import shlex
 import shutil
@@ -342,6 +343,45 @@ def config_hash(params):
     return hashlib.sha256(blob.encode()).hexdigest()[:12]
 
 
+def csr_num_nodes(path):
+    """Reads n from a binary CSR header (8-byte magic, then int64 n)."""
+    with open(path, "rb") as f:
+        head = f.read(16)
+    if not head.startswith(b"CBCSRv1"):
+        raise SystemExit(f"{path} is not a binary CSR file; run CONVERT first")
+    return int.from_bytes(head[8:16], "little", signed=True)
+
+
+def num_labels(path):
+    """Number of distinct labels in a labels file (the true k)."""
+    with open(path) as f:
+        return len({line.strip() for line in f if line.strip()})
+
+
+def resolve_clusters(solver, args):
+    """Resolves --clusters, deriving it from cluster_policy when 'auto'.
+
+    exact:         true k on labelled graphs, ceil(sqrt(n)) on DIMACS.
+    overprovision: max(16, true k) on labelled graphs, ceil(sqrt(n)) on DIMACS.
+    An explicit integer overrides the policy; solvers that determine their own
+    count (clusters capability false) get None.
+    """
+    if not solver.get("capabilities", {}).get("clusters"):
+        return None, None
+    if str(args.clusters) != "auto":
+        k = int(args.clusters)
+        if k < 1:
+            raise SystemExit(f"solver '{solver['name']}' requires --clusters >= 1")
+        return k, "explicit"
+    policy = solver.get("cluster_policy", "exact")
+    true_k = num_labels(args.labels) if args.labels else None
+    if true_k:
+        k = true_k if policy == "exact" else max(16, true_k)
+    else:
+        k = max(1, math.ceil(math.sqrt(csr_num_nodes(args.graph))))
+    return k, f"auto:{policy}"
+
+
 def add_flag(argv, flag, value):
     """Supports both '--flag=' and '--flag' spellings."""
     if flag.endswith("="):
@@ -429,7 +469,11 @@ def main():
     p.add_argument("--time", type=float, required=True, help="per-run limit in seconds")
     p.add_argument("--memory", type=float, required=True, help="limit in GB")
     p.add_argument("--threads", type=int, default=1)
-    p.add_argument("--clusters", type=int, default=0)
+    p.add_argument(
+        "--clusters",
+        default="auto",
+        help="target cluster count, or 'auto' to derive from the solver's cluster_policy",
+    )
     p.add_argument("--features", default=None)
     p.add_argument("--labels", default=None)
     p.add_argument("--device", default="cpu", choices=("cpu", "cuda"))
@@ -457,14 +501,6 @@ def main():
         solver = json.load(f)
     solver_dir = solver_path.parent
 
-    # A solver that consumes a cluster count needs a real one. --clusters
-    # defaults to 0 (the "not set" sentinel), and forwarding that produces a
-    # zero-cluster head that fails deep in the solver; catch it up front.
-    if solver.get("capabilities", {}).get("clusters") and args.clusters < 1:
-        raise SystemExit(
-            f"solver '{solver['name']}' requires --clusters N with N >= 1"
-        )
-
     args.graph = str(Path(args.graph).resolve())
     if args.features:
         args.features = str(Path(args.features).resolve())
@@ -480,6 +516,10 @@ def main():
                 break
     elif args.labels:
         args.labels = str(Path(args.labels).resolve())
+
+    # Resolve the cluster count now that the graph and labels are known, so
+    # 'auto' can consult cluster_policy, the graph size, and the true k.
+    args.clusters, cluster_mode = resolve_clusters(solver, args)
 
     params, source = resolve_params(solver, args.params, args.set)
     chash = config_hash(params)
@@ -539,6 +579,7 @@ def main():
             "time_limit": args.time,
             "memory_limit_gb": args.memory,
             "clusters": args.clusters,
+            "cluster_mode": cluster_mode,
         },
         "memory": {
             "peak_bytes": monitor.peak_bytes,

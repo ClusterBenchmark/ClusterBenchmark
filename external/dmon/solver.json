@@ -1,7 +1,7 @@
 {
   "name": "dmon",
   "class": "learning",
-  "reference": "Tsitsulin, Palowitch, Perozzi, Müller. Graph Clustering with Graph Neural Networks. JMLR 2023.",
+  "reference": "Tsitsulin, Palowitch, Perozzi, M\u00fcller. Graph Clustering with Graph Neural Networks. JMLR 2023.",
   "upstream": {
     "repo": "https://github.com/google-research/google-research.git",
     "commit": "376257a6d0b88a6048a554e25600b123d85b8e86",
@@ -12,6 +12,7 @@
   "cwd": "google-research",
   "venv": "google-research/.venv",
   "entry": "python3 run_dmon.py",
+  "cluster_policy": "overprovision",
   "capabilities": {
     "features": true,
     "clusters": true,
@@ -35,15 +36,27 @@
       "flag": "--architecture",
       "default": "512",
       "type": "categorical",
-      "choices": ["64", "128", "256", "512", "64,64", "512,512"],
+      "choices": [
+        "64",
+        "128",
+        "256",
+        "512",
+        "64,64",
+        "512,512"
+      ],
       "tunable": false,
-      "doc": "GCN hidden layers, one width per comma-separated entry. Paper (§5) uses a single hidden layer of 512 for all real-world datasets and 64 only for small synthetic graphs. Settable per graph class but excluded from tuning."
+      "doc": "GCN hidden layers, one width per comma-separated entry. Paper (\u00a75) uses a single hidden layer of 512 for all real-world datasets and 64 only for small synthetic graphs. Settable per graph class but excluded from tuning."
     },
     "feature_kind": {
       "flag": "--feature-kind",
       "default": "ldp+rni",
       "type": "categorical",
-      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "choices": [
+        "ones",
+        "ldp",
+        "rni",
+        "ldp+rni"
+      ],
       "doc": "Synthetic node representation used only when the instance has no real features."
     },
     "learning_rate": {
@@ -51,7 +64,7 @@
       "default": 0.001,
       "type": "float",
       "tunable": false,
-      "doc": "Adam learning rate. The paper (§5) deliberately keeps all hyperparameters constant and runs no tuning, so this is set-only."
+      "doc": "Adam learning rate. The paper (\u00a75) deliberately keeps all hyperparameters constant and runs no tuning, so this is set-only."
     },
     "collapse_regularization": {
       "flag": "--collapse-regularization",
@@ -65,7 +78,7 @@
       "default": 0.5,
       "type": "float",
       "tunable": false,
-      "doc": "Dropout on the GNN representation. Fixed at 0.5 uniformly in the paper (§5); never swept, so set-only."
+      "doc": "Dropout on the GNN representation. Fixed at 0.5 uniformly in the paper (\u00a75); never swept, so set-only."
     }
   }
 }

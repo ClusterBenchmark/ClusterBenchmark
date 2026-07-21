@@ -11,6 +11,7 @@
   "cwd": "CommDGI",
   "venv": ".venv",
   "entry": "python3 run_commdgi.py",
+  "cluster_policy": "exact",
   "capabilities": {
     "features": true,
     "clusters": true,
@@ -34,14 +35,25 @@
       "flag": "--hidden",
       "default": "64",
       "type": "categorical",
-      "choices": ["8", "16", "32", "64", "128"],
-      "doc": "Embedding dimensionality of the DGI encoder. Default 64 (paper's standard, §4.3). The paper's primary sensitivity sweep is over {8,16,32,64,128} (Fig 4), so it is tunable."
+      "choices": [
+        "8",
+        "16",
+        "32",
+        "64",
+        "128"
+      ],
+      "doc": "Embedding dimensionality of the DGI encoder. Default 64 (paper's standard, \u00a74.3). The paper's primary sensitivity sweep is over {8,16,32,64,128} (Fig 4), so it is tunable."
     },
     "feature_kind": {
       "flag": "--feature-kind",
       "default": "ldp+rni",
       "type": "categorical",
-      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "choices": [
+        "ones",
+        "ldp",
+        "rni",
+        "ldp+rni"
+      ],
       "doc": "Synthetic node representation used only when the instance has no real features."
     },
     "learning_rate": {
@@ -49,27 +61,30 @@
       "default": 0.001,
       "type": "float",
       "tunable": false,
-      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (§4.3); never swept, so set-only."
+      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (\u00a74.3); never swept, so set-only."
     },
     "clustertemp": {
       "flag": "--clustertemp",
       "default": 30.0,
       "type": "float",
       "tunable": false,
-      "doc": "Clustering softmax temperature delta. Fixed at 30 in the paper (§4.3); never swept, so set-only."
+      "doc": "Clustering softmax temperature delta. Fixed at 30 in the paper (\u00a74.3); never swept, so set-only."
     },
     "weight_decay": {
       "flag": "--weight-decay",
       "default": 0.2,
       "type": "float",
       "tunable": false,
-      "doc": "Adam weight decay. Paper (§4.3) uses 0.2; the repo hardcoded 0.005. Never swept, so set-only."
+      "doc": "Adam weight decay. Paper (\u00a74.3) uses 0.2; the repo hardcoded 0.005. Never swept, so set-only."
     },
     "graph_weight": {
       "flag": "--graph-weight",
       "default": 2.0,
       "type": "float",
-      "range": [0.05, 8.0],
+      "range": [
+        0.05,
+        8.0
+      ],
       "scale": "log",
       "doc": "Weight alpha on the DGI/graph mutual-information loss (Eq. 9, paper value 2). Swept in Figs 6/7; tunable."
     },
@@ -77,9 +92,12 @@
       "flag": "--community-weight",
       "default": 5.0,
       "type": "float",
-      "range": [0.05, 8.0],
+      "range": [
+        0.05,
+        8.0
+      ],
       "scale": "log",
-      "doc": "Weight beta on the community mutual-information loss (Eq. 9, paper value 5; §4.6 says community MI should carry the largest weight). Swept in Figs 6/7; tunable."
+      "doc": "Weight beta on the community mutual-information loss (Eq. 9, paper value 5; \u00a74.6 says community MI should carry the largest weight). Swept in Figs 6/7; tunable."
     },
     "sparse_modularity": {
       "flag": "--sparse-modularity",
