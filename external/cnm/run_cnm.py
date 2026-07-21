@@ -1,171 +1,96 @@
-import sys
-import igraph as ig
-import gc
-import time
-import multiprocessing
-import queue
+"""CNM (Clauset-Newman-Moore) clustering via python-igraph, on the shared harness.
+
+CNM greedily agglomerates communities to maximise modularity -- igraph's
+community_fastgreedy, the algorithm from Clauset, Newman & Moore, "Finding
+community structure in very large networks" (Phys. Rev. E 2004). It is
+deterministic and has no hyperparameters, so repeated runs differ only in timing.
+
+Mirrors the Louvain migration: the graph is loaded from binary CSR via
+scripts/graphio.py, the per-run timeout uses SIGALRM in-process, and each run
+writes a JSON report next to its clustering. The pre-migration version (cdlib /
+networkx greedy_modularity with a forked worker for the timeout) is kept as
+run_cnm_legacy.py.
+"""
+
 import argparse
+import json
+import signal
+import sys
+import time
+from pathlib import Path
 
-from cdlib import algorithms
-from cdlib import evaluation
-import networkx as nx
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"))
 
-def read_metis_graph(filename):
-    """
-    Reads an undirected graph in METIS format.
-    Returns a networkx.Graph object.
-    """
-    with open(filename, "r") as f:
-        # Skip comment lines
-        first_line = ""
-        for line in f:
-            if line.strip() and not line.startswith('%'):
-                first_line = line.strip()
-                break
-
-        parts = first_line.split()
-        n_vertices = int(parts[0])
-        n_edges = int(parts[1])
-        t = 0
-        if (len(parts) > 2):
-            t = int(parts[2])
-
-        vertex_weights = (t == 10 or t == 11)
-        edge_weights = (t == 1 or t == 11)
-
-        g = nx.Graph()
-        g.add_nodes_from(range(n_vertices))
-
-        for u, line in enumerate(f):
-            if not line.strip() or line.startswith('%'):
-                continue
-
-            N = list(map(int, line.split()))
-            if vertex_weights:
-                N = N[1:]
-
-            if edge_weights:
-                N = zip(N[::2], N[1::2])
-                for v, w in N:
-                    if v - 1 > u:  # only add each edge once
-                        g.add_edge(u, v - 1, weight=w)
-            else:
-                for v in N:
-                    if v - 1 > u:  # only add each edge once
-                        g.add_edge(u, v - 1)
-
-    gc.collect()
-
-    return g
+import igraph as ig  # noqa: E402,F401  (availability check; also seeds parity)
+import graphio  # noqa: E402
 
 
-def run_cnm(g):
-    """
-    Run the CNM community detection algorithm on a networkx graph.
-    Returns a list of cluster IDs, one per vertex, and the modularity score.
-    """
-    # The graph 'g' is expected to be a networkx graph.
-    coms = algorithms.greedy_modularity(g)
-    modularity = evaluation.newman_girvan_modularity(g, coms).score
-
-    # The returned 'coms' object also contains the list of communities.
-    # We need to convert this into a membership vector where the i-th
-    # element is the community ID of the i-th vertex.
-    # The nodes in the graph are integers, so they can be used directly as indices.
-    membership_vector = [0] * g.number_of_nodes()
-    for i, community in enumerate(coms.communities):
-        for node_index in community:
-            membership_vector[node_index] = i
-
-    return membership_vector, modularity
+class RunTimeout(Exception):
+    pass
 
 
-def run_cnm_worker(g, result_queue):
-    """
-    A worker function to run Louvain in a separate process.
-    Puts the result in a queue.
-    """
-    try:
-        membership, modularity = run_cnm(g)
-        result_queue.put((membership, modularity))
-    except Exception as e:
-        # Pass exceptions back to the main process
-        result_queue.put(e)
+def _alarm(signum, frame):
+    raise RunTimeout()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run CNM clustering.")
-    parser.add_argument("--input_file", help="Path to the input graph file in METIS format.")
-    parser.add_argument("--output_file", help="Base name for output cluster files.")
-    parser.add_argument("--verbose", type=int, help="Enable verbose output.")
-    parser.add_argument("--k", type=int, help="Number of times to run the clustering.")
-    parser.add_argument("--timeout", type=int, default=0, help="Timeout in seconds for each clustering run. Default is 0 (no timeout).")
-    args = parser.parse_args()
+    p = argparse.ArgumentParser(description="Run CNM (fast greedy) clustering.")
+    p.add_argument("--graph", required=True, help="binary CSR graph file")
+    p.add_argument("--output-prefix", required=True)
+    p.add_argument("--runs", type=int, default=1)
+    p.add_argument("--time", type=float, default=0.0, help="per-run limit, 0 disables")
+    p.add_argument("--seed", type=int, default=0)
+    args = p.parse_args()
 
-    if (args.verbose):
-        print(f"Reading graph from {args.input_file} ...")
-    g = read_metis_graph(args.input_file)
+    t0 = time.perf_counter()
+    csr = graphio.load_csr(args.graph)
+    g = csr.to_igraph()
+    parse_seconds = time.perf_counter() - t0
 
-    if (args.verbose):
-        print("Running CNM clustering ...")
+    weights = g.es["weight"] if "weight" in g.edge_attributes() else None
 
-    for i in range(args.k):
-        gc.collect()
-        result_queue = multiprocessing.Queue()
-        p = multiprocessing.Process(target=run_cnm_worker, args=(g, result_queue))
+    signal.signal(signal.SIGALRM, _alarm)
 
-        start_time = time.time()
-        p.start()
+    for i in range(args.runs):
+        # CNM is deterministic; the seed is recorded only for report parity.
+        report = {
+            "run": i,
+            "seed": args.seed + i,
+            "parse_seconds": round(parse_seconds, 6),
+        }
 
+        if args.time > 0:
+            signal.setitimer(signal.ITIMER_REAL, args.time)
+
+        start = time.perf_counter()
         try:
-            # Wait for the result with a timeout
-            if args.timeout > 0:
-                result = result_queue.get(timeout=args.timeout)
-            else:
-                result = result_queue.get()
+            dendrogram = g.community_fastgreedy(weights=weights)
+            clusters = dendrogram.as_clustering()  # cut at maximum modularity
+            elapsed = time.perf_counter() - start
+            signal.setitimer(signal.ITIMER_REAL, 0)
 
-            if isinstance(result, Exception):
-                raise result
+            report["status"] = "ok"
+            report["solve_seconds"] = round(elapsed, 6)
+            report["modularity"] = g.modularity(clusters.membership, weights=weights)
+            report["n_clusters"] = len(clusters)
+            report["iterations"] = {"done": 1, "requested": 1}
 
-            membership, modularity = result
-            end_time = time.time()
-            elapsed = end_time - start_time
+            graphio.write_clustering(f"{args.output_prefix}{i}.txt", clusters.membership)
+        except RunTimeout:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "tle"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
+        except Exception as exc:  # noqa: BLE001 - reported, not swallowed
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "error"
+            report["error"] = f"{type(exc).__name__}: {exc}"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
 
-            if (args.verbose):
-                print(f"N: {g.number_of_nodes()}\nModularity: {modularity:.4f}\nTime: {elapsed:.4f}")
-                print(f"Writing cluster assignments to {args.output_file} ...")
-            else:
-                print(f"{elapsed:.4f},{modularity:.10f},", end="")
-                sys.stdout.flush()
+        with open(f"{args.output_prefix}{i}.json", "w") as f:
+            json.dump(report, f)
 
-            with open(args.output_file + str(i) + ".txt", "w") as out:
-                out.write("\n".join(map(str, membership)))
-                out.write("\n")
-        except queue.Empty:
-            if (args.verbose):
-                print("Clustering timed out.")
-            else:
-                print("tle,tle,", end="")
-                sys.stdout.flush()
-            # The file for this run won't be created, so the calling script will know it failed.
-            continue
-        except Exception as e:
-            if (args.verbose):
-                print(f"An error occurred during clustering: {e}")
-            else:
-                print("err,err,", end="")
-                sys.stdout.flush()
-            continue
-        finally:
-            # Ensure the process is terminated and joined
-            if p.is_alive():
-                p.terminate()
-            p.join()
+    return 0
 
-    if (args.verbose):
-        print("Done.")
-    else:
-        print()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
