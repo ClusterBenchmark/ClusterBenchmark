@@ -13,6 +13,7 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-pip install infomap
+# infomap provides the map-equation solver; numpy backs graphio's CSR memmap.
+pip install infomap numpy
 
 echo "Environment setup complete."

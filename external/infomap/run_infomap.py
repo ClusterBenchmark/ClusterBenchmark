@@ -1,170 +1,121 @@
-import sys
-from infomap import Infomap
-import gc
-import time
+"""Infomap clustering via the infomap package, on the shared harness.
+
+Infomap (Rosvall & Bergstrom, "Maps of random walks on complex networks reveal
+community structure", 2008) minimises the map equation's codelength. It is
+parameter-free (Markov time 1) but stochastic, so it takes a seed and an
+optional number of restart trials (best codelength kept). We evaluate the
+resulting partition with modularity like every other solver; the codelength is
+recorded in the report for reference.
+
+Mirrors the Louvain/CNM migration: binary CSR via scripts/graphio.py, a SIGALRM
+per-run timeout, and a JSON report per run. The pre-migration version (per-edge
+add_link loop, forked worker for the timeout) is kept as run_infomap_legacy.py.
+"""
+
 import argparse
-import multiprocessing
-import queue
+import json
+import signal
+import sys
+import time
+from pathlib import Path
 
-def read_metis_graph(filename):
-    """
-    Reads an undirected graph in METIS format.
-    Returns an Infomap object and the number of vertices.
-    """
-    im = Infomap("--flow-model undirected --silent")
-    with open(filename, "r") as f:
-        # Skip comment lines
-        first_line = ""
-        for line in f:
-            if line.strip() and not line.startswith('%'):
-                first_line = line.strip()
-                break
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"))
 
-        parts = first_line.split()
-        n_vertices = int(parts[0])
-        n_edges = int(parts[1])
-        t = 0
-        if (len(parts) > 2):
-            t = int(parts[2])
+import numpy as np  # noqa: E402
+from infomap import Infomap  # noqa: E402
 
-        vertex_weights = (t == 10 or t == 11)
-        edge_weights = (t == 1 or t == 11)
-
-        for u, line in enumerate(f):
-            if not line.strip() or line.startswith('%'):
-                continue
-
-            N = list(map(int, line.split()))
-            if vertex_weights:
-                N = N[1:]
-
-            if edge_weights:
-                # Create a zip object of tuples for N
-                N = zip(N[::2], N[1::2])
-                for v, w in N:
-                    if v - 1 > u:  # only add each edge once
-                        im.add_link(u, v - 1, w)
-            else:
-                for v in N:
-                    if v - 1 > u:  # only add each edge once
-                        im.add_link(u, v - 1)
-    
-    gc.collect()
-
-    return im, n_vertices
+import graphio  # noqa: E402
 
 
-def run_infomap(im, n_vertices):
-    """
-    Run the Infomap community detection algorithm on the graph.
-    Returns a list of cluster IDs, one per vertex, and the codelength.
-    """
-    im.run() 
-    
-    membership = [-1] * n_vertices
-    max_module_id = 0
-    for node in im.nodes:
-        membership[node.node_id] = node.module_id
-        if node.module_id > max_module_id:
-            max_module_id = node.module_id
-
-    # Assign unique cluster IDs to degree 0 vertices
-    next_module_id = max_module_id + 1
-    for i in range(n_vertices):
-        if membership[i] == -1:
-            membership[i] = next_module_id
-            next_module_id += 1
-
-    return membership, im.codelength
+class RunTimeout(Exception):
+    pass
 
 
-def run_infomap_worker(im, n_vertices, result_queue):
-    """
-    A worker function to run Infomap in a separate process.
-    Puts the result in a queue.
-    """
-    try:
-        membership, codelength = run_infomap(im, n_vertices)
-        result_queue.put((membership, codelength))
-    except Exception as e:
-        # Pass exceptions back to the main process
-        result_queue.put(e)
+def _alarm(signum, frame):
+    raise RunTimeout()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Infomap clustering.")
-    parser.add_argument("--input_file", help="Path to the input graph file in METIS format.")
-    parser.add_argument("--output_file", help="Base name for output cluster files.")
-    parser.add_argument("--verbose", type=int, help="Enable verbose output.")
-    parser.add_argument("--k", type=int, help="Number of times to run the clustering.")
-    parser.add_argument("--timeout", type=int, default=0, help="Timeout in seconds for each clustering run. Default is 0 (no timeout).")
-    args = parser.parse_args()
+    p = argparse.ArgumentParser(description="Run Infomap clustering.")
+    p.add_argument("--graph", required=True, help="binary CSR graph file")
+    p.add_argument("--output-prefix", required=True)
+    p.add_argument("--runs", type=int, default=1)
+    p.add_argument("--time", type=float, default=0.0, help="per-run limit, 0 disables")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--num-trials", type=int, default=1, help="restart trials; best codelength kept")
+    args = p.parse_args()
 
-    if (args.verbose):
-        print(f"Reading graph from {args.input_file} ...")
-    im, n_vertices = read_metis_graph(args.input_file)
-
-    if (args.verbose):
-        print("Running Infomap clustering ...")
-
-    for i in range(args.k):
-        gc.collect()
-
-        result_queue = multiprocessing.Queue()
-        p = multiprocessing.Process(target=run_infomap_worker, args=(im, n_vertices, result_queue))
-        
-        start_time = time.time()
-        p.start()
-
-        try:
-            # Wait for the result with a timeout
-            if args.timeout > 0:
-                result = result_queue.get(timeout=args.timeout)
-            else:
-                result = result_queue.get()
-
-            if isinstance(result, Exception):
-                raise result
-
-            membership, codelength = result
-            end_time = time.time()
-            elapsed = end_time - start_time
-
-            if (args.verbose):
-                print(f"N: {n_vertices}\nCodelength: {codelength:.4f}\nTime: {elapsed:.4f}")
-                print(f"Writing cluster assignments to {args.output_file} ...")
-            else:
-                print(f"{elapsed:.4f},{codelength:.10f},", end="")
-                sys.stdout.flush()
-
-            with open(args.output_file + str(i) + ".txt", "w") as out:
-                out.write("\n".join(map(str, membership)))
-                out.write("\n")
-        except queue.Empty:
-            if (args.verbose):
-                print("Clustering timed out.")
-            else:
-                print("tle,tle,", end="")
-                sys.stdout.flush()
-            # The file for this run won't be created, so the calling script will know it failed.
-            continue
-        except Exception as e:
-            if (args.verbose):
-                print(f"An error occurred during clustering: {e}")
-            else:
-                print("err,err,", end="")
-                sys.stdout.flush()
-            continue
-        finally:
-            # Ensure the process is terminated and joined
-            if p.is_alive():
-                p.terminate()
-            p.join()
-
-    if (args.verbose):
-        print("Done.")
+    t0 = time.perf_counter()
+    csr = graphio.load_csr(args.graph)
+    edges = np.asarray(csr.edges_upper())
+    w = csr.weights_upper()
+    # infomap.add_links takes a numpy array; use (k,3) with weights, else (k,2).
+    if w is not None:
+        links = np.column_stack([edges.astype(np.float64), np.asarray(w, dtype=np.float64)])
     else:
-        print()
+        links = edges
+    n = csr.n
+    parse_seconds = time.perf_counter() - t0
+
+    signal.signal(signal.SIGALRM, _alarm)
+
+    for i in range(args.runs):
+        seed = args.seed + i
+        report = {
+            "run": i,
+            "seed": seed,
+            "parse_seconds": round(parse_seconds, 6),
+            "num_trials": args.num_trials,
+        }
+
+        if args.time > 0:
+            signal.setitimer(signal.ITIMER_REAL, args.time)
+
+        start = time.perf_counter()
+        try:
+            # Infomap requires a strictly positive seed, so offset the harness
+            # seed (which starts at 0) by one; the mapping stays deterministic.
+            im = Infomap(
+                f"--flow-model undirected --silent --seed {seed + 1} "
+                f"--num-trials {args.num_trials}"
+            )
+            im.add_links(links)
+            im.run()
+            elapsed = time.perf_counter() - start
+            signal.setitimer(signal.ITIMER_REAL, 0)
+
+            # Membership by module id; isolated (degree-0) vertices get their own.
+            membership = [-1] * n
+            for node in im.nodes:
+                membership[node.node_id] = node.module_id
+            nxt = (max(membership) + 1) if membership else 0
+            for v in range(n):
+                if membership[v] == -1:
+                    membership[v] = nxt
+                    nxt += 1
+
+            report["status"] = "ok"
+            report["solve_seconds"] = round(elapsed, 6)
+            report["codelength"] = im.codelength
+            report["n_clusters"] = len(set(membership))
+            report["iterations"] = {"done": 1, "requested": 1}
+
+            graphio.write_clustering(f"{args.output_prefix}{i}.txt", membership)
+        except RunTimeout:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "tle"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
+        except Exception as exc:  # noqa: BLE001 - reported, not swallowed
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "error"
+            report["error"] = f"{type(exc).__name__}: {exc}"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
+
+        with open(f"{args.output_prefix}{i}.json", "w") as f:
+            json.dump(report, f)
+
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
