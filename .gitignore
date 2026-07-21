@@ -9,6 +9,7 @@ external/dmon/google-research/
 external/commdgi/CommDGI/
 external/ucode/UCODE/
 external/dgcluster/DGCluster/
+external/magi/MAGI/
 
 paper/data/.venv 
 

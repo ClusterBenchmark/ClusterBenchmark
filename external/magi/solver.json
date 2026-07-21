@@ -1,0 +1,73 @@
+{
+  "name": "magi",
+  "class": "learning",
+  "reference": "Liu, Yang, et al. Revisiting Modularity Maximization for Graph Clustering: A Contrastive Learning Perspective (MAGI). KDD 2024.",
+  "upstream": {
+    "repo": "https://github.com/EdisonLeeeee/MAGI.git",
+    "commit": "6313854c0748d58fee11e84d7e6b73221e9c1557",
+    "note": "Clone + separate driver, no patch: the Encoder/Model (magi/model.py) and the sampling/helpers in magi/utils.py are imported unchanged and the authors' files are left pristine. run_magi.py runs the full-graph GCN variant (train_gcn.py) with a KMeans readout over the learned embedding.",
+    "variant": "Full-graph GCN only. The contrastive loss is a dense N x N similarity, so it is O(n^2) and will MLE on large graphs; MAGI's scalable minibatch SAGE variant (train_sage.py) is a separate entry point, not migrated here."
+  },
+  "cwd": "MAGI",
+  "venv": "MAGI/.venv",
+  "entry": "python3 run_magi.py",
+  "capabilities": {
+    "features": true,
+    "clusters": true,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "clusters": "--clusters",
+    "seed": "--seed",
+    "device": "--device",
+    "features": "--features"
+  },
+  "params": {
+    "hidden": {
+      "flag": "--hidden",
+      "default": "512",
+      "type": "categorical",
+      "choices": ["128", "256", "512", "512,512"],
+      "tunable": false,
+      "doc": "GNN encoder widths (comma-separated for multiple layers). Settable per graph class but excluded from tuning."
+    },
+    "feature_kind": {
+      "flag": "--feature-kind",
+      "default": "ldp+rni",
+      "type": "categorical",
+      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "doc": "Synthetic node representation used only when the instance has no real features."
+    },
+    "learning_rate": {
+      "flag": "--learning-rate",
+      "default": 0.0005,
+      "type": "float",
+      "range": [0.0001, 0.01],
+      "scale": "log",
+      "doc": "Adam learning rate."
+    },
+    "tau": {
+      "flag": "--tau",
+      "default": 0.3,
+      "type": "float",
+      "range": [0.05, 1.0],
+      "scale": "log",
+      "doc": "Contrastive loss temperature."
+    },
+    "wt": {
+      "flag": "--wt",
+      "default": 100,
+      "type": "int",
+      "range": [20, 200],
+      "scale": "log",
+      "doc": "Number of random walks used to build the similarity graph."
+    }
+  }
+}
