@@ -10,6 +10,7 @@ external/commdgi/CommDGI/
 external/ucode/UCODE/
 external/dgcluster/DGCluster/
 external/magi/MAGI/
+external/magi-sage/MAGI/
 
 paper/data/.venv 
 

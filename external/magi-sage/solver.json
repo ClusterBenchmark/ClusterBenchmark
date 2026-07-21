@@ -1,0 +1,81 @@
+{
+  "name": "magi-sage",
+  "class": "learning",
+  "reference": "Liu, Yang, et al. Revisiting Modularity Maximization for Graph Clustering: A Contrastive Learning Perspective (MAGI). KDD 2024.",
+  "upstream": {
+    "repo": "https://github.com/EdisonLeeeee/MAGI.git",
+    "commit": "6313854c0748d58fee11e84d7e6b73221e9c1557",
+    "note": "Clone + separate driver, no patch. This is MAGI's minibatch SAGE variant (train_sage.py): the Encoder/Model, NeighborSampler, get_mask, and setup_seed are imported unchanged. Companion to the full-graph GCN variant in external/magi. run_magi_sage.py trains on sampled minibatches and reads out with KMeans.",
+    "variant": "Minibatch SAGE. Unlike the GCN variant it does not build a dense N x N similarity, so it scales to large graphs -- this is why it exists as a separate solver."
+  },
+  "cwd": "MAGI",
+  "venv": "MAGI/.venv",
+  "entry": "python3 run_magi_sage.py",
+  "capabilities": {
+    "features": true,
+    "clusters": true,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "clusters": "--clusters",
+    "seed": "--seed",
+    "device": "--device",
+    "features": "--features"
+  },
+  "params": {
+    "hidden_channels": {
+      "flag": "--hidden-channels",
+      "default": "512,256",
+      "type": "categorical",
+      "choices": ["512,256", "256,128", "512,512,256"],
+      "tunable": false,
+      "doc": "Per-layer encoder widths. Must match the length of size; settable per graph class but excluded from tuning."
+    },
+    "size": {
+      "flag": "--size",
+      "default": "10,10",
+      "type": "categorical",
+      "choices": ["10,10", "15,10", "10,10,10"],
+      "tunable": false,
+      "doc": "Per-layer neighbour sample sizes. Must match the length of hidden_channels."
+    },
+    "feature_kind": {
+      "flag": "--feature-kind",
+      "default": "ldp+rni",
+      "type": "categorical",
+      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "doc": "Synthetic node representation used only when the instance has no real features."
+    },
+    "learning_rate": {
+      "flag": "--learning-rate",
+      "default": 0.01,
+      "type": "float",
+      "range": [0.0005, 0.05],
+      "scale": "log",
+      "doc": "Adam learning rate."
+    },
+    "tau": {
+      "flag": "--tau",
+      "default": 0.5,
+      "type": "float",
+      "range": [0.05, 1.0],
+      "scale": "log",
+      "doc": "Contrastive loss temperature."
+    },
+    "wt": {
+      "flag": "--wt",
+      "default": 20,
+      "type": "int",
+      "range": [10, 100],
+      "scale": "log",
+      "doc": "Number of random walks used to build the similarity graph."
+    }
+  }
+}
