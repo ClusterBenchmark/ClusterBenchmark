@@ -442,6 +442,14 @@ def main():
         solver = json.load(f)
     solver_dir = solver_path.parent
 
+    # A solver that consumes a cluster count needs a real one. --clusters
+    # defaults to 0 (the "not set" sentinel), and forwarding that produces a
+    # zero-cluster head that fails deep in the solver; catch it up front.
+    if solver.get("capabilities", {}).get("clusters") and args.clusters < 1:
+        raise SystemExit(
+            f"solver '{solver['name']}' requires --clusters N with N >= 1"
+        )
+
     args.graph = str(Path(args.graph).resolve())
     if args.features:
         args.features = str(Path(args.features).resolve())
