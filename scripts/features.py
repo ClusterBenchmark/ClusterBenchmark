@@ -149,28 +149,20 @@ def main():
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--rni-dim", type=int, default=DEFAULT_RNI_DIM)
     p.add_argument("--out", default=None, help="default: <graph>.<kind>.feat")
-    p.add_argument(
-        "--text", action="store_true", help="write the legacy text format instead"
-    )
     p.add_argument("--force", action="store_true", help="regenerate even if cached")
     args = p.parse_args()
 
     csr = graphio.load_csr(args.graph)
 
     stem = str(Path(args.graph).with_suffix(""))
-    suffix = ".features" if args.text else ".feat"
-    out = Path(args.out) if args.out else Path(f"{stem}.{args.kind.replace('+', '_')}{suffix}")
+    out = Path(args.out) if args.out else Path(f"{stem}.{args.kind.replace('+', '_')}.feat")
 
     if out.exists() and not args.force:
         print(f"{out} exists, use --force to regenerate", file=sys.stderr)
         return 0
 
     features = build(csr, kind=args.kind, seed=args.seed, rni_dim=args.rni_dim)
-
-    if args.text:
-        graphio.write_features_text(out, features)
-    else:
-        graphio.write_features(out, features)
+    graphio.write_features(out, features)
 
     # Provenance, so a cached feature matrix is never anonymous.
     meta = {

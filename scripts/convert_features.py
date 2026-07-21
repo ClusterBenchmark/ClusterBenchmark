@@ -2,16 +2,16 @@
 """Converts a text feature file to the binary feature format, streaming.
 
 Provided (real) node features arrive as text: an `n dim` header followed by one
-whitespace-separated row per vertex. Passing that text file straight to a solver
-re-introduces exactly the problem the binary CSR format removed for graphs --
-graphio.load_features has to read the whole file and split it in memory, which
-on a large attributed graph is the parse-time spike and peak-memory cost we set
-out to avoid.
+whitespace-separated row per vertex. The Python path does not load text at all
+(graphio.load_features accepts only the binary format, just as load_csr accepts
+only binary CSR), so a large ASCII matrix is never parsed on the training hot
+path -- the parse-time spike and peak-memory cost the binary formats removed.
 
-This is the CONVERT step for features: run it once per instance and hand the
-resulting .feat to the harness via --features. load_features then memory-maps
-it with no parsing at all. Conversion itself streams one row at a time, so it
-does not hold the matrix in memory either.
+This is the CONVERT step for features, the counterpart to CONVERT for graphs:
+run it once per instance and hand the resulting .feat to the harness via
+--features, where load_features memory-maps it with no parsing. Conversion
+itself streams one row at a time, so it does not hold the matrix in memory
+either.
 
 Usage:
     python3 scripts/convert_features.py cora.features --out cora.feat

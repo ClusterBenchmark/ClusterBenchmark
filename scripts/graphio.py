@@ -153,58 +153,33 @@ def write_features(path, features):
         features.tofile(f)
 
 
-def write_features_text(path, features):
-    """Writes the legacy text format: an 'n dim' header, then one row per vertex."""
-    features = np.asarray(features, dtype=np.float32)
-    with open(path, "w") as f:
-        f.write(f"{features.shape[0]} {features.shape[1]}\n")
-        np.savetxt(f, features, fmt="%.6g")
-
-
 def load_features(path, n=None):
-    """Reads a dense feature matrix, binary or text, as float32.
+    """Memory maps a dense feature matrix from the binary format, as float32.
 
-    Binary files are memory mapped. Text files are read in one pass and split
-    once, since np.loadtxt allocates Python objects per token and is far too
-    slow on the larger instances.
+    Only the binary .feat format is accepted, mirroring load_csr: a large ASCII
+    feature matrix is never parsed on the training hot path. Real features
+    usually arrive as text; convert them once with scripts/convert_features.py.
     """
     with open(path, "rb") as f:
         head = f.read(FEAT_HEADER_LEN)
 
-    if head.startswith(FEAT_MAGIC):
-        rows = int(np.frombuffer(head, dtype=np.int64, count=1, offset=8)[0])
-        dim = int(np.frombuffer(head, dtype=np.int32, count=1, offset=16)[0])
-        if n is not None and rows != n:
-            raise ValueError(f"{path}: has {rows} rows, expected n={n}")
-        return np.memmap(
-            path,
-            dtype=np.float32,
-            mode="r",
-            offset=FEAT_HEADER_LEN,
-            shape=(rows, dim),
+    if not head.startswith(FEAT_MAGIC):
+        raise ValueError(
+            f"{path} is not a binary feature file. "
+            f"Run scripts/convert_features.py on the text features first."
         )
 
-    with open(path, "rb") as f:
-        tokens = f.read().split()
-
-    # The legacy text format starts with an 'n dim' header line.
-    if len(tokens) >= 2:
-        try:
-            rows, dim = int(tokens[0]), int(tokens[1])
-            if rows * dim == len(tokens) - 2:
-                arr = np.array(tokens[2:], dtype=np.float32).reshape(rows, dim)
-                if n is not None and rows != n:
-                    raise ValueError(f"{path}: has {rows} rows, expected n={n}")
-                return arr
-        except ValueError:
-            pass
-
-    arr = np.array(tokens, dtype=np.float32)
-    if n is None:
-        raise ValueError(f"{path}: headerless feature file requires n")
-    if arr.size % n != 0:
-        raise ValueError(f"{path}: {arr.size} values is not divisible by n={n}")
-    return arr.reshape(n, arr.size // n)
+    rows = int(np.frombuffer(head, dtype=np.int64, count=1, offset=8)[0])
+    dim = int(np.frombuffer(head, dtype=np.int32, count=1, offset=16)[0])
+    if n is not None and rows != n:
+        raise ValueError(f"{path}: has {rows} rows, expected n={n}")
+    return np.memmap(
+        path,
+        dtype=np.float32,
+        mode="r",
+        offset=FEAT_HEADER_LEN,
+        shape=(rows, dim),
+    )
 
 
 def load_labels(path, n):
