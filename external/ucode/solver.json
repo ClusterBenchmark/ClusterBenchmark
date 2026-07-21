@@ -1,0 +1,66 @@
+{
+  "name": "ucode",
+  "class": "learning",
+  "reference": "Kalantzi, Karypis (AU-DIS UCODE). Unsupervised Community Detection with modularity-based GNNs.",
+  "upstream": {
+    "repo": "https://github.com/AU-DIS/UCODE.git",
+    "commit": "09f968b2828c684659c420ff60908af46cba20ce",
+    "patch": "ucode.patch",
+    "note": "The GCN (UCODEncoder.py), loss_modularity_trace (Lossfunction.py), and utils.convert_torch_npz are imported unchanged. The patch is utils.py only: networkx to_scipy_sparse_array compat, a vectorised get_B (the original O(n^2) Python double loop is unusable at scale), and div-by-zero guards. main.py is left pristine and unused; training is run_ucode.py on the shared harness.",
+    "fixed": "The number of communities is the encoder output width (hid_units), which the previous integration hardcoded at 16 while ignoring the requested count; it is now set from --clusters."
+  },
+  "cwd": "UCODE",
+  "venv": "UCODE/.venv",
+  "entry": "python3 run_ucode.py",
+  "capabilities": {
+    "features": true,
+    "clusters": true,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "clusters": "--clusters",
+    "seed": "--seed",
+    "device": "--device",
+    "features": "--features"
+  },
+  "params": {
+    "hid_dimension": {
+      "flag": "--hid-dimension",
+      "default": "512",
+      "type": "categorical",
+      "choices": ["128", "256", "512"],
+      "tunable": false,
+      "doc": "Hidden width of the GCN encoder. Paper uses 512. Settable per graph class but excluded from tuning."
+    },
+    "feature_kind": {
+      "flag": "--feature-kind",
+      "default": "ldp+rni",
+      "type": "categorical",
+      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "doc": "Synthetic node representation used only when the instance has no real features."
+    },
+    "learning_rate": {
+      "flag": "--learning-rate",
+      "default": 0.001,
+      "type": "float",
+      "range": [0.0001, 0.01],
+      "scale": "log",
+      "doc": "Adam learning rate."
+    },
+    "weight_decay": {
+      "flag": "--weight-decay",
+      "default": 0.1,
+      "type": "float",
+      "range": [0.001, 0.5],
+      "scale": "log",
+      "doc": "Adam weight decay (L2 regularisation)."
+    }
+  }
+}
