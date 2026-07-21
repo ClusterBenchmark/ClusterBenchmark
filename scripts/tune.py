@@ -166,7 +166,14 @@ def main():
 
     solver_path = resolve_solver(args.solver)
     solver = json.loads(solver_path.read_text())
-    specs = solver.get("params", {})
+    # A param with "tunable": false is still forwarded by the harness (so it can
+    # be set per graph class), but is held at its default during a search rather
+    # than consuming a search dimension.
+    specs = {
+        name: spec
+        for name, spec in solver.get("params", {}).items()
+        if spec.get("tunable", True)
+    }
     if not specs:
         raise SystemExit(f"{solver['name']} exposes no tunable parameters")
 

@@ -31,6 +31,14 @@
     "features": "--features"
   },
   "params": {
+    "architecture": {
+      "flag": "--architecture",
+      "default": "64",
+      "type": "categorical",
+      "choices": ["64", "128", "256", "512", "64,64", "512,512"],
+      "tunable": false,
+      "doc": "GCN hidden layers, one width per comma-separated entry. Paper uses 64 for large graphs and 512 for some datasets. Settable per graph class but excluded from tuning."
+    },
     "feature_kind": {
       "flag": "--feature-kind",
       "default": "ldp+rni",
