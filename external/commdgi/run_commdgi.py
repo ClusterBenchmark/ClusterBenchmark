@@ -33,6 +33,12 @@ def add_arguments(p):
     p.add_argument("--hidden", type=int, default=512)
     p.add_argument("--learning-rate", type=float, default=0.001)
     p.add_argument("--clustertemp", type=float, default=30.0)
+    # Protocol B improvement: compute the modularity term from the sparse
+    # adjacency instead of the authors' dense n x n modularity matrix. The two
+    # are numerically equivalent (verified), but the dense form is O(n^2) memory
+    # and compute and MLEs on large graphs. Off by default so Protocol A stays
+    # faithful to the reference code.
+    p.add_argument("--sparse-modularity", action="store_true")
 
 
 def make_modularity_matrix(adj, torch):
@@ -40,6 +46,16 @@ def make_modularity_matrix(adj, torch):
     adj = adj * (torch.ones(adj.shape[0], adj.shape[0]) - torch.eye(adj.shape[0]))
     degrees = adj.sum(dim=0).unsqueeze(1)
     return adj - degrees @ degrees.t() / adj.sum()
+
+
+def sparse_modularity(r, adj_sp, degree, two_m):
+    """DGI.modularity without forming B: (1/2m)(trace(r^T A_nodiag r) - ||d^T r||^2/2m)."""
+    import torch
+
+    ar = torch.sparse.mm(adj_sp, r)
+    term1 = (r * ar).sum()
+    dr = degree @ r
+    return (term1 - (dr * dr).sum() / two_m) / two_m
 
 
 def main():
@@ -51,11 +67,28 @@ def main():
     from DGI import DeepGraphInfomax
 
     args = ctx.args
+    N = ctx.graph.n
 
-    # Dense adjacency and modularity matrix: intrinsic to CommDGI's objective.
-    dense_adj = ctx.graph.to_scipy_csr().toarray().astype(np.float32)
-    adj_all = torch.from_numpy(dense_adj).to(device)
-    test_object = make_modularity_matrix(adj_all, torch).to(device)
+    # The modularity term is CommDGI's only O(n^2) piece. Protocol A builds the
+    # authors' dense adjacency and modularity matrix; Protocol B keeps it sparse.
+    a_sparse = ctx.graph.to_scipy_csr()
+    adj_all = test_object = None
+    adj_sp = degree = two_m = None
+    if args.sparse_modularity:
+        a_nodiag = a_sparse.astype(np.float32)
+        a_nodiag.setdiag(0)
+        a_nodiag.eliminate_zeros()
+        coo = a_nodiag.tocoo()
+        adj_sp = torch.sparse_coo_tensor(
+            np.vstack([coo.row, coo.col]), coo.data, size=(N, N)
+        ).coalesce().to(device)
+        degree = torch.tensor(
+            np.asarray(a_nodiag.sum(axis=1)).ravel(), dtype=torch.float32
+        ).to(device)
+        two_m = degree.sum()
+    else:
+        adj_all = torch.from_numpy(a_sparse.toarray().astype(np.float32)).to(device)
+        test_object = make_modularity_matrix(adj_all, torch).to(device)
 
     # edge_index in the form PyG wants: both directions, exactly what CSR stores.
     src = np.asarray(ctx.graph.sources(), dtype=np.int64)
@@ -89,9 +122,12 @@ def main():
                 optimizer.zero_grad()
                 pos_z, neg_z, summary, mu, r, dist = model(features, edge_index)
                 dgi_loss = model.loss(pos_z, neg_z, summary)
-                modularity_loss = model.modularity(
-                    mu, r, pos_z, dist, adj_all, test_object, model_args
-                )
+                if args.sparse_modularity:
+                    modularity_loss = sparse_modularity(r, adj_sp, degree, two_m)
+                else:
+                    modularity_loss = model.modularity(
+                        mu, r, pos_z, dist, adj_all, test_object, model_args
+                    )
                 comm_loss = model.comm_loss(pos_z, mu)
                 loss = -modularity_loss + 5 * dgi_loss + comm_loss
                 loss.backward()

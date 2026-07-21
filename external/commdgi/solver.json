@@ -60,6 +60,13 @@
       "range": [1.0, 100.0],
       "scale": "log",
       "doc": "Softmax temperature for the differentiable k-means cluster assignments."
+    },
+    "sparse_modularity": {
+      "flag": "--sparse-modularity",
+      "default": false,
+      "type": "bool",
+      "tunable": false,
+      "doc": "Protocol B: compute the modularity term from the sparse adjacency instead of the authors' dense n x n matrix (numerically equivalent, but O(n) memory). Off keeps Protocol A faithful to the reference code."
     }
   }
 }

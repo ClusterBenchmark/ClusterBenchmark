@@ -45,6 +45,12 @@ def add_arguments(p):
         default=0.3,
         help="Louvain resolution for the structural-community selection",
     )
+    # Protocol B improvement: compute the modularity term from the sparse
+    # adjacency instead of the authors' dense n x n modularity matrix. The two
+    # are numerically equivalent (verified), but the dense form is O(n^2) memory
+    # and compute and MLEs on large graphs. Off by default so Protocol A stays
+    # faithful to the reference code.
+    p.add_argument("--sparse-modularity", action="store_true")
 
 
 def make_modularity_matrix(adj, torch):
@@ -52,6 +58,16 @@ def make_modularity_matrix(adj, torch):
     adj = adj * (torch.ones(adj.shape[0], adj.shape[0]) - torch.eye(adj.shape[0]))
     degrees = adj.sum(dim=0).unsqueeze(1)
     return adj - degrees @ degrees.t() / adj.sum()
+
+
+def sparse_modularity(r, adj_sp, degree, two_m):
+    """DGI.modularity without forming B: -(1/2m)(trace(r^T A_nodiag r) - ||d^T r||^2/2m)."""
+    import torch
+
+    ar = torch.sparse.mm(adj_sp, r)
+    term1 = (r * ar).sum()
+    dr = degree @ r
+    return -(term1 - (dr * dr).sum() / two_m) / two_m
 
 
 def main():
@@ -65,12 +81,29 @@ def main():
     from model import Encoder, Summarizer, cluster_net, corruption
 
     args = ctx.args
+    N = ctx.graph.n
 
-    # Dense adjacency and modularity matrix are intrinsic to LIM (O(n^2)).
+    # The modularity term is the only O(n^2) part of LIM. Protocol A builds the
+    # authors' dense adjacency and modularity matrix; Protocol B keeps it sparse.
     a_sparse = ctx.graph.to_scipy_csr()
-    adj_dense = torch.from_numpy(a_sparse.toarray().astype(np.float32))
-    test_object = make_modularity_matrix(adj_dense, torch).to(device)
-    adj_dense = adj_dense.to(device)
+    adj_dense = test_object = None
+    adj_sp = degree = two_m = None
+    if args.sparse_modularity:
+        a_nodiag = a_sparse.astype(np.float32)
+        a_nodiag.setdiag(0)
+        a_nodiag.eliminate_zeros()
+        coo = a_nodiag.tocoo()
+        adj_sp = torch.sparse_coo_tensor(
+            np.vstack([coo.row, coo.col]), coo.data, size=(N, N)
+        ).coalesce().to(device)
+        degree = torch.tensor(
+            np.asarray(a_nodiag.sum(axis=1)).ravel(), dtype=torch.float32
+        ).to(device)
+        two_m = degree.sum()
+    else:
+        adj_dense = torch.from_numpy(a_sparse.toarray().astype(np.float32))
+        test_object = make_modularity_matrix(adj_dense, torch).to(device)
+        adj_dense = adj_dense.to(device)
 
     src = np.asarray(ctx.graph.sources(), dtype=np.int64)
     dst = np.asarray(ctx.graph.E, dtype=np.int64)
@@ -116,9 +149,12 @@ def main():
                 model.train()
                 optimizer.zero_grad()
                 pos_z, mu, r, dist = model(feat, edge, selected)
-                modularity_loss = model.modularity(
-                    mu, r, pos_z, dist, adj_dense, test_object, model_args
-                )
+                if args.sparse_modularity:
+                    modularity_loss = sparse_modularity(r, adj_sp, degree, two_m)
+                else:
+                    modularity_loss = model.modularity(
+                        mu, r, pos_z, dist, adj_dense, test_object, model_args
+                    )
                 loss = b * modularity_loss
                 loss.backward()
                 optimizer.step()
