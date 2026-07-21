@@ -32,11 +32,11 @@
   "params": {
     "hidden_channels": {
       "flag": "--hidden-channels",
-      "default": "512,256",
+      "default": "256,256",
       "type": "categorical",
-      "choices": ["512,256", "256,128", "512,512,256"],
+      "choices": ["256,256", "256,128", "256,256,256"],
       "tunable": false,
-      "doc": "Per-layer encoder widths. Must match the length of size; settable per graph class but excluded from tuning."
+      "doc": "Per-layer encoder widths. Paper (Table 5) uses width 256 for every SAGE dataset (ogbn-products has 3 layers). Must match the length of size; settable per graph class but excluded from tuning."
     },
     "size": {
       "flag": "--size",

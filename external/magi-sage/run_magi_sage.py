@@ -25,8 +25,8 @@ import mlrunner  # noqa: E402
 
 
 def add_arguments(p):
-    p.add_argument("--epochs", type=int, default=100)
-    p.add_argument("--hidden-channels", default="512,256", help="per-layer encoder widths")
+    p.add_argument("--epochs", type=int, default=400)
+    p.add_argument("--hidden-channels", default="256,256", help="per-layer encoder widths")
     p.add_argument("--size", default="10,10", help="per-layer neighbour sample sizes")
     p.add_argument("--batchsize", type=int, default=2048)
     p.add_argument("--learning-rate", type=float, default=0.01)

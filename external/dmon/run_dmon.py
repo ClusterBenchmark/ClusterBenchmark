@@ -34,7 +34,7 @@ def add_arguments(p):
     p.add_argument("--epochs", type=int, default=1000)
     p.add_argument(
         "--architecture",
-        default="64",
+        default="512",
         help="comma-separated GCN channel sizes; one layer per entry",
     )
     p.add_argument("--collapse-regularization", type=float, default=1.0)

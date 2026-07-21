@@ -32,11 +32,11 @@
   "params": {
     "hidden": {
       "flag": "--hidden",
-      "default": "512",
+      "default": "64",
       "type": "categorical",
-      "choices": ["128", "256", "512"],
+      "choices": ["64", "128", "256", "512"],
       "tunable": false,
-      "doc": "Hidden dimensionality of the DGI encoder. Paper uses 512. Settable per graph class but excluded from tuning."
+      "doc": "Hidden dimensionality of the DGI encoder. Paper (§4.3, Fig 4) uses 64 as the standard setting; 512 was the repo default. Settable per graph class but excluded from tuning."
     },
     "feature_kind": {
       "flag": "--feature-kind",

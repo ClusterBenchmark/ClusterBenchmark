@@ -33,11 +33,11 @@
   "params": {
     "hid_dimension": {
       "flag": "--hid-dimension",
-      "default": "512",
+      "default": "256",
       "type": "categorical",
       "choices": ["128", "256", "512"],
       "tunable": false,
-      "doc": "Hidden width of the GCN encoder. Paper uses 512. Settable per graph class but excluded from tuning."
+      "doc": "Hidden width of the GCN encoder. Paper uses 256 for the non-overlapping setting (128 overlapping); §5.1/§5.4, Fig 4/6 settle on 256. Settable per graph class but excluded from tuning."
     },
     "feature_kind": {
       "flag": "--feature-kind",

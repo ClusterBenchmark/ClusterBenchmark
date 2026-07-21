@@ -30,7 +30,7 @@ import mlrunner  # noqa: E402
 def add_arguments(p):
     # A fixed compute budget; the per-run time limit is what actually bounds it.
     p.add_argument("--train-iters", type=int, default=1001)
-    p.add_argument("--hidden", type=int, default=512)
+    p.add_argument("--hidden", type=int, default=64)
     p.add_argument("--learning-rate", type=float, default=0.001)
     p.add_argument("--clustertemp", type=float, default=30.0)
     # Protocol B improvement: compute the modularity term from the sparse

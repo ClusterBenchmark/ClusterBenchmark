@@ -33,7 +33,7 @@ import mlrunner  # noqa: E402
 
 def add_arguments(p):
     p.add_argument("--epochs", type=int, default=1000)
-    p.add_argument("--hid-dimension", type=int, default=512)
+    p.add_argument("--hid-dimension", type=int, default=256)
     p.add_argument("--learning-rate", type=float, default=0.001)
     p.add_argument("--weight-decay", type=float, default=0.1)
 
