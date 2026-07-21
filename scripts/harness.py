@@ -76,9 +76,13 @@ class MemoryMonitor:
         "exit $ec"
     )
 
-    def __init__(self, memory_limit_gb, sample_hz=20.0):
+    def __init__(self, memory_limit_gb, sample_hz=20.0, trace=False):
         self.memory_limit_gb = memory_limit_gb
         self.interval = 1.0 / sample_hz
+        # The full memory time series is only useful for debugging the monitor
+        # itself; the peak is tracked directly below. Off by default, since at
+        # 20 Hz an hour-long run is ~72k samples per run of pure output clutter.
+        self.trace = trace
         self.samples = []
         self.peak_bytes = None
         self.method = None
@@ -122,9 +126,10 @@ class MemoryMonitor:
             if self._cgroup is None or not self._cgroup.is_dir():
                 self._stop.wait(self.interval)
                 continue
-            cur = self._read_int("memory.current")
-            if cur is not None:
-                self.samples.append((round(time.monotonic() - t0, 3), cur))
+            if self.trace:
+                cur = self._read_int("memory.current")
+                if cur is not None:
+                    self.samples.append((round(time.monotonic() - t0, 3), cur))
             # memory.peak is monotonic, so tracking it here bounds the error to
             # one sampling interval even if the wrapper's read is lost.
             peak = self._read_int("memory.peak")
@@ -162,7 +167,12 @@ class MemoryMonitor:
         while not self._stop.is_set():
             rss = self._proc_tree_rss(root_pid)
             if rss > 0:
-                self.samples.append((round(time.monotonic() - t0, 3), rss))
+                # This path has no cgroup memory.peak, so the peak must come from
+                # the samples; track it directly rather than from the trace list.
+                if self.peak_bytes is None or rss > self.peak_bytes:
+                    self.peak_bytes = rss
+                if self.trace:
+                    self.samples.append((round(time.monotonic() - t0, 3), rss))
             self._stop.wait(self.interval)
 
     # -- execution ----------------------------------------------------------
@@ -435,6 +445,11 @@ def main():
     p.add_argument("--out", default=None, help="JSONL output file, default stdout")
     p.add_argument("--workdir", default=None, help="scratch dir for solver output")
     p.add_argument("--keep", action="store_true", help="keep intermediate cluster files")
+    p.add_argument(
+        "--trace-memory",
+        action="store_true",
+        help="record the full memory time series (debugging; large output)",
+    )
     args = p.parse_args()
 
     solver_path = resolve_solver(args.solver)
@@ -501,7 +516,7 @@ def main():
     # only catches a solver that has stopped honouring it.
     outer_timeout = args.time * args.runs * 1.5 + 1800
 
-    monitor = MemoryMonitor(args.memory)
+    monitor = MemoryMonitor(args.memory, trace=args.trace_memory)
     code, stdout, stderr, wall, timed_out = monitor.run(
         argv, cwd=str(cwd), env=env, timeout=outer_timeout, allow_rlimit=not gpu
     )
@@ -527,9 +542,11 @@ def main():
         },
         "memory": {
             "peak_bytes": monitor.peak_bytes,
+            "peak_mb": round(monitor.peak_bytes / 1e6, 1) if monitor.peak_bytes else None,
             "method": monitor.method,
             "oom_killed": monitor.oom_killed,
-            "samples": monitor.samples if len(monitor.samples) <= 2000 else None,
+            # Full time series only when explicitly requested (--trace-memory).
+            **({"samples": monitor.samples} if monitor.trace else {}),
         },
         "process": {
             "exit_code": code,
