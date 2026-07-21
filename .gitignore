@@ -4,6 +4,9 @@ bin/*
 
 external/*/.venv
 
+# Per-solver build clones (created by each solver's build.sh, removed by clean.sh)
+external/dmon/google-research/
+
 paper/data/.venv 
 
 .vscode/*

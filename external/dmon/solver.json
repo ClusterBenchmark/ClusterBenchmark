@@ -1,0 +1,66 @@
+{
+  "name": "dmon",
+  "class": "learning",
+  "reference": "Tsitsulin, Palowitch, Perozzi, Müller. Graph Clustering with Graph Neural Networks. JMLR 2023.",
+  "upstream": {
+    "repo": "https://github.com/google-research/google-research.git",
+    "commit": "376257a6d0b88a6048a554e25600b123d85b8e86",
+    "path": "graph_embedding/dmon",
+    "patch": "dmon.patch",
+    "note": "The gcn.GCN and dmon.DMoN layers are imported unchanged; the patch is a single TF2 compat fix (add_variable -> add_weight). Training is run_dmon.py on the shared harness, not the authors' train.py."
+  },
+  "cwd": "google-research",
+  "venv": "google-research/.venv",
+  "entry": "python3 run_dmon.py",
+  "capabilities": {
+    "features": true,
+    "clusters": true,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "clusters": "--clusters",
+    "seed": "--seed",
+    "device": "--device",
+    "features": "--features"
+  },
+  "params": {
+    "feature_kind": {
+      "flag": "--feature-kind",
+      "default": "ldp+rni",
+      "type": "categorical",
+      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "doc": "Synthetic node representation used only when the instance has no real features."
+    },
+    "learning_rate": {
+      "flag": "--learning-rate",
+      "default": 0.001,
+      "type": "float",
+      "range": [0.0001, 0.01],
+      "scale": "log",
+      "doc": "Adam learning rate."
+    },
+    "collapse_regularization": {
+      "flag": "--collapse-regularization",
+      "default": 1.0,
+      "type": "float",
+      "range": [0.1, 10.0],
+      "scale": "log",
+      "doc": "DMoN collapse regularisation weight; discourages the trivial single-cluster solution."
+    },
+    "dropout_rate": {
+      "flag": "--dropout-rate",
+      "default": 0.5,
+      "type": "float",
+      "range": [0.0, 0.7],
+      "scale": "linear",
+      "doc": "Dropout on the GNN representation."
+    }
+  }
+}
