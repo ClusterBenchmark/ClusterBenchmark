@@ -1,0 +1,65 @@
+{
+  "name": "commdgi",
+  "class": "learning",
+  "reference": "Zhang, Hu, He, Wang. CommDGI: Community Detection Oriented Deep Graph Infomax. CIKM 2020.",
+  "upstream": {
+    "repo": "https://github.com/FDUDSDE/CommDGI.git",
+    "commit": "b61fa2da6413da9b95aad4d717b5da89f6e982e3",
+    "patch": "commdgi.patch",
+    "note": "The Encoder/Summarizer/corruption/cluster_net (model.py) and DeepGraphInfomax (DGI.py) are imported unchanged; the patch is two compat fixes (networkx from_numpy_array, sklearn multi_class) off our driver's path. Training is run_commdgi.py on the shared harness, not the authors' train.py."
+  },
+  "cwd": "CommDGI",
+  "venv": ".venv",
+  "entry": "python3 run_commdgi.py",
+  "capabilities": {
+    "features": true,
+    "clusters": true,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "clusters": "--clusters",
+    "seed": "--seed",
+    "device": "--device",
+    "features": "--features"
+  },
+  "params": {
+    "hidden": {
+      "flag": "--hidden",
+      "default": "512",
+      "type": "categorical",
+      "choices": ["128", "256", "512"],
+      "tunable": false,
+      "doc": "Hidden dimensionality of the DGI encoder. Paper uses 512. Settable per graph class but excluded from tuning."
+    },
+    "feature_kind": {
+      "flag": "--feature-kind",
+      "default": "ldp+rni",
+      "type": "categorical",
+      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "doc": "Synthetic node representation used only when the instance has no real features."
+    },
+    "learning_rate": {
+      "flag": "--learning-rate",
+      "default": 0.001,
+      "type": "float",
+      "range": [0.0001, 0.01],
+      "scale": "log",
+      "doc": "Adam learning rate."
+    },
+    "clustertemp": {
+      "flag": "--clustertemp",
+      "default": 30.0,
+      "type": "float",
+      "range": [1.0, 100.0],
+      "scale": "log",
+      "doc": "Softmax temperature for the differentiable k-means cluster assignments."
+    }
+  }
+}

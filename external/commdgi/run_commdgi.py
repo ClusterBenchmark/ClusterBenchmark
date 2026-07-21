@@ -1,195 +1,108 @@
-import torch
-import argparse
-import numpy as np
-import time
-import gc
-from torch_geometric.data import Data
+"""CommDGI clustering driver on the shared ML harness.
 
-# Import the necessary components from the original code
-from model import Encoder, corruption, Summarizer, cluster_net
-from DGI import DeepGraphInfomax
+The method is the authors' code, imported unchanged from the cloned upstream
+(see build.sh / solver.json for the pinned commit): the Encoder, Summarizer,
+corruption and cluster_net from model.py, and DeepGraphInfomax from DGI.py. This
+file assembles them and runs the training loop, while graph and feature loading,
+seeding, the per-run time limit, and report writing come from mlrunner.
 
-def load_metis_graph(path):
-    """
-    Parses a graph from a file in the METIS format.
+It replaces the previous run_commdgi.py, which carried its own METIS parser and
+text feature loader and fell back to a dense n x n identity when no features
+were given. Featureless instances now use the shared synthetic representation.
 
-    Args:
-        path (str): The path to the METIS file.
+Note CommDGI's modularity objective is defined over a dense n x n modularity
+matrix (DGI.modularity, and make_modularity_matrix below). That density is the
+method, not an artifact, so it is preserved: CommDGI genuinely does not scale to
+large graphs, which is a result to report rather than a bug to fix.
+"""
 
-    Returns:
-        torch_geometric.data.Data: A PyTorch Geometric Data object.
-    """
-    with open(path, "r") as f:
-        # Skip comment lines
-        first_line = ""
-        for line in f:
-            if line.strip() and not line.startswith('%'):
-                first_line = line.strip()
-                break
+import sys
+from pathlib import Path
+from types import SimpleNamespace
 
-        parts = first_line.split()
-        n_vertices = int(parts[0])
-        n_edges = int(parts[1])
-        t = 0
-        if (len(parts) > 2):
-            t = int(parts[2])
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 
-        vertex_weights = (t == 10 or t == 11)
-        edge_weights = (t == 1 or t == 11)
+import numpy as np  # noqa: E402
 
-        edges = []
-        edge_attr = []
+import mlrunner  # noqa: E402
 
-        for u, line in enumerate(f):
-            if not line.strip() or line.startswith('%'):
-                continue
 
-            N = list(map(int, line.split()))
-            if vertex_weights:
-                N = N[1:]
+def add_arguments(p):
+    # A fixed compute budget; the per-run time limit is what actually bounds it.
+    p.add_argument("--train-iters", type=int, default=1001)
+    p.add_argument("--hidden", type=int, default=512)
+    p.add_argument("--learning-rate", type=float, default=0.001)
+    p.add_argument("--clustertemp", type=float, default=30.0)
 
-            if edge_weights:
-                N = zip(N[::2], N[1::2])
-                for v, w in N:
-                    if v - 1 > u:  # only add each edge once
-                        edges.append([u, v - 1])
-                        edge_attr.append(w)
-            else:
-                for v in N:
-                    if v - 1 > u:  # only add each edge once
-                        edges.append([u, v - 1])
 
-    # Create the edge_index tensor for PyTorch Geometric
-    edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
-
-    del edges
-    del edge_attr
-
-    gc.collect()
-
-    # Create a Data object
-    data = Data(edge_index=edge_index, num_nodes=n_vertices)
-
-    return data
-
-def load_features(path):
-    """
-    Parses a feature file.
-
-    Args:
-        path (str): The path to the feature file.
-
-    Returns:
-        torch.Tensor: A tensor with the node features.
-    """
-    with open(path, "r") as f:
-        # Read header
-        header = f.readline().split()
-        num_nodes = int(header[0])
-        num_features = int(header[1])
-
-        # Read features
-        features = np.zeros((num_nodes, num_features), dtype=float)
-        for i, line in enumerate(f):
-            if line.strip():
-                features[i] = list(map(float, line.strip().split()))
-
-    return torch.tensor(features, dtype=torch.float)
-
-def make_adj(edge_index, num_nodes):
-    adj = np.zeros((num_nodes, num_nodes), dtype=float)
-    for i in range(len(edge_index[0])):
-        adj[edge_index[0][i]][edge_index[1][i]] = 1
-        adj[edge_index[1][i]][edge_index[0][i]] = 1  # For undirected graphs
-    return adj
-
-def make_modularity_matrix(adj):
+def make_modularity_matrix(adj, torch):
+    """B = A - dd^T / 2m, over the off-diagonal adjacency (authors' setup)."""
     adj = adj * (torch.ones(adj.shape[0], adj.shape[0]) - torch.eye(adj.shape[0]))
     degrees = adj.sum(dim=0).unsqueeze(1)
-    mod = adj - degrees @ degrees.t() / adj.sum()
-    return mod
+    return adj - degrees @ degrees.t() / adj.sum()
+
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--metis_file', type=str, required=True, help='Path to the input graph in METIS format.')
-    parser.add_argument('--features_file', type=str, help='Path to the optional features file.')
-    parser.add_argument('--output_file', type=str, required=True, help='Name of output file.')
-    parser.add_argument('--K', type=int, required=True, help='How many partitions/clusters.')
-    parser.add_argument('--it', type=int, default=1, help='How many clusters to compute.')
-    parser.add_argument('--lr', type=float, default=0.001, help='Learning rate.')
-    parser.add_argument('--hidden', type=int, default=512, help='Number of hidden units.')
-    parser.add_argument('--train_iters', type=int, default=1001, help='Number of training iterations.')
-    parser.add_argument('--clustertemp', type=float, default=30, help='Softmax temperature for cluster assignments.')
-    parser.add_argument('--seed', type=int, default=24, help='Random seed.')
-    parser.add_argument('--timeout', type=int, help='Timeout in seconds for the training loop.')
-    args = parser.parse_args()
+    ctx = mlrunner.setup("CommDGI graph clustering", add_arguments)
+    device = ctx.use_torch()
 
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    device = torch.device('cpu')
+    import torch
+    from model import Encoder, Summarizer, cluster_net, corruption
+    from DGI import DeepGraphInfomax
 
-    it = int(args.it)
+    args = ctx.args
 
-    # 1. Load the graph from the METIS file
-    data = load_metis_graph(args.metis_file).to(device)
-    
-    adj_all = torch.from_numpy(make_adj(data.edge_index.numpy(), data.num_nodes)).float()
-    test_object = make_modularity_matrix(adj_all)
+    # Dense adjacency and modularity matrix: intrinsic to CommDGI's objective.
+    dense_adj = ctx.graph.to_scipy_csr().toarray().astype(np.float32)
+    adj_all = torch.from_numpy(dense_adj).to(device)
+    test_object = make_modularity_matrix(adj_all, torch).to(device)
 
-    # 2. Load features if provided, otherwise generate identity features
-    if args.features_file:
-        data.x = load_features(args.features_file).to(device)
-    else:
-        data.x = torch.eye(data.num_nodes, device=device)
+    # edge_index in the form PyG wants: both directions, exactly what CSR stores.
+    src = np.asarray(ctx.graph.sources(), dtype=np.int64)
+    dst = np.asarray(ctx.graph.E, dtype=np.int64)
+    edge_index = torch.from_numpy(np.vstack([src, dst])).to(device)
 
-    for i in range(it):
+    features = torch.from_numpy(
+        np.ascontiguousarray(ctx.features, dtype=np.float32)
+    ).to(device)
+    num_features = features.shape[1]
 
-        # 3. Set up the model and optimizer
-        model = DeepGraphInfomax(
-            hidden_channels=args.hidden,
-            encoder=Encoder(data.num_features, args.hidden),
-            summary=Summarizer(),
-            corruption=corruption,
-            args=args,
-            cluster=cluster_net
-        ).to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-3)
+    # The authors' modules read only args.K and args.clustertemp off this object.
+    model_args = SimpleNamespace(K=args.clusters, clustertemp=args.clustertemp)
 
-        gc.collect()
+    for run in ctx.runs():
+        with run:
+            model = DeepGraphInfomax(
+                hidden_channels=args.hidden,
+                encoder=Encoder(num_features, args.hidden),
+                summary=Summarizer(),
+                corruption=corruption,
+                args=model_args,
+                cluster=cluster_net,
+            ).to(device)
+            optimizer = torch.optim.Adam(
+                model.parameters(), lr=args.learning_rate, weight_decay=5e-3
+            )
 
-        finished_iterations = 0
-        start_time = time.time()
-        for epoch in range(args.train_iters):
-            if args.timeout and (time.time() - start_time) > args.timeout:
-                # print(f"Timeout of {args.timeout} seconds reached. Stopping training.")
-                break
+            for _ in run.epochs(args.train_iters):
+                model.train()
+                optimizer.zero_grad()
+                pos_z, neg_z, summary, mu, r, dist = model(features, edge_index)
+                dgi_loss = model.loss(pos_z, neg_z, summary)
+                modularity_loss = model.modularity(
+                    mu, r, pos_z, dist, adj_all, test_object, model_args
+                )
+                comm_loss = model.comm_loss(pos_z, mu)
+                loss = -modularity_loss + 5 * dgi_loss + comm_loss
+                loss.backward()
+                optimizer.step()
 
-            model.train()
-            optimizer.zero_grad()
-            pos_z, neg_z, summary, mu, r, dist = model(data.x, data.edge_index)
-            dgi_loss = model.loss(pos_z, neg_z, summary)
-            modularity_loss = model.modularity(mu, r, pos_z, dist, adj_all, test_object, args)
-            comm_loss = model.comm_loss(pos_z, mu)
-            loss = -modularity_loss + 5 * dgi_loss + comm_loss
-            # loss = -modularity_loss
-            loss.backward()
-            optimizer.step()
-            finished_iterations += 1
+            model.eval()
+            with torch.no_grad():
+                _, _, _, _, r, _ = model(features, edge_index)
+                clusters = r.argmax(dim=1).cpu().numpy()
+            run.result(clusters)
 
-        end_time = time.time()
-        print(f"{end_time - start_time:.4f},{finished_iterations},", end="")
 
-        # 4. Evaluate the model and save the cluster assignments
-        model.eval()
-        with torch.no_grad():
-            _, _, _, _, r, _ = model(data.x, data.edge_index)
-            cluster_assignments = r.argmax(dim=1)
-            output_file = args.output_file + str(i) + ".txt"
-            with open(output_file, "w") as f:
-                for cluster_id in cluster_assignments:
-                    f.write(f"{cluster_id.item()}\n")
-    
-    print()
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

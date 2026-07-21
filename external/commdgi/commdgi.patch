@@ -1,0 +1,26 @@
+diff --git a/DGI.py b/DGI.py
+index 3df6ef4..f9fd6e5 100644
+--- a/DGI.py
++++ b/DGI.py
+@@ -124,7 +124,7 @@ class DeepGraphInfomax(torch.nn.Module):
+              multi_class='auto', *args, **kwargs):
+         r"""Evaluates latent space quality via a logistic regression downstream
+         task."""
+-        clf = LogisticRegression(solver=solver, multi_class=multi_class, *args,
++        clf = LogisticRegression(solver=solver, *args,
+                                  **kwargs).fit(train_z.detach().cpu().numpy(),
+                                                train_y.detach().cpu().numpy())
+         return clf.score(test_z.detach().cpu().numpy(),
+diff --git a/evaluation.py b/evaluation.py
+index a89e76b..9f56544 100644
+--- a/evaluation.py
++++ b/evaluation.py
+@@ -78,7 +78,7 @@ def matched(true,pred):
+     cm = Metrics.confusion_matrix(true,pred,labels=np.arange(0,max_idx+1))
+     shifted_mat = np.zeros((cm.shape[0]*2,cm.shape[0] * 2))
+     shifted_mat[:cm.shape[0],cm.shape[0]:] = cm
+-    g = nx.from_numpy_matrix(shifted_mat)
++    g = nx.from_numpy_array(shifted_mat)
+     match = nx.max_weight_matching(g)
+     unmatched = set(np.arange(0,cm.shape[0]))
+     label_map = {}
