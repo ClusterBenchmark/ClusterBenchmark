@@ -1,0 +1,73 @@
+{
+  "name": "lim",
+  "class": "learning",
+  "reference": "Less is More: Structural community selection for deep graph clustering (Less-is-More).",
+  "upstream": {
+    "repo": "https://github.com/wuanghoong/Less-is-More.git",
+    "commit": "c2275f083bc5ecc4e6681303c610c22a53c0f499",
+    "patch": "lim.patch",
+    "note": "The Encoder/Summarizer/corruption/cluster_net (model.py) and DeepGraphInfomax (DGI.py) are imported unchanged; the patch is a single device-correctness fix in DGI.forward (community index tensors on the embedding's device) so the model runs on GPU. main.py is left pristine and unused; training and the structural-community selection are reproduced in run_lim.py on the shared harness.",
+    "variant": "O(n^2): dense modularity matrix and dense adjacency; will MLE on large graphs. Takes no target k -- Louvain selects the large structural communities as anchors and their count is K."
+  },
+  "cwd": "Less-is-More",
+  "venv": "Less-is-More/.venv",
+  "entry": "python3 run_lim.py",
+  "capabilities": {
+    "features": true,
+    "clusters": false,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "seed": "--seed",
+    "device": "--device",
+    "features": "--features"
+  },
+  "params": {
+    "hidden": {
+      "flag": "--hidden",
+      "default": "512",
+      "type": "categorical",
+      "choices": ["128", "256", "512"],
+      "tunable": false,
+      "doc": "Hidden dimensionality of the DGI encoder. Settable per graph class but excluded from tuning."
+    },
+    "feature_kind": {
+      "flag": "--feature-kind",
+      "default": "ldp+rni",
+      "type": "categorical",
+      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "doc": "Synthetic node representation used only when the instance has no real features."
+    },
+    "learning_rate": {
+      "flag": "--learning-rate",
+      "default": 0.001,
+      "type": "float",
+      "range": [0.0001, 0.01],
+      "scale": "log",
+      "doc": "Adam learning rate."
+    },
+    "clustertemp": {
+      "flag": "--clustertemp",
+      "default": 30.0,
+      "type": "float",
+      "range": [1.0, 100.0],
+      "scale": "log",
+      "doc": "Softmax temperature for the cluster assignments."
+    },
+    "resolution": {
+      "flag": "--resolution",
+      "default": 0.3,
+      "type": "float",
+      "range": [0.1, 1.5],
+      "scale": "linear",
+      "doc": "Louvain resolution for structural-community selection; the granularity knob (higher yields more, smaller communities). LIM takes no target k."
+    }
+  }
+}

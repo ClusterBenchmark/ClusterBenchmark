@@ -4,26 +4,36 @@ cd "$(dirname "$0")"
 
 set -e
 
+# Device: cpu (default) installs the CPU-only PyTorch wheel; cuda installs the
+# default CUDA-enabled wheel for GPU runs (Protocol B). Nothing else differs, so
+# we switch the wheel here rather than keeping two solver.json files.
+DEVICE="${1:-cpu}"
+if [[ "$DEVICE" != "cpu" && "$DEVICE" != "cuda" ]]; then
+    echo "usage: $0 [cpu|cuda]" >&2
+    exit 1
+fi
+
 git clone https://github.com/wuanghoong/Less-is-More.git
-
-cp lim.patch Less-is-More/
-
 cd Less-is-More/
-
 git checkout c2275f083bc5ecc4e6681303c610c22a53c0f499
 
-git apply lim.patch
+# Compat-only patch: a single device-correctness fix in DGI.forward so the model
+# runs on GPU. The method is unchanged; main.py is left pristine and unused.
+git apply ../lim.patch
 
-# Create virtual environment
+# Our driver runs from here so it can import model.py / DGI.py.
+cp ../run_lim.py .
+
 python3 -m venv .venv
-
-# Activate venv
 source .venv/bin/activate
+pip install --upgrade pip
 
-# Install python packages
-pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
-pip install torch_geometric
-pip install scikit-learn
-pip install matplotlib
+if [[ "$DEVICE" == "cuda" ]]; then
+    pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0
+else
+    pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+fi
 
-echo "Environment setup complete."
+pip install torch_geometric scikit-learn networkx
+
+echo "Environment setup complete ($DEVICE)."
