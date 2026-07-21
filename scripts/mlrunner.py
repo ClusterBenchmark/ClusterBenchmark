@@ -143,11 +143,15 @@ class RunContext:
             },
             "device_requested": self.ctx.args.device,
             "device_actual": self.ctx.device_actual,
-            "features": {
-                "kind": self.ctx.feature_kind,
-                "dim": int(self.ctx.features.shape[1]),
-                "synthetic": self.ctx.features_synthetic,
-            },
+            "features": (
+                None
+                if self.ctx.features is None
+                else {
+                    "kind": self.ctx.feature_kind,
+                    "dim": int(self.ctx.features.shape[1]),
+                    "synthetic": self.ctx.features_synthetic,
+                }
+            ),
         }
         if self.error:
             report["error"] = self.error
@@ -160,7 +164,7 @@ class RunContext:
 class Context:
     """Shared state for an invocation: the graph, features, and device."""
 
-    def __init__(self, args):
+    def __init__(self, args, needs_features=True):
         self.args = args
         self.device_actual = None
         self._seed_hooks = []
@@ -168,7 +172,13 @@ class Context:
         t0 = time.perf_counter()
         self.graph = graphio.load_csr(args.graph)
 
-        if args.features:
+        if not needs_features:
+            # Structure-only methods (e.g. GNNS optimises modularity directly on
+            # the graph). No representation is built, so none is recorded.
+            self.features = None
+            self.feature_kind = None
+            self.features_synthetic = False
+        elif args.features:
             self.features = np.asarray(
                 graphio.load_features(args.features, self.graph.n), dtype=np.float32
             )
@@ -280,7 +290,7 @@ def build_parser(description, add_arguments=None):
     return p
 
 
-def setup(description, add_arguments=None, argv=None):
-    """Parses arguments and loads the graph and features."""
+def setup(description, add_arguments=None, argv=None, needs_features=True):
+    """Parses arguments and loads the graph and, unless disabled, features."""
     args = build_parser(description, add_arguments).parse_args(argv)
-    return Context(args)
+    return Context(args, needs_features=needs_features)

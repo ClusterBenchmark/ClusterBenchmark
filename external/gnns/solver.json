@@ -1,0 +1,59 @@
+{
+  "name": "gnns",
+  "class": "learning",
+  "reference": "Sobolevsky, Belyi. Graph Neural Network Sampling for community detection. Applied Network Science 2022.",
+  "upstream": {
+    "repo": "https://github.com/Alexander-Belyi/GNNS.git",
+    "commit": "12e12c49a9245d2f76b7e2323b0e7e4694739612",
+    "notebook": "GNNS.ipynb",
+    "notebook_sha256": "8ded87b0394ae338806a0fdcae32e1eee9a6ff49568622e3ed9e3864ae584f9c",
+    "vendored": "gnns.py",
+    "note": "Upstream is a Jupyter notebook, not a library. gnns.py is the algorithm cells hand-extracted from it (GPL-3.0, attribution preserved in the file header); the notebook's installs, demo, and benchmarking cells are omitted. Run scripts/nbextract.py on the pinned notebook to reproduce the full source and audit the extraction. Our only change to the algorithm is a timeout argument in runGNNSSeries; training is run_gnns.py on the shared harness."
+  },
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_gnns.py",
+  "capabilities": {
+    "features": false,
+    "clusters": true,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "clusters": "--clusters",
+    "seed": "--seed",
+    "device": "--device"
+  },
+  "params": {
+    "num_random_configs": {
+      "flag": "--num-random-configs",
+      "default": 100,
+      "type": "int",
+      "range": [20, 300],
+      "scale": "log",
+      "doc": "Number of random GNNS configurations sampled per run; the search breadth."
+    },
+    "fraction_to_keep": {
+      "flag": "--fraction-to-keep",
+      "default": 0.3333,
+      "type": "float",
+      "range": [0.1, 0.9],
+      "scale": "linear",
+      "doc": "Fraction of configurations carried between refinement stages."
+    },
+    "iterations_per_stage": {
+      "flag": "--iterations-per-stage",
+      "default": "10,10,30",
+      "type": "categorical",
+      "choices": ["10,10,30", "20,20,40", "10,10,10,30"],
+      "tunable": false,
+      "doc": "Iterations per refinement stage. Settable per graph class but excluded from tuning."
+    }
+  }
+}
