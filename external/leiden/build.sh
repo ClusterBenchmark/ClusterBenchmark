@@ -13,7 +13,7 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install python-igraph (C core + Python bindings)
-pip install igraph
+# python-igraph provides community_leiden; numpy backs graphio's CSR memmap.
+pip install igraph numpy
 
 echo "Environment setup complete."

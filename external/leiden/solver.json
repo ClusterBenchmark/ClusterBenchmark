@@ -1,0 +1,39 @@
+{
+  "name": "leiden",
+  "class": "classical",
+  "reference": "Traag, Waltman & van Eck. From Louvain to Leiden: guaranteeing well-connected communities. Sci. Rep. 2019. (python-igraph community_leiden, modularity objective)",
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_leiden.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "resolution": {
+      "flag": "--resolution",
+      "default": 1.0,
+      "type": "float",
+      "range": [0.2, 3.0],
+      "scale": "linear",
+      "doc": "Modularity resolution gamma. 1.0 is standard modularity; tuned as the granularity knob, like Louvain."
+    },
+    "n_iterations": {
+      "flag": "--n-iterations",
+      "default": 2,
+      "type": "int",
+      "tunable": false,
+      "doc": "Leiden iterations. igraph's default is 2 (Protocol A); set -1 to run until the partition is stable (Protocol B). A compute knob, not a tuned hyperparameter."
+    }
+  }
+}
