@@ -49,25 +49,38 @@
       "flag": "--learning-rate",
       "default": 0.001,
       "type": "float",
-      "range": [0.0001, 0.01],
-      "scale": "log",
-      "doc": "Adam learning rate."
+      "tunable": false,
+      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (p.11); never swept, so set-only."
     },
     "clustertemp": {
       "flag": "--clustertemp",
       "default": 30.0,
       "type": "float",
-      "range": [1.0, 100.0],
-      "scale": "log",
-      "doc": "Softmax temperature for the cluster assignments."
+      "tunable": false,
+      "doc": "Softmax temperature delta. Fixed at 30 in the paper (p.11, Eq. 10); never swept, so set-only."
     },
     "resolution": {
       "flag": "--resolution",
       "default": 0.3,
       "type": "float",
-      "range": [0.1, 1.5],
+      "tunable": false,
+      "doc": "Louvain resolution for structural-community selection. Fixed at 0.3 in the authors' code; never swept, so set-only. Granularity in Protocol B comes from threshold_std_mult instead."
+    },
+    "threshold_std_mult": {
+      "flag": "--threshold-std-mult",
+      "default": 0.5,
+      "type": "float",
+      "range": [0.1, 1.0],
       "scale": "linear",
-      "doc": "Louvain resolution for structural-community selection; the granularity knob (higher yields more, smaller communities). LIM takes no target k."
+      "doc": "Community-size keep threshold = mean + this*std. The paper's headline sensitivity sweep (Fig 2, 0.1-1.0, best 0.4-0.6); tunable."
+    },
+    "alpha": {
+      "flag": "--alpha",
+      "default": 0.001,
+      "type": "float",
+      "range": [0.001, 1.0],
+      "scale": "log",
+      "doc": "Modularity-loss weight (paper's alpha). Swept {1,0.1,0.01,0.001} in the paper (Fig 3, best 0.001); tunable."
     },
     "sparse_modularity": {
       "flag": "--sparse-modularity",

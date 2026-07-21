@@ -33,6 +33,13 @@ def add_arguments(p):
     p.add_argument("--hidden", type=int, default=64)
     p.add_argument("--learning-rate", type=float, default=0.001)
     p.add_argument("--clustertemp", type=float, default=30.0)
+    p.add_argument("--weight-decay", type=float, default=0.2)
+    # Loss coefficients from the paper's Eq. 9 (alpha on the DGI/graph MI term,
+    # beta on the community MI term). The paper uses alpha=2, beta=5 and Figs 6/7
+    # sweep them. Our earlier code copied the repo's commented-out line, which put
+    # the large weight on the DGI term instead of community; this restores Eq. 9.
+    p.add_argument("--graph-weight", type=float, default=2.0)
+    p.add_argument("--community-weight", type=float, default=5.0)
     # Protocol B improvement: compute the modularity term from the sparse
     # adjacency instead of the authors' dense n x n modularity matrix. The two
     # are numerically equivalent (verified), but the dense form is O(n^2) memory
@@ -114,7 +121,7 @@ def main():
                 cluster=cluster_net,
             ).to(device)
             optimizer = torch.optim.Adam(
-                model.parameters(), lr=args.learning_rate, weight_decay=5e-3
+                model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
             )
 
             for _ in run.epochs(args.train_iters):
@@ -129,7 +136,11 @@ def main():
                         mu, r, pos_z, dist, adj_all, test_object, model_args
                     )
                 comm_loss = model.comm_loss(pos_z, mu)
-                loss = -modularity_loss + 5 * dgi_loss + comm_loss
+                loss = (
+                    -modularity_loss
+                    + args.graph_weight * dgi_loss
+                    + args.community_weight * comm_loss
+                )
                 loss.backward()
                 optimizer.step()
 

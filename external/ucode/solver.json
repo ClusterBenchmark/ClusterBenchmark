@@ -36,8 +36,7 @@
       "default": "256",
       "type": "categorical",
       "choices": ["128", "256", "512"],
-      "tunable": false,
-      "doc": "Hidden width of the GCN encoder. Paper uses 256 for the non-overlapping setting (128 overlapping); §5.1/§5.4, Fig 4/6 settle on 256. Settable per graph class but excluded from tuning."
+      "doc": "Hidden width of the GCN encoder. Default 256 (paper's non-overlapping value, §5.1/§5.4). The hidden dimension is the paper's one sensitivity sweep (Fig 4/6, {8..512}), so it is tunable; choices span the useful plateau."
     },
     "feature_kind": {
       "flag": "--feature-kind",
@@ -50,17 +49,15 @@
       "flag": "--learning-rate",
       "default": 0.001,
       "type": "float",
-      "range": [0.0001, 0.01],
-      "scale": "log",
-      "doc": "Adam learning rate."
+      "tunable": false,
+      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (§5.1, 'no hyperparameter tuning'); set-only."
     },
     "weight_decay": {
       "flag": "--weight-decay",
       "default": 0.1,
       "type": "float",
-      "range": [0.001, 0.5],
-      "scale": "log",
-      "doc": "Adam weight decay (L2 regularisation)."
+      "tunable": false,
+      "doc": "Adam weight decay. Paper uses 0.1 (non-overlapping, §5.1); 0.01 for overlapping. Never swept, so set-only."
     }
   }
 }

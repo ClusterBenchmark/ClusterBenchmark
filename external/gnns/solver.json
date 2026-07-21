@@ -35,25 +35,24 @@
       "flag": "--num-random-configs",
       "default": 100,
       "type": "int",
-      "range": [20, 300],
+      "range": [100, 25000],
       "scale": "log",
-      "doc": "Number of random GNNS configurations sampled per run; the search breadth."
+      "doc": "Number of random GNNS configurations sampled per run; the paper's sole tuning axis (GNNS100 / GNNS2500 / GNNS25000, §Training). Tunable over the tiers the authors ran."
     },
     "fraction_to_keep": {
       "flag": "--fraction-to-keep",
       "default": 0.3333,
       "type": "float",
-      "range": [0.1, 0.9],
-      "scale": "linear",
-      "doc": "Fraction of configurations carried between refinement stages."
+      "tunable": false,
+      "doc": "Fraction of configurations carried between refinement stages. Hardcoded at 1/3 in the paper (Algorithm 1); never varied, so set-only."
     },
     "iterations_per_stage": {
       "flag": "--iterations-per-stage",
-      "default": "10,10,30",
+      "default": "auto",
       "type": "categorical",
-      "choices": ["10,10,30", "20,20,40", "10,10,10,30"],
+      "choices": ["auto", "10,10,30", "10,10,30,100"],
       "tunable": false,
-      "doc": "Iterations per refinement stage. Settable per graph class but excluded from tuning."
+      "doc": "Iterations per refinement stage. 'auto' follows Algorithm 1: [10,10,30] for S<=1000, [10,10,30,100] for S>1000. Coupled to the config count, not an independent knob."
     }
   }
 }

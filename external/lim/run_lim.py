@@ -45,6 +45,18 @@ def add_arguments(p):
         default=0.3,
         help="Louvain resolution for the structural-community selection",
     )
+    p.add_argument(
+        "--threshold-std-mult",
+        type=float,
+        default=0.5,
+        help="community-size keep threshold = mean + this*std (paper Fig 2 sweeps 0.1-1.0)",
+    )
+    p.add_argument(
+        "--alpha",
+        type=float,
+        default=0.001,
+        help="modularity-loss weight (paper Fig 3 sweeps {1,0.1,0.01,0.001})",
+    )
     # Protocol B improvement: compute the modularity term from the sparse
     # adjacency instead of the authors' dense n x n modularity matrix. The two
     # are numerically equivalent (verified), but the dense form is O(n^2) memory
@@ -119,14 +131,14 @@ def main():
         graph, resolution=args.resolution, threshold=1e-09, seed=123
     )
     sizes = [len(c) for c in communities]
-    keep = np.mean(sizes) + 0.5 * np.std(sizes)
+    keep = np.mean(sizes) + args.threshold_std_mult * np.std(sizes)
     selected = [list(c) for c in communities if len(c) > keep]
     K = len(selected)
     if K < 1:
         raise ValueError("no structural communities selected; check the resolution")
 
     model_args = SimpleNamespace(K=K, clustertemp=args.clustertemp)
-    b = 0.001  # modularity-loss weight (authors')
+    b = args.alpha  # modularity-loss weight (the paper's alpha)
 
     for run in ctx.runs():
         with run:

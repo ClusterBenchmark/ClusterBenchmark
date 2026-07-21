@@ -34,9 +34,8 @@
       "flag": "--hidden",
       "default": "64",
       "type": "categorical",
-      "choices": ["64", "128", "256", "512"],
-      "tunable": false,
-      "doc": "Hidden dimensionality of the DGI encoder. Paper (§4.3, Fig 4) uses 64 as the standard setting; 512 was the repo default. Settable per graph class but excluded from tuning."
+      "choices": ["8", "16", "32", "64", "128"],
+      "doc": "Embedding dimensionality of the DGI encoder. Default 64 (paper's standard, §4.3). The paper's primary sensitivity sweep is over {8,16,32,64,128} (Fig 4), so it is tunable."
     },
     "feature_kind": {
       "flag": "--feature-kind",
@@ -49,17 +48,38 @@
       "flag": "--learning-rate",
       "default": 0.001,
       "type": "float",
-      "range": [0.0001, 0.01],
-      "scale": "log",
-      "doc": "Adam learning rate."
+      "tunable": false,
+      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (§4.3); never swept, so set-only."
     },
     "clustertemp": {
       "flag": "--clustertemp",
       "default": 30.0,
       "type": "float",
-      "range": [1.0, 100.0],
+      "tunable": false,
+      "doc": "Clustering softmax temperature delta. Fixed at 30 in the paper (§4.3); never swept, so set-only."
+    },
+    "weight_decay": {
+      "flag": "--weight-decay",
+      "default": 0.2,
+      "type": "float",
+      "tunable": false,
+      "doc": "Adam weight decay. Paper (§4.3) uses 0.2; the repo hardcoded 0.005. Never swept, so set-only."
+    },
+    "graph_weight": {
+      "flag": "--graph-weight",
+      "default": 2.0,
+      "type": "float",
+      "range": [0.05, 8.0],
       "scale": "log",
-      "doc": "Softmax temperature for the differentiable k-means cluster assignments."
+      "doc": "Weight alpha on the DGI/graph mutual-information loss (Eq. 9, paper value 2). Swept in Figs 6/7; tunable."
+    },
+    "community_weight": {
+      "flag": "--community-weight",
+      "default": 5.0,
+      "type": "float",
+      "range": [0.05, 8.0],
+      "scale": "log",
+      "doc": "Weight beta on the community mutual-information loss (Eq. 9, paper value 5; §4.6 says community MI should carry the largest weight). Swept in Figs 6/7; tunable."
     },
     "sparse_modularity": {
       "flag": "--sparse-modularity",

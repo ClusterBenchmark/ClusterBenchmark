@@ -49,9 +49,8 @@
       "flag": "--learning-rate",
       "default": 0.0005,
       "type": "float",
-      "range": [0.0001, 0.01],
-      "scale": "log",
-      "doc": "Adam learning rate."
+      "tunable": false,
+      "doc": "Adam learning rate. Set per dataset in the paper (5e-4 for most GCN datasets, 1e-4 CiteSeer; Table 5) but never swept, so set-only."
     },
     "tau": {
       "flag": "--tau",
@@ -59,15 +58,23 @@
       "type": "float",
       "range": [0.05, 1.0],
       "scale": "log",
-      "doc": "Contrastive loss temperature."
+      "doc": "Contrastive loss temperature. Paper sweeps it (Fig 5, optimum ~0.5); tunable."
     },
     "wt": {
       "flag": "--wt",
       "default": 100,
       "type": "int",
-      "range": [20, 200],
+      "range": [10, 100],
       "scale": "log",
-      "doc": "Number of random walks used to build the similarity graph."
+      "doc": "Number of random walks. Paper sweeps #walks in Fig 4 (1-100); tunable."
+    },
+    "wl": {
+      "flag": "--wl",
+      "default": 2,
+      "type": "int",
+      "range": [1, 10],
+      "scale": "linear",
+      "doc": "Random-walk depth. A headline sensitivity knob (Fig 4, l in {1,3,5,10}, optimum ~5); tunable."
     }
   }
 }

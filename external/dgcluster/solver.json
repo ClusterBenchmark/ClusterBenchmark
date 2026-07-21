@@ -34,8 +34,7 @@
       "default": "gcn",
       "type": "categorical",
       "choices": ["gcn", "gat", "gin", "sage"],
-      "tunable": false,
-      "doc": "Message-passing backbone. Settable per graph class but excluded from tuning."
+      "doc": "Message-passing backbone. The paper devotes Table 4 to sweeping this (GAT best avg Q, SAGE best avg F1), so it is tunable."
     },
     "feature_kind": {
       "flag": "--feature-kind",
@@ -48,9 +47,8 @@
       "flag": "--learning-rate",
       "default": 0.001,
       "type": "float",
-      "range": [0.0001, 0.01],
-      "scale": "log",
-      "doc": "Adam learning rate."
+      "tunable": false,
+      "doc": "Adam learning rate. Fixed at 1e-3 in the paper (§Other Settings); never swept, so set-only."
     },
     "threshold": {
       "flag": "--threshold",
@@ -58,7 +56,7 @@
       "type": "float",
       "range": [0.1, 1.2],
       "scale": "linear",
-      "doc": "Birch distance threshold; the granularity knob (lower yields more clusters). DGCluster takes no target k."
+      "doc": "Birch distance threshold; the granularity knob (lower yields more clusters). Tunable: the paper controls granularity via lambda (Fig 2), which we disable for the unsupervised setting, so this is our granularity lever for a k-free method. Default 0.5 matches the authors' code."
     }
   }
 }

@@ -50,25 +50,22 @@
       "flag": "--learning-rate",
       "default": 0.001,
       "type": "float",
-      "range": [0.0001, 0.01],
-      "scale": "log",
-      "doc": "Adam learning rate."
+      "tunable": false,
+      "doc": "Adam learning rate. The paper (§5) deliberately keeps all hyperparameters constant and runs no tuning, so this is set-only."
     },
     "collapse_regularization": {
       "flag": "--collapse-regularization",
       "default": 1.0,
       "type": "float",
-      "range": [0.1, 10.0],
-      "scale": "log",
-      "doc": "DMoN collapse regularisation weight; discourages the trivial single-cluster solution."
+      "tunable": false,
+      "doc": "DMoN collapse regularisation weight. Fixed at 1.0 in the paper (Eq. 5); never swept, so set-only."
     },
     "dropout_rate": {
       "flag": "--dropout-rate",
       "default": 0.5,
       "type": "float",
-      "range": [0.0, 0.7],
-      "scale": "linear",
-      "doc": "Dropout on the GNN representation."
+      "tunable": false,
+      "doc": "Dropout on the GNN representation. Fixed at 0.5 uniformly in the paper (§5); never swept, so set-only."
     }
   }
 }

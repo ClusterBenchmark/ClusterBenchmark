@@ -28,8 +28,8 @@ def add_arguments(p):
     p.add_argument("--fraction-to-keep", type=float, default=1.0 / 3.0)
     p.add_argument(
         "--iterations-per-stage",
-        default="10,10,30",
-        help="comma-separated GNNS iterations per refinement stage",
+        default="auto",
+        help="GNNS iterations per stage; 'auto' derives the schedule from the config count (Algorithm 1)",
     )
     p.add_argument("--max-total-tensor-size", type=int, default=100_000_000)
 
@@ -57,7 +57,11 @@ def main():
 
     G = nx.from_scipy_sparse_array(ctx.graph.to_scipy_csr())
     max_communities = args.clusters
-    iterations_per_stage = [int(x) for x in str(args.iterations_per_stage).split(",") if x]
+    if str(args.iterations_per_stage) == "auto":
+        # Algorithm 1: append a 100-iteration stage once S exceeds 1000.
+        iterations_per_stage = [10, 10, 30, 100] if args.num_random_configs > 1000 else [10, 10, 30]
+    else:
+        iterations_per_stage = [int(x) for x in str(args.iterations_per_stage).split(",") if x]
 
     for run in ctx.runs():
         with run:
