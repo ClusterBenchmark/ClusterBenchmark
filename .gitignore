@@ -8,6 +8,7 @@ external/*/.venv
 external/dmon/google-research/
 external/commdgi/CommDGI/
 external/ucode/UCODE/
+external/dgcluster/DGCluster/
 
 paper/data/.venv 
 

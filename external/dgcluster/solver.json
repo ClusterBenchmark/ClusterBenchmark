@@ -1,0 +1,64 @@
+{
+  "name": "dgcluster",
+  "class": "learning",
+  "reference": "Bhowmick, Meneni, Derr, et al. DGCluster: A Neural Framework for Attributed Graph Clustering via Modularity Maximization. AAAI 2024.",
+  "upstream": {
+    "repo": "https://github.com/pyrobits/DGCluster.git",
+    "commit": "e5ede94ef796a176a092bad14cc20a5e551333f6",
+    "note": "Clone + separate driver, no patch: the GNN encoder and modularity loss_fn (main.py) are imported unchanged and main.py/utils.py are left pristine. run_dgcluster.py sets the module globals loss_fn reads and runs training. We run DGCluster unsupervised by overriding its label-based auxiliary objective to zero (it is semi-supervised by default); the override lives in the driver, not the authors' files.",
+    "unsupervised": "DGCluster's aux objective uses ground-truth labels; disabled so the comparison stays structural."
+  },
+  "cwd": "DGCluster",
+  "venv": "DGCluster/.venv",
+  "entry": "python3 run_dgcluster.py",
+  "capabilities": {
+    "features": true,
+    "clusters": false,
+    "threads": true,
+    "gpu": true,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "seed": "--seed",
+    "device": "--device",
+    "features": "--features"
+  },
+  "params": {
+    "base_model": {
+      "flag": "--base-model",
+      "default": "gcn",
+      "type": "categorical",
+      "choices": ["gcn", "gat", "gin", "sage"],
+      "tunable": false,
+      "doc": "Message-passing backbone. Settable per graph class but excluded from tuning."
+    },
+    "feature_kind": {
+      "flag": "--feature-kind",
+      "default": "ldp+rni",
+      "type": "categorical",
+      "choices": ["ones", "ldp", "rni", "ldp+rni"],
+      "doc": "Synthetic node representation used only when the instance has no real features."
+    },
+    "learning_rate": {
+      "flag": "--learning-rate",
+      "default": 0.001,
+      "type": "float",
+      "range": [0.0001, 0.01],
+      "scale": "log",
+      "doc": "Adam learning rate."
+    },
+    "threshold": {
+      "flag": "--threshold",
+      "default": 0.5,
+      "type": "float",
+      "range": [0.1, 1.2],
+      "scale": "linear",
+      "doc": "Birch distance threshold; the granularity knob (lower yields more clusters). DGCluster takes no target k."
+    }
+  }
+}
