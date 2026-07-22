@@ -1,7 +1,7 @@
 # From Heuristics to Graph Neural Networks: Benchmarking Modularity Maximization for Community Detection
 
 **Authors:** Adil Chhabra, Kenneth Langedal, and Christian Schulz <br>
-**Status:** Submitted to KDD 2026 Datasets and Benchmarks Track
+**Status:** In progress
 
 ## Overview
 
@@ -10,6 +10,87 @@ This repository provides the benchmarking framework and implementations used in 
 The primary contribution of this survey is a unified interface for benchmarking diverse clustering algorithms using a single, standardized graph format. This allows for direct comparison between traditional heuristic solvers and modern GNN-based approaches.
 
 ### Repository Structure
+
+## Requirements
+
+* A C compiler and `make` (build the `CONVERT` and `EVAL` tools).
+* Python 3.12 with a working `venv` + `pip`.
+* An **MPI** implementation (e.g. OpenMPI) — needed only by the C/C++ solvers `clustre` and `vieclus`, whose KaHIP/VieClus/KaGen stack links against it. The other solvers do not require MPI.
+* *Optional:* a CUDA toolkit and a GPU for accelerated runs of the learning-based solvers. A CUDA build also runs on CPU, so a GPU is optional.
+
+Each solver's `build.sh` provisions its own isolated environment (a Python virtual environment, or a cloned + patched + compiled binary), so the solvers never share dependencies.
+
+<details>
+<summary><b>No sudo?</b> Installing Python and MPI in user space</summary>
+
+If you cannot install `python3.12-venv`, get a self-contained interpreter with [uv](https://docs.astral.sh/uv/) (no root needed):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"          # add to ~/.bashrc to persist
+uv python install 3.12
+ln -sf "$(ls -d "$(uv python dir)"/cpython-3.12*/bin/python3 | head -1)" "$HOME/.local/bin/python3"
+hash -r
+```
+
+OpenMPI likewise builds into `$HOME/.local` without root:
+
+```bash
+./configure --prefix="$HOME/.local" --disable-mpi-fortran && make -j"$(nproc)" && make install
+export LD_LIBRARY_PATH="$HOME/.local/lib:$LD_LIBRARY_PATH"   # add to ~/.bashrc to persist
+```
+</details>
+
+## Setup
+
+```bash
+make                                              # builds CONVERT and EVAL
+python3 -m venv scripts/.venv                     # tooling venv (instance prep + tuning)
+scripts/.venv/bin/pip install numpy optuna
+for d in external/*/; do [ -f "$d/build.sh" ] && bash "$d/build.sh" cpu; done   # cpu or cuda
+```
+
+`build.sh` accepts `cpu` or `cuda` for the learning-based solvers (selecting CPU-only or CUDA wheels); the classical solvers ignore the argument.
+
+## Preparing instances
+
+The harness reads a compact **binary CSR** graph and, optionally, a **binary feature** file. Convert a METIS `.graph` (and its sibling `.features`, if any) once — useful when the source data lives on read-only storage:
+
+```bash
+scripts/prep_instances.sh <out_dir> path/to/graph1.graph [graph2.graph ...]
+```
+
+This writes `<name>.csr` (and `<name>.feat` when features exist) into the writable `<out_dir>`. Ground-truth `.labels` are read in place and are not copied.
+
+## Running the benchmark
+
+Every solver is driven through a single harness with a uniform command line; everything solver-specific is declared in `external/<solver>/solver.json`. A single run:
+
+```bash
+python3 scripts/harness.py --solver leiden \
+    --graph <out_dir>/cora.csr --labels path/to/cora.labels \
+    --runs 5 --time 3600 --memory 120 --threads 1 --device cpu \
+    --out results/leiden.jsonl
+```
+
+Key options: `--runs` (repeats, run `i` uses seed `base+i`), `--time` (per-run seconds), `--memory` (GB, hard-capped per solver via cgroups — leave some headroom below physical RAM), `--threads`, `--device cpu|cuda`, `--features <file>.feat` (attached automatically only for solvers that consume features), and `--clusters` (`auto` by default, derived from the solver's policy). A per-run **watchdog** hard-kills any run that exceeds `--time` plus a grace margin (`--grace`, `--startup-grace`), so a solver that ignores its own limit — or is stuck in a C extension where a signal cannot fire — is still stopped. Output is JSON Lines, one full record per run; `scripts/export_csv.py` produces the flat CSV if you want it.
+
+**Protocol A (out-of-the-box).** Run every solver over a set of prepared instances with author-faithful defaults — real features where the instance has them, synthetic LDP+RNI otherwise:
+
+```bash
+scripts/run_protocol_a.sh <csr_dir> <labels_dir> results_A  cpu 3600 120 5 1
+# args: CSR_DIR LABELS_DIR OUT_DIR [DEVICE TIME MEM_GB RUNS THREADS GRACE STARTUP_GRACE]
+```
+
+Override the solver set with the `SOLVERS` environment variable (e.g. `SOLVERS="leiden vieclus" scripts/run_protocol_a.sh ...`).
+
+**Protocol B (per-instance tuning).** Tune the hyperparameters the original authors tuned, per instance, as an upper bound on the benefit of tuning:
+
+```bash
+scripts/.venv/bin/python scripts/tune.py --solver dgcluster \
+    --graphs <out_dir>/cora.csr --metric modularity --trials 50 \
+    --features-suffix .feat --out params/dgcluster.cora.json
+```
 
 All included algorithms are located in the **external/** directory. Each algorithm folder contains three standardized scripts to ensure reproducibility:
 
@@ -87,7 +168,7 @@ For more information on other objectives, see the dedicated [page on objective f
 | &#x2705; | CNM | 2004 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1103/PhysRevE.70.066111) | |
 | &#x2705; | Walktrap | 2005 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1007/11569596_31) | |
 | &#x2705; | Infomap | 2007 | &#x2705; | | | | | &#x2705; | [Link](https://doi.org/10.1073/pnas.0706851105) | [GitHub](https://github.com/mapequation/infomap) |
-| &#x2705; | WT | 2007 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1145/1242572.1242805) | |
+| &#x274C; | WT | 2007 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1145/1242572.1242805) | |
 |  &#x2705; | Louvain | 2008 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1088/1742-5468/2008/10/P10008) | [SourceForge](https://sourceforge.net/projects/louvain/) |
 | &#x274C; | CGGCi | 2012 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
 | &#x274C; | VNS | 2012 | &#x2705; | | &#x2705; | | | | [Link](https://doi.org/10.1090/conm/588/11705) | &#x274C; |
@@ -134,3 +215,4 @@ Build with `make EVAL`, then run `./EVAL <graph.metis> <pred.labels> [truth.labe
 7. Supervised set-level metrics (Adjusted Rand Index, Normalized Mutual Information, purity, inverse purity) computed directly from the per-node labels
 
 Items 5–7 are the “non-graph structural” scores: they evaluate the clustering purely through node memberships rather than the underlying topology.
+
