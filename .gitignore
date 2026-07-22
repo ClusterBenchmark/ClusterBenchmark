@@ -12,6 +12,10 @@ external/dgcluster/DGCluster/
 external/magi/MAGI/
 external/magi-sage/MAGI/
 external/lim/Less-is-More/
+external/hollocou/graph-streaming/
+external/hollocou/streamcom
+external/clustre/CluStRE/
+external/clustre/clustre
 
 paper/data/.venv 
 
