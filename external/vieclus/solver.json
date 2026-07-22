@@ -1,0 +1,45 @@
+{
+  "name": "vieclus",
+  "class": "classical",
+  "reference": "Biedermann, Henzinger, Schulz & Schuster. Memetic Graph Clustering. SEA 2018. (KaHIP/VieClus, official Python interface, pinned pip vieclus==1.3.1, single-process)",
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_vieclus.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "leiden": {
+      "flag": "--leiden",
+      "default": false,
+      "type": "bool",
+      "tunable": false,
+      "doc": "Use VieClus's Leiden mode, which guarantees connected communities. Off by default (standard memetic VieClus); an algorithm variant, not a tuned knob; set-only."
+    },
+    "leiden_theta": {
+      "flag": "--leiden-theta",
+      "default": 0.01,
+      "type": "float",
+      "tunable": false,
+      "doc": "Leiden refinement temperature, only meaningful with --leiden. VieClus default 0.01; set-only."
+    },
+    "cluster_upperbound": {
+      "flag": "--cluster-upperbound",
+      "default": 0,
+      "type": "int",
+      "tunable": false,
+      "doc": "Maximum cluster size; 0 leaves it unbounded. A size constraint, not a tuned knob; set-only. VieClus optimises plain modularity with no resolution parameter, so its only quality lever is the time budget (--time): Protocol A and B coincide, the same anytime-solver property as clustre-fast."
+    }
+  }
+}
