@@ -88,6 +88,7 @@ class MemoryMonitor:
         self.peak_bytes = None
         self.method = None
         self.oom_killed = False
+        self.watchdog_killed_run = None
         self._stop = threading.Event()
         self._cgroup = None
         self._peak_file = None
@@ -176,9 +177,39 @@ class MemoryMonitor:
                     self.samples.append((round(time.monotonic() - t0, 3), rss))
             self._stop.wait(self.interval)
 
+    # -- per-run hard timeout ----------------------------------------------
+
+    def _watchdog(self, proc, output_prefix, n_runs, per_run_limit, startup_grace, t0):
+        """Kills the process group if any single run overruns its budget.
+
+        Run i is 'done' once its {prefix}{i}.json report appears. Run 0 is
+        allowed startup_grace + per_run_limit (process startup and graph loading
+        counted once); each later run is allowed per_run_limit from the moment
+        the previous run finished. We do not trust the solver to stop itself: a
+        run stuck in a C extension (e.g. Gurobi building an ILP, where a Python
+        SIGALRM cannot be delivered) or a native binary ignoring its budget is
+        SIGKILLed here. Reports already written by earlier runs survive.
+        """
+        next_run = 0
+        deadline = t0 + startup_grace + per_run_limit
+        while not self._stop.is_set() and next_run < n_runs:
+            if Path(f"{output_prefix}{next_run}.json").exists():
+                next_run += 1
+                deadline = time.monotonic() + per_run_limit
+                continue
+            if time.monotonic() > deadline:
+                self.watchdog_killed_run = next_run
+                try:
+                    os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                except OSError:
+                    proc.kill()
+                return
+            self._stop.wait(0.5)
+
     # -- execution ----------------------------------------------------------
 
-    def run(self, argv, cwd, env, timeout, allow_rlimit):
+    def run(self, argv, cwd, env, timeout, allow_rlimit,
+            output_prefix=None, n_runs=1, per_run_limit=None, startup_grace=0.0):
         """Executes argv, returning (exit_code, stdout, stderr, wall_seconds)."""
         use_cgroup = self.cgroups_available()
         t0 = time.monotonic()
@@ -249,6 +280,15 @@ class MemoryMonitor:
             )
         sampler.start()
 
+        watchdog = None
+        if per_run_limit is not None and output_prefix is not None:
+            watchdog = threading.Thread(
+                target=self._watchdog,
+                args=(proc, output_prefix, n_runs, per_run_limit, startup_grace, t0),
+                daemon=True,
+            )
+            watchdog.start()
+
         timed_out = False
         try:
             stdout, stderr = proc.communicate(timeout=timeout)
@@ -263,6 +303,8 @@ class MemoryMonitor:
         wall = time.monotonic() - t0
         self._stop.set()
         sampler.join(timeout=2.0)
+        if watchdog:
+            watchdog.join(timeout=2.0)
 
         # Authoritative value, written from inside the cgroup by the wrapper.
         if self._peak_file:
@@ -280,7 +322,13 @@ class MemoryMonitor:
 
         # A SIGKILL exit under a memory limit is the signature of the cgroup
         # OOM killer; the scope is gone by now so memory.events is unreadable.
-        if use_cgroup and proc.returncode in (-9, 137) and not timed_out:
+        # A watchdog kill is also a SIGKILL, so exclude it here.
+        if (
+            use_cgroup
+            and proc.returncode in (-9, 137)
+            and not timed_out
+            and self.watchdog_killed_run is None
+        ):
             self.oom_killed = True
 
         return proc.returncode, stdout, stderr, wall, timed_out
@@ -468,6 +516,21 @@ def main():
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--time", type=float, required=True, help="per-run limit in seconds")
     p.add_argument("--memory", type=float, required=True, help="limit in GB")
+    p.add_argument(
+        "--grace",
+        type=float,
+        default=30.0,
+        help="per-run hard-kill grace on top of --time; the harness SIGKILLs the "
+        "solver once the whole invocation exceeds runs*(time+max(grace,0.25*time)) "
+        "+ startup-grace, so a solver that ignores its own limit is still stopped",
+    )
+    p.add_argument(
+        "--startup-grace",
+        type=float,
+        default=120.0,
+        help="one-off allowance (s) for process startup and graph loading before "
+        "the hard kill; raise it for very large graphs that are slow to load",
+    )
     p.add_argument("--threads", type=int, default=1)
     p.add_argument(
         "--clusters",
@@ -552,13 +615,30 @@ def main():
     caps = solver.get("capabilities", {})
     gpu = args.device == "cuda" and caps.get("gpu", False)
 
-    # Generous outer limit: the solver enforces the per-run limit itself, this
-    # only catches a solver that has stopped honouring it.
-    outer_timeout = args.time * args.runs * 1.5 + 1800
+    # The solver is asked to honour the per-run limit itself, but we do not
+    # trust it to: a run stuck in a C extension (e.g. Gurobi building an ILP)
+    # never gets to act on a Python SIGALRM, and a native binary may ignore its
+    # budget. The monitor's watchdog enforces the limit per run -- each run gets
+    # its --time plus a grace margin for a brief overrun -- and SIGKILLs the
+    # process group if a single run exceeds it; runs that already wrote a report
+    # survive. per_run_limit is what each run is allowed; outer_timeout is only a
+    # loose final backstop on the whole invocation in case the watchdog is
+    # somehow bypassed.
+    per_run_limit = args.time + max(args.grace, 0.25 * args.time)
+    outer_timeout = args.startup_grace + args.runs * per_run_limit + 60
+
+    # Clear any stale reports for this prefix so the watchdog, which treats a
+    # report file as "run finished", is not fooled by output from a prior run of
+    # the same config.
+    for i in range(args.runs):
+        Path(f"{output_prefix}{i}.json").unlink(missing_ok=True)
+        Path(f"{output_prefix}{i}.txt").unlink(missing_ok=True)
 
     monitor = MemoryMonitor(args.memory, trace=args.trace_memory)
     code, stdout, stderr, wall, timed_out = monitor.run(
-        argv, cwd=str(cwd), env=env, timeout=outer_timeout, allow_rlimit=not gpu
+        argv, cwd=str(cwd), env=env, timeout=outer_timeout, allow_rlimit=not gpu,
+        output_prefix=output_prefix, n_runs=args.runs,
+        per_run_limit=per_run_limit, startup_grace=args.startup_grace,
     )
 
     out = open(args.out, "a") if args.out else sys.stdout
@@ -593,6 +673,8 @@ def main():
             "exit_code": code,
             "wall_seconds": round(wall, 4),
             "outer_timeout": timed_out,
+            "per_run_limit_seconds": round(per_run_limit, 1),
+            "watchdog_killed_run": monitor.watchdog_killed_run,
         },
         "env": {
             "host": os.uname().nodename,
@@ -621,6 +703,9 @@ def main():
         elif clustering_path.exists():
             record["status"] = "ok"
         elif record.get("solver_report", {}).get("status") == "tle":
+            record["status"] = "tle"
+        elif monitor.watchdog_killed_run is not None and i >= monitor.watchdog_killed_run:
+            # This run (and any after it) never finished before the hard kill.
             record["status"] = "tle"
         elif timed_out:
             record["status"] = "tle"
