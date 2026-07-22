@@ -89,8 +89,12 @@ def main():
         shutil.rmtree(rundir, ignore_errors=True)
         os.makedirs(rundir, exist_ok=True)
 
+        # --oversubscribe: launch the requested number of ranks even when it
+        # exceeds the slots OpenMPI counts (it counts physical cores by default,
+        # so -n on a hyperthreaded box otherwise errors out). The rank count is
+        # the user's choice via --threads; honour it.
         argv = [
-            "mpirun", "-n", str(ranks), VIECLUS, graph,
+            "mpirun", "--oversubscribe", "-n", str(ranks), VIECLUS, graph,
             f"--time_limit={args.time if args.time > 0 else 1.0}",
             f"--seed={seed}",
             f"--output_filename={out_txt}",
