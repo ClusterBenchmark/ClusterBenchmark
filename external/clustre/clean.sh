@@ -4,3 +4,4 @@ cd "$(dirname "$0")"
 
 rm -rf CluStRE/
 rm -rf clustre
+rm -rf .venv

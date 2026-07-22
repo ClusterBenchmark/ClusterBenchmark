@@ -1,0 +1,53 @@
+{
+  "name": "clustre-strong",
+  "class": "classical",
+  "reference": "Fischer, Gottesbüren et al. CluStRE: Streaming Graph Clustering with Multi-Stage Refinement. 2025. (strong mode: streaming + VieClus memetic refinement + restream local search). Shares one build with clustre-fast under external/clustre.",
+  "cwd": "../clustre",
+  "venv": "../clustre/.venv",
+  "entry": "python3 run_clustre.py --mode strong",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "one_pass_algorithm": {
+      "flag": "--one-pass-algorithm",
+      "default": "modularity",
+      "type": "str",
+      "tunable": false,
+      "doc": "Streaming objective function. Fixed to modularity; set-only."
+    },
+    "cut_off": {
+      "flag": "--cut-off",
+      "default": 0.05,
+      "type": "float",
+      "range": [0.01, 0.2],
+      "scale": "log",
+      "doc": "Restream local-search stopping fraction: a round stops once its modularity gain falls below cut_off * estimated overall modularity. CluStRE's default is 0.05; smaller values search deeper. The refinement-depth knob for Protocol B."
+    },
+    "ext_algorithm_time": {
+      "flag": "--ext-algorithm-time",
+      "default": 300,
+      "type": "int",
+      "tunable": false,
+      "doc": "VieClus memetic budget in seconds (CluStRE default 300). The driver caps it at the per-run --time so the solver returns within budget. A compute budget, not a tuned hyperparameter; set-only."
+    },
+    "ls_time_limit": {
+      "flag": "--ls-time-limit",
+      "default": 600,
+      "type": "int",
+      "tunable": false,
+      "doc": "Local-search budget in seconds (CluStRE default 600). Also capped at the per-run --time by the driver. A compute budget; set-only."
+    }
+  }
+}

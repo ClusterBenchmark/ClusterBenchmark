@@ -1,0 +1,38 @@
+{
+  "name": "clustre-fast",
+  "class": "classical",
+  "reference": "Fischer, Gottesbüren et al. CluStRE: Streaming Graph Clustering with Multi-Stage Refinement. 2025. (light mode: one-pass streaming). Shares one build with clustre-strong under external/clustre.",
+  "cwd": "../clustre",
+  "venv": "../clustre/.venv",
+  "entry": "python3 run_clustre.py --mode light",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "one_pass_algorithm": {
+      "flag": "--one-pass-algorithm",
+      "default": "modularity",
+      "type": "str",
+      "tunable": false,
+      "doc": "Streaming objective function. Fixed to modularity, the objective this survey optimises; set-only."
+    },
+    "cluster_fraction": {
+      "flag": "--cluster-fraction",
+      "default": 0.0,
+      "type": "float",
+      "tunable": false,
+      "doc": "Caps initial clusters at cluster_fraction*n. 0 leaves CluStRE's default (5M cap), i.e. uncapped for our graphs. A capacity limit, not a tuned knob; set-only. Light mode is otherwise parameter-free, so Protocol A and B coincide."
+    }
+  }
+}
