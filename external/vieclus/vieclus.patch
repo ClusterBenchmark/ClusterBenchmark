@@ -1,0 +1,79 @@
+diff --git a/app/parse_parameters.h b/app/parse_parameters.h
+index 9c6eebe..bb1e7b7 100644
+--- a/app/parse_parameters.h
++++ b/app/parse_parameters.h
+@@ -64,7 +64,7 @@ int parse_parameters(int argn, char **argv,
+                 time_limit,
+                 //mh_pool_size,
+                 //mh_mutate_fraction,
+-		//mh_print_log,
++		mh_print_log,
+                 //local_partitioning_repetitions,
+                 //input_partition,
+                 filename_output,
+diff --git a/extern/KaHIP/lib/io/graph_io.cpp b/extern/KaHIP/lib/io/graph_io.cpp
+index 8b94911..76f7479 100644
+--- a/extern/KaHIP/lib/io/graph_io.cpp
++++ b/extern/KaHIP/lib/io/graph_io.cpp
+@@ -5,6 +5,10 @@
+  *****************************************************************************/
+ 
+ #include <sstream>
++#include <cstring>
++#include <cstdint>
++#include <vector>
++#include <limits>
+ #include "graph_io.h"
+ 
+ graph_io::graph_io() {
+@@ -79,6 +83,50 @@ int graph_io::readPartition(graph_access & G, std::string filename) {
+ }
+ 
+ int graph_io::readGraphWeighted(graph_access & G, std::string filename) {
++        // Binary CSR fast path: read the ClusterBenchmark CBCSRv1 format directly
++        // so the harness never converts the graph to a METIS text file. The
++        // layout is fixed and documented in that repo's include/graph.h (magic
++        // "CBCSRv1", int64 n, int64 m [= directed edges], int32 flags, int32
++        // reserved; a 32-byte header; then V[n+1] int64 offsets and E[m] int32
++        // neighbours). The graph is built through the same graph_access
++        // construction API the METIS reader uses below; unit weights, since
++        // VieClus optimises unweighted modularity here.
++        {
++                std::ifstream bin(filename.c_str(), std::ios::binary);
++                char magic[8] = {0};
++                if( bin && bin.read(magic, 8) && std::memcmp(magic, "CBCSRv1", 7) == 0 ) {
++                        int64_t n = 0, m = 0;
++                        bin.seekg(8, std::ios::beg);
++                        bin.read((char*)&n, 8);
++                        bin.read((char*)&m, 8);
++                        bin.seekg(32, std::ios::beg); // past flags + reserved
++                        if( m > std::numeric_limits<int>::max() || n > std::numeric_limits<int>::max() ) {
++                                std::cerr << "The graph is too large. Currently only 32bit supported!" << std::endl;
++                                exit(0);
++                        }
++                        std::vector<int64_t> V(n + 1);
++                        bin.read((char*)V.data(), (n + 1) * (int64_t)sizeof(int64_t));
++                        std::vector<int32_t> E(m > 0 ? m : 1);
++                        if( m > 0 ) bin.read((char*)E.data(), m * (int64_t)sizeof(int32_t));
++                        if( !bin ) {
++                                std::cerr << "Error reading CSR file " << filename << std::endl;
++                                return 1;
++                        }
++                        G.start_construction((NodeID)n, (EdgeID)m);
++                        for( int64_t u = 0; u < n; u++ ) {
++                                NodeID node = G.new_node();
++                                G.setPartitionIndex(node, 0);
++                                G.setNodeWeight(node, 1);
++                                for( int64_t i = V[u]; i < V[u + 1]; i++ ) {
++                                        EdgeID e = G.new_edge(node, (NodeID)E[i]);
++                                        G.setEdgeWeight(e, 1);
++                                }
++                        }
++                        G.finish_construction();
++                        return 0;
++                }
++        }
++
+         std::string line;
+ 
+         // open file for reading

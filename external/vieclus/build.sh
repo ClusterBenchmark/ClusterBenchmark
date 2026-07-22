@@ -4,18 +4,24 @@ cd "$(dirname "$0")"
 
 set -e
 
-# Create virtual environment
-python3 -m venv .venv
+# System prerequisites: an MPI implementation (VieClus parallelises the memetic
+# search across MPI ranks) and CMake + a C++14 compiler. On Debian/Ubuntu:
+#     sudo apt install libopenmpi-dev cmake g++
+# KaHIP and Argtable are vendored in the repo, so they need no system package.
 
-# Activate venv
-source .venv/bin/activate
+git clone https://github.com/KaHIP/VieClus.git
 
-# Upgrade pip
-pip install --upgrade pip
+cd VieClus
 
-# VieClus ships an official CSR Python interface (KaHIP/VieClus), so no C++/MPI
-# build is needed here -- the pinned wheel is the whole solver. numpy backs
-# graphio's CSR memmap. The wheel is single-process (no MPI island parallelism).
-pip install vieclus==1.3.1 numpy
+git checkout 0e27f24387ab1dcfeaf6d75cd0bc680531207c27
+
+# One compat patch: teach KaHIP's graph reader to consume our binary CSR format
+# directly, so the harness feeds VieClus the CSR without a METIS text conversion.
+git apply ../vieclus.patch
+
+# Build with MPI (default). deploy/vieclus is the CLI binary.
+./compile_withcmake.sh
+
+cp deploy/vieclus ../
 
 echo "Environment setup complete."

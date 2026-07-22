@@ -16,6 +16,8 @@ external/hollocou/graph-streaming/
 external/hollocou/streamcom
 external/clustre/CluStRE/
 external/clustre/clustre
+external/vieclus/VieClus/
+external/vieclus/vieclus
 
 paper/data/.venv 
 

@@ -1,147 +1,147 @@
-"""VieClus memetic graph clustering, on the shared harness.
+"""VieClus memetic graph clustering, on the shared harness (CLI binary).
 
 VieClus (Biedermann, Henzinger, Schulz & Schuster, "Memetic Graph Clustering",
 SEA 2018; KaHIP/VieClus) is a memetic (evolutionary) algorithm that maximises
-modularity. It is an anytime solver: given a time budget it keeps evolving a pool
-of clusterings and returns the best found. It was the reference baseline this
-survey grew out of.
+modularity. It is the anytime baseline this survey grew out of.
 
-Integration uses VieClus's official Python interface (pip install vieclus), which
-exposes cluster(vwgt, xadj, adjcwgt, adjncy, seed, time_limit) over CSR arrays and
-returns (modularity, membership). Our binary CSR maps straight onto those arrays
-via scripts/graphio.py -- no METIS text, no on-disk conversion, no output parsing.
-The pip wheel is single-process (no MPI island parallelism); the harness runs it
-at one thread, so this is the single-thread VieClus baseline.
+We drive the CLI binary rather than the pip wheel, because the wheel hides two
+features we want and the binary exposes both as-is (the log flag was merely
+commented out of the argument table; vieclus.patch re-enables it):
+  * Parallelism -- VieClus parallelises the evolutionary search across MPI ranks,
+    so --threads maps to `mpirun -n <threads>`.
+  * Time-of-best -- with --mh_print_log each rank writes a (timestamp, objective)
+    convergence log; we record when the best modularity was first reached as
+    time_to_best_seconds, plus the full trajectory, since a fixed time budget is
+    otherwise a meaningless "runtime" for an anytime solver.
 
-Note on time: VieClus is anytime, so solve_seconds here is essentially the budget
-it was given, not a time-to-solution. Capturing when the best clustering was
-actually found (VieClus already logs improving incumbents) is deferred future
-work; for now --time is the evolutionary budget.
+Graph I/O is binary CSR: a compat patch teaches KaHIP's reader to consume our
+CBCSRv1 format directly, and VieClus writes the clustering as one cluster id per
+line in node order (EVAL's format) to --output_filename. Each run executes in its
+own scratch subdir because the log filename depends only on rank/seed (not the
+graph name), so shared dirs would collide. EVAL provides the quality numbers.
 """
 
 import argparse
-import contextlib
+import glob
 import json
 import os
-import signal
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"))
-
-import numpy as np  # noqa: E402
-import graphio  # noqa: E402
-import vieclus  # noqa: E402
-
-INT32_MAX = 2**31 - 1
+VIECLUS = str(Path(__file__).resolve().parent / "vieclus")
 
 
-class RunTimeout(Exception):
-    pass
+def parse_convergence(rundir, seed):
+    """Reads VieClus's per-rank convergence logs for this run.
 
-
-def _alarm(signum, frame):
-    raise RunTimeout()
-
-
-@contextlib.contextmanager
-def suppress_fd_stdout():
-    """Redirects file descriptor 1 to /dev/null.
-
-    VieClus prints per-generation "fingerprint" lines from C++ even when its
-    suppress_output flag is set, which would otherwise accumulate megabytes of
-    noise on a long run. Redirect at the fd level so the C++ prints are dropped;
-    stderr is left alone so real errors still surface.
+    Each log line is "<elapsed_seconds> <objective>", appended as new bests are
+    found (so objective is non-decreasing). Returns (time_to_best, best_objective,
+    trajectory): best_objective is the max across ranks, time_to_best is the
+    earliest timestamp at which it was reached (not the final flush at the time
+    limit), and trajectory is the merged (t, obj) points sorted by time.
     """
-    saved = os.dup(1)
-    devnull = os.open(os.devnull, os.O_WRONLY)
-    try:
-        os.dup2(devnull, 1)
-        yield
-    finally:
-        os.dup2(saved, 1)
-        os.close(devnull)
-        os.close(saved)
+    points = []
+    for log in glob.glob(os.path.join(rundir, f"log__m_rank_*_file__seed_{seed}_k_1")):
+        try:
+            with open(log) as f:
+                for ln in f:
+                    parts = ln.split()
+                    if len(parts) == 2:
+                        points.append((float(parts[0]), float(parts[1])))
+        except OSError:
+            continue
+    if not points:
+        return None, None, []
+    points.sort()
+    best_obj = max(o for _, o in points)
+    t_best = min(t for t, o in points if o >= best_obj)
+    return t_best, best_obj, points
 
 
 def main():
-    p = argparse.ArgumentParser(description="Run VieClus clustering.")
+    p = argparse.ArgumentParser(description="Run VieClus clustering (CLI).")
     p.add_argument("--graph", required=True, help="binary CSR graph file")
     p.add_argument("--output-prefix", required=True)
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--time", type=float, default=0.0, help="per-run evolutionary budget")
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--threads", type=int, default=1, help="MPI ranks (mpirun -n)")
     p.add_argument("--leiden", action="store_true",
                    help="use VieClus's Leiden mode (guarantees connected communities)")
-    p.add_argument("--leiden-theta", type=float, default=0.01,
-                   help="Leiden refinement temperature (only with --leiden)")
-    p.add_argument("--cluster-upperbound", type=int, default=0,
-                   help="max cluster size, 0 = no limit")
+    p.add_argument("--leiden-theta", type=float, default=0.01)
     args = p.parse_args()
 
-    t0 = time.perf_counter()
-    csr = graphio.load_csr(args.graph)
-    n, m = csr.n, csr.m
-    if m > INT32_MAX:
-        raise SystemExit(
-            f"VieClus uses 32-bit edge ids; {m} directed edges exceed {INT32_MAX}"
-        )
-
-    # VieClus's C interface takes int arrays (int* xadj/adjncy/vwgt/adjcwgt).
-    xadj = np.asarray(csr.V, dtype=np.int32)
-    adjncy = np.asarray(csr.E, dtype=np.int32)
-    vwgt = csr.VW.astype(np.int32) if csr.VW is not None else np.ones(n, dtype=np.int32)
-    adjcwgt = csr.EW.astype(np.int32) if csr.EW is not None else np.ones(m, dtype=np.int32)
-    parse_seconds = time.perf_counter() - t0
-
-    # VieClus honours time_limit internally; SIGALRM is only a backstop against a
-    # run that ignores it (as Bayan does), a little above the budget.
-    signal.signal(signal.SIGALRM, _alarm)
+    graph = os.path.abspath(args.graph)
+    ranks = max(1, args.threads)
+    hard_timeout = (args.time * 1.5 + 60) if args.time > 0 else None
 
     for i in range(args.runs):
         seed = args.seed + i
-        report = {
-            "run": i,
-            "seed": seed,
-            "parse_seconds": round(parse_seconds, 6),
-            "leiden": args.leiden,
-            "cluster_upperbound": args.cluster_upperbound,
-        }
+        out_txt = os.path.abspath(f"{args.output_prefix}{i}.txt")
+        report = {"run": i, "seed": seed, "ranks": ranks, "leiden": args.leiden}
 
-        if args.time > 0:
-            signal.setitimer(signal.ITIMER_REAL, args.time + 60)
+        # Isolated cwd: the log filename depends only on rank/seed/k, so runs
+        # sharing a directory would overwrite each other's logs.
+        rundir = f"{args.output_prefix}{i}_vcwork"
+        shutil.rmtree(rundir, ignore_errors=True)
+        os.makedirs(rundir, exist_ok=True)
+
+        argv = [
+            "mpirun", "-n", str(ranks), VIECLUS, graph,
+            f"--time_limit={args.time if args.time > 0 else 1.0}",
+            f"--seed={seed}",
+            f"--output_filename={out_txt}",
+            "--mh_print_log",
+        ]
+        if args.leiden:
+            argv += ["--leiden", f"--leiden_theta={args.leiden_theta}"]
 
         start = time.perf_counter()
         try:
-            with suppress_fd_stdout():
-                modularity, clustering = vieclus.cluster(
-                    vwgt, xadj, adjcwgt, adjncy,
-                    suppress_output=True,
-                    seed=seed,
-                    time_limit=args.time if args.time > 0 else 1.0,
-                    cluster_upperbound=args.cluster_upperbound,
-                    leiden=args.leiden,
-                    leiden_theta=args.leiden_theta,
-                )
-            signal.setitimer(signal.ITIMER_REAL, 0)
+            proc = subprocess.run(
+                argv, cwd=rundir,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                timeout=hard_timeout, start_new_session=True,
+            )
+            elapsed = time.perf_counter() - start
 
-            membership = list(clustering)
-            report["status"] = "ok"
-            report["solve_seconds"] = round(time.perf_counter() - start, 6)
-            report["modularity"] = modularity
-            report["n_clusters"] = len(set(membership))
-            report["iterations"] = {"done": 1, "requested": 1}
-            graphio.write_clustering(f"{args.output_prefix}{i}.txt", membership)
-        except RunTimeout:
-            signal.setitimer(signal.ITIMER_REAL, 0)
+            modularity = None
+            for line in proc.stdout.splitlines():
+                if line.startswith("modularity"):
+                    try:
+                        modularity = float(line.split()[-1])
+                    except (IndexError, ValueError):
+                        pass
+            t_best, log_best, trajectory = parse_convergence(rundir, seed)
+
+            if proc.returncode != 0 or not os.path.exists(out_txt):
+                report["status"] = "error"
+                report["error"] = (
+                    f"vieclus exit {proc.returncode}: "
+                    f"{proc.stdout.strip()[-500:]} {proc.stderr.strip()[-500:]}"
+                )
+            else:
+                report["status"] = "ok"
+                report["iterations"] = {"done": 1, "requested": 1}
+            report["solve_seconds"] = round(elapsed, 6)
+            if modularity is not None:
+                report["modularity"] = modularity
+            if t_best is not None:
+                report["time_to_best_seconds"] = round(t_best, 6)
+                report["log_best_objective"] = log_best
+                report["convergence"] = [[round(t, 6), o] for t, o in trajectory]
+        except subprocess.TimeoutExpired:
             report["status"] = "tle"
             report["solve_seconds"] = round(time.perf_counter() - start, 6)
         except Exception as exc:  # noqa: BLE001 - reported, not swallowed
-            signal.setitimer(signal.ITIMER_REAL, 0)
             report["status"] = "error"
             report["error"] = f"{type(exc).__name__}: {exc}"
             report["solve_seconds"] = round(time.perf_counter() - start, 6)
+        finally:
+            shutil.rmtree(rundir, ignore_errors=True)
 
         with open(f"{args.output_prefix}{i}.json", "w") as f:
             json.dump(report, f)

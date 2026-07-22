@@ -2,4 +2,5 @@
 
 cd "$(dirname "$0")"
 
-rm -rf .venv
+rm -rf VieClus
+rm -rf vieclus
