@@ -22,6 +22,11 @@
 
 set -u
 
+# ctrl-c / SIGTERM: the harness already kills its own solver's process group on
+# the signal (start_new_session isolates it from the terminal), so all this trap
+# has to do is stop the loop rather than march on to the next solver/instance.
+trap 'echo; echo "[$(date +%T)] interrupted -- stopping"; exit 130' INT TERM
+
 here="$(cd "$(dirname "$0")/.." && pwd)"
 [ "$#" -ge 3 ] || { echo "usage: $0 CSR_DIR LABELS_DIR OUT_DIR [DEVICE TIME MEM RUNS THREADS GRACE STARTUP_GRACE]"; exit 1; }
 CSR_DIR="$1"; LABELS_DIR="$2"; OUT_DIR="$3"

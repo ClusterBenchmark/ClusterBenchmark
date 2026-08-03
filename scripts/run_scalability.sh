@@ -41,6 +41,11 @@
 
 set -u
 
+# ctrl-c / SIGTERM: the harness already kills its own solver's process group on
+# the signal (start_new_session isolates it from the terminal), so all this trap
+# has to do is stop the loop rather than march on to the next solver/instance.
+trap 'echo; echo "[$(date +%T)] interrupted -- stopping"; exit 130' INT TERM
+
 here="$(cd "$(dirname "$0")/.." && pwd)"
 [ "$#" -ge 3 ] || { echo "usage: $0 CSR_DIR LABELS_DIR OUT_DIR [TIME MEM RUNS GRACE STARTUP_GRACE]"; exit 1; }
 CSR_DIR="$1"; LABELS_DIR="$2"; OUT_DIR="$3"
@@ -58,9 +63,11 @@ THREAD_LIST="${THREAD_LIST:-$NPROC}"
 
 # Solvers whose solver.json declares threads:true (CPU thread sweep). vieclus is
 # the only threads-capable classical (MPI islands); the rest are the ML methods.
-PAR_SOLVERS="${PAR_SOLVERS:-vieclus commdgi dgcluster dmon gnns lim magi magi-sage ucode}"
+# Note the `-` (not `:-`): an explicitly empty PAR_SOLVERS="" means "skip the CPU
+# sweep entirely", while leaving it unset uses the default list. Same for GPU.
+PAR_SOLVERS="${PAR_SOLVERS-vieclus commdgi dgcluster dmon gnns lim magi magi-sage ucode}"
 # Solvers whose solver.json declares gpu:true (accelerator sweep) -- all ML.
-GPU_SOLVERS="${GPU_SOLVERS:-commdgi dgcluster dmon gnns lim magi magi-sage ucode}"
+GPU_SOLVERS="${GPU_SOLVERS-commdgi dgcluster dmon gnns lim magi magi-sage ucode}"
 
 # Detect a CUDA-capable torch once, so the GPU sweep is skipped cleanly on a
 # CPU-only box rather than erroring per run. Override with FORCE_GPU=1.

@@ -177,6 +177,31 @@ class MemoryMonitor:
                     self.samples.append((round(time.monotonic() - t0, 3), rss))
             self._stop.wait(self.interval)
 
+    # -- killing the solver tree -------------------------------------------
+
+    def _kill_solver(self, proc):
+        """Hard-kill the entire solver process tree.
+
+        In cgroup mode the scope's cgroup.kill reaps every process in the scope
+        at once, regardless of process group -- essential because a launcher like
+        mpirun puts each rank in its own process group, so os.killpg on the
+        driver's group alone leaves the ranks running. We still killpg as a
+        belt-and-suspenders (and it is the only mechanism in the non-cgroup
+        fallback path).
+        """
+        if self._cgroup is not None:
+            try:
+                (self._cgroup / "cgroup.kill").write_text("1")
+            except OSError:
+                pass
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except OSError:
+            try:
+                proc.kill()
+            except OSError:
+                pass
+
     # -- per-run hard timeout ----------------------------------------------
 
     def _watchdog(self, proc, output_prefix, n_runs, per_run_limit, startup_grace, t0):
@@ -199,10 +224,7 @@ class MemoryMonitor:
                 continue
             if time.monotonic() > deadline:
                 self.watchdog_killed_run = next_run
-                try:
-                    os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-                except OSError:
-                    proc.kill()
+                self._kill_solver(proc)
                 return
             self._stop.wait(0.5)
 
@@ -294,11 +316,17 @@ class MemoryMonitor:
             stdout, stderr = proc.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
             timed_out = True
-            try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-            except OSError:
-                proc.kill()
+            self._kill_solver(proc)
             stdout, stderr = proc.communicate()
+        except KeyboardInterrupt:
+            # ctrl-c (or SIGTERM, which main() re-raises as KeyboardInterrupt).
+            # The solver runs in its own session, so the signal never reached it --
+            # without this it would keep running orphaned after the harness dies.
+            # Kill the whole tree, reap, then re-raise so main() exits.
+            self._stop.set()
+            self._kill_solver(proc)
+            proc.communicate()
+            raise
 
         wall = time.monotonic() - t0
         self._stop.set()
@@ -750,5 +778,17 @@ def git_commit():
         return None
 
 
+def _sigterm(_signum, _frame):
+    # Turn SIGTERM into the same path as ctrl-c so `kill <harness>` also tears
+    # down the solver's process group instead of orphaning it.
+    raise KeyboardInterrupt
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    signal.signal(signal.SIGTERM, _sigterm)
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        # The solver has already been killed in MemoryMonitor.run; exit with the
+        # conventional 128+SIGINT code, no traceback.
+        sys.exit(130)

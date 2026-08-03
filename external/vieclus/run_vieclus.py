@@ -105,10 +105,16 @@ def main():
 
         start = time.perf_counter()
         try:
+            # No start_new_session here: mpirun must stay in this driver's
+            # process group so that when the harness hard-kills the solver group
+            # (ctrl-c, watchdog, or timeout) the signal reaches mpirun and its
+            # ranks too. Isolating it in a new session orphaned mpirun, leaving it
+            # running after the harness died. subprocess.run's own timeout still
+            # kills mpirun directly, which cleans up its ranks.
             proc = subprocess.run(
                 argv, cwd=rundir,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=hard_timeout, start_new_session=True,
+                timeout=hard_timeout,
             )
             elapsed = time.perf_counter() - start
 
