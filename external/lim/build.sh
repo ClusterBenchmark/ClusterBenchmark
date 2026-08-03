@@ -29,7 +29,10 @@ source .venv/bin/activate
 pip install --upgrade pip
 
 if [[ "$DEVICE" == "cuda" ]]; then
-    pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0
+    # cu124: newest CUDA build the lab GPU driver (max CUDA 12.6) can initialise;
+    # the default index ships a cu128 wheel that a 12.6 driver rejects as too old.
+    # (torch 2.8.0 is not published for cu124, so it is unpinned here.)
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 else
     pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
 fi
