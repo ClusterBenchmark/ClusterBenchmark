@@ -50,7 +50,10 @@ def add_arguments(p):
 
 def make_modularity_matrix(adj, torch):
     """B = A - dd^T / 2m, over the off-diagonal adjacency (authors' setup)."""
-    adj = adj * (torch.ones(adj.shape[0], adj.shape[0]) - torch.eye(adj.shape[0]))
+    # Build the off-diagonal mask on adj's own device; otherwise a GPU adj hits a
+    # cuda/cpu mismatch (the authors only ever ran this on CPU).
+    adj = adj * (torch.ones(adj.shape[0], adj.shape[0], device=adj.device)
+                 - torch.eye(adj.shape[0], device=adj.device))
     degrees = adj.sum(dim=0).unsqueeze(1)
     return adj - degrees @ degrees.t() / adj.sum()
 
