@@ -123,6 +123,8 @@ def main():
                 args=model_args,
                 cluster=cluster_net,
             ).to(device)
+            if hasattr(model, "init") and isinstance(model.init, torch.Tensor):
+                model.init = model.init.to(device)
             optimizer = torch.optim.Adam(
                 model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
             )
