@@ -1,17 +1,28 @@
 diff --git a/DGI.py b/DGI.py
-index 3df6ef4..f9fd6e5 100644
+index 3df6ef4..28939fc 100644
 --- a/DGI.py
 +++ b/DGI.py
-@@ -69,3 +69,3 @@ class DeepGraphInfomax(torch.nn.Module):
+@@ -66,9 +66,9 @@ class DeepGraphInfomax(torch.nn.Module):
+         self.reset_parameters()
+         self.K = args.K
          self.cluster_temp = args.clustertemp
 -        self.init = torch.rand(self.K,hidden_channels)
 +        self.register_buffer("init", torch.rand(self.K, hidden_channels))
          self.cluster = cluster
-@@ -119,2 +119,2 @@ class DeepGraphInfomax(torch.nn.Module):
+-        
++
+     def reset_parameters(self):
+         reset(self.encoder)
+         reset(self.summary)
+@@ -117,14 +117,14 @@ class DeepGraphInfomax(torch.nn.Module):
+         return -torch.log(self.discriminate(pos_z,self.summary(mu),sigmoid=True) + EPS).mean()
+ 
      def modularity(self, mu, r, embeds, dist, bin_adj, mod, args):
 -        bin_adj_nodiag = bin_adj * (torch.ones(bin_adj.shape[0], bin_adj.shape[0]) - torch.eye(bin_adj.shape[0]))
 +        bin_adj_nodiag = bin_adj * (torch.ones(bin_adj.shape[0], bin_adj.shape[0], device=bin_adj.device) - torch.eye(bin_adj.shape[0], device=bin_adj.device))
-@@ -124,7 +124,7 @@ class DeepGraphInfomax(torch.nn.Module):
+         return (1. / bin_adj_nodiag.sum()) * (r.t() @ mod @ r).trace()
+ 
+     def test(self, train_z, train_y, test_z, test_y, solver='lbfgs',
               multi_class='auto', *args, **kwargs):
          r"""Evaluates latent space quality via a logistic regression downstream
          task."""
