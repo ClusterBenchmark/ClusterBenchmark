@@ -2,6 +2,10 @@
 bin/*
 !bin/.gitignore
 
+other_papers/*
+results_A/*
+out_scale/*
+
 external/*/.venv
 
 # Per-solver build clones (created by each solver's build.sh, removed by clean.sh)

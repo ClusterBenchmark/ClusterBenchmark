@@ -21,10 +21,18 @@ graph *graph_parse(FILE *f)
     while (Data[p] == '%')
         util_skip_line(Data, &p);
 
-    long long n, m, t;
+    long long n = 0, m = 0, fmt = 0, ncon = 0;
     util_parse_id(Data, &p, &n);
     util_parse_id(Data, &p, &m);
-    util_parse_id(Data, &p, &t);
+    util_parse_id(Data, &p, &fmt);
+    util_parse_id(Data, &p, &ncon);
+
+    if (ncon == 0)
+        ncon = 1;
+
+    int edge_weights = (fmt % 10) == 1;
+    int vertex_weights = ((fmt / 10) % 10) == 1;
+    int vertex_sizes = ((fmt / 100) % 10) == 1;
 
     m *= 2;
 
@@ -33,54 +41,62 @@ graph *graph_parse(FILE *f)
     long long *V = malloc(sizeof(long long) * (n + 1));
     int *E = malloc(sizeof(int) * m);
 
-    int vertex_weights = (t == 10 || t == 11);
-    int edge_weights = (t == 1 || t == 11);
-
-    long long *VW = edge_weights ? malloc(sizeof(long long) * n) : NULL;
-    long long *EW = edge_weights ? malloc(sizeof(long long) * m) : NULL;
-
-    long long ei = 0, vw = 0;
+    long long ei = 0;
     for (int u = 0; u < n; u++)
     {
         while (Data[p] == '%')
             util_skip_line(Data, &p);
 
+        if (vertex_sizes)
+        {
+            long long vsize = 0;
+            util_parse_id(Data, &p, &vsize);
+        }
+
         if (vertex_weights)
-            util_parse_id(Data, &p, &vw);
+        {
+            for (int k = 0; k < ncon; k++)
+            {
+                long long vw = 0;
+                util_parse_id(Data, &p, &vw);
+            }
+        }
 
         V[u] = ei;
-        if (VW != NULL)
-            VW[u] = 0;
 
         while (ei < m)
         {
-            while (Data[p] == ' ')
+            while (Data[p] == ' ' || Data[p] == '\t' || Data[p] == '\r')
                 p++;
-            if (Data[p] == '\n')
+            if (Data[p] == '\n' || Data[p] == '\0')
                 break;
 
-            long long e;
+            long long e = 0;
             util_parse_id(Data, &p, &e);
-            E[ei] = e - 1;
 
             if (edge_weights)
             {
-                util_parse_id(Data, &p, EW + ei);
-                if (e - 1 == u)
-                    VW[u] += EW[ei];
+                long long ew = 0;
+                util_parse_id(Data, &p, &ew);
             }
 
             if (e - 1 != u)
+            {
+                E[ei] = e - 1;
                 ei++;
+            }
         }
-        p++;
+        if (Data[p] == '\n')
+            p++;
+        else if (Data[p] != '\0')
+            util_skip_line(Data, &p);
     }
     V[n] = ei;
 
     munmap(Data, size);
 
     graph *g = malloc(sizeof(graph));
-    *g = (graph){.n = n, .m = m, .V = V, .E = E, .VW = VW, .EW = EW};
+    *g = (graph){.n = n, .m = m, .V = V, .E = E, .VW = NULL, .EW = NULL};
 
     return g;
 }
