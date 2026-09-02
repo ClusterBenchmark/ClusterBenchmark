@@ -1,0 +1,5 @@
+{
+  "base_model": "gcn",
+  "feature_kind": "ldp",
+  "threshold": 0.5153575744583502
+}
