@@ -12,7 +12,7 @@ index 9c6eebe..bb1e7b7 100644
                  //input_partition,
                  filename_output,
 diff --git a/extern/KaHIP/lib/io/graph_io.cpp b/extern/KaHIP/lib/io/graph_io.cpp
-index 8b94911..76f7479 100644
+index 8b94911..7c02cbb 100644
 --- a/extern/KaHIP/lib/io/graph_io.cpp
 +++ b/extern/KaHIP/lib/io/graph_io.cpp
 @@ -5,6 +5,10 @@
@@ -26,7 +26,7 @@ index 8b94911..76f7479 100644
  #include "graph_io.h"
  
  graph_io::graph_io() {
-@@ -79,6 +83,50 @@ int graph_io::readPartition(graph_access & G, std::string filename) {
+@@ -79,6 +83,57 @@ int graph_io::readPartition(graph_access & G, std::string filename) {
  }
  
  int graph_io::readGraphWeighted(graph_access & G, std::string filename) {
@@ -35,18 +35,19 @@ index 8b94911..76f7479 100644
 +        // layout is fixed and documented in that repo's include/graph.h (magic
 +        // "CBCSRv1", int64 n, int64 m [= directed edges], int32 flags, int32
 +        // reserved; a 32-byte header; then V[n+1] int64 offsets and E[m] int32
-+        // neighbours). The graph is built through the same graph_access
-+        // construction API the METIS reader uses below; unit weights, since
-+        // VieClus optimises unweighted modularity here.
++        // neighbours, EW[m] int64 edge weights if flags & 1).
 +        {
 +                std::ifstream bin(filename.c_str(), std::ios::binary);
 +                char magic[8] = {0};
 +                if( bin && bin.read(magic, 8) && std::memcmp(magic, "CBCSRv1", 7) == 0 ) {
 +                        int64_t n = 0, m = 0;
++                        int32_t flags = 0, reserved = 0;
 +                        bin.seekg(8, std::ios::beg);
 +                        bin.read((char*)&n, 8);
 +                        bin.read((char*)&m, 8);
-+                        bin.seekg(32, std::ios::beg); // past flags + reserved
++                        bin.read((char*)&flags, 4);
++                        bin.read((char*)&reserved, 4);
++                        bin.seekg(32, std::ios::beg);
 +                        if( m > std::numeric_limits<int>::max() || n > std::numeric_limits<int>::max() ) {
 +                                std::cerr << "The graph is too large. Currently only 32bit supported!" << std::endl;
 +                                exit(0);
@@ -55,6 +56,11 @@ index 8b94911..76f7479 100644
 +                        bin.read((char*)V.data(), (n + 1) * (int64_t)sizeof(int64_t));
 +                        std::vector<int32_t> E(m > 0 ? m : 1);
 +                        if( m > 0 ) bin.read((char*)E.data(), m * (int64_t)sizeof(int32_t));
++                        std::vector<int64_t> EW;
++                        if( flags & 1 ) {
++                                EW.resize(m > 0 ? m : 1);
++                                if( m > 0 ) bin.read((char*)EW.data(), m * (int64_t)sizeof(int64_t));
++                        }
 +                        if( !bin ) {
 +                                std::cerr << "Error reading CSR file " << filename << std::endl;
 +                                return 1;
@@ -66,7 +72,8 @@ index 8b94911..76f7479 100644
 +                                G.setNodeWeight(node, 1);
 +                                for( int64_t i = V[u]; i < V[u + 1]; i++ ) {
 +                                        EdgeID e = G.new_edge(node, (NodeID)E[i]);
-+                                        G.setEdgeWeight(e, 1);
++                                        EdgeWeight w = (flags & 1) ? (EdgeWeight)EW[i] : 1;
++                                        G.setEdgeWeight(e, w);
 +                                }
 +                        }
 +                        G.finish_construction();
