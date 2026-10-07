@@ -37,7 +37,7 @@ mkdir -p "$OUT_DIR"
 # clustre-strong is intentionally excluded (dropped from the run set: it trails
 # plain VieClus and its anytime wall time is hard to present). Override the list
 # with the SOLVERS env var to run a subset, e.g. SOLVERS="leiden vieclus" ...
-SOLVERS="${SOLVERS:-louvain cnm walktrap combo infomap leiden bayan hollocou clustre-fast vieclus dmon commdgi gnns ucode dgcluster magi magi-sage lim}"
+SOLVERS="${SOLVERS:-louvain cnm walktrap combo infomap leiden bayan hollocou clustre-fast vieclus dmon commdgi gnns ucode dgcluster magi lim}"
 
 echo "device=$DEVICE time=${TIME}s mem=${MEM}GB runs=$RUNS threads=$THREADS grace=$GRACE startup=$STARTUP"
 for s in $SOLVERS; do
