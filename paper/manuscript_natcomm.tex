@@ -75,12 +75,11 @@ Despite existing surveys~\cite{Liu2020, Jin2023, survey2023, Li2024, liang2024, 
 \end{itemize}
 
 \section{Preliminary}\label{sec:preliminary}
-%We use the term \emph{algorithm} to denote a concrete computational procedure. Except where explicitly stated, the algorithms considered here are heuristics for modularity maximization and do not guarantee optimality.
 
 \paragraph*{\textbf{Graphs and clusterings}.}
 An \emph{(attributed) graph} is defined as $G = (V, E, \mathcal{F})$, where $V = \{v_1, v_2, \dots, v_n\}$ is a set of $n$ vertices, $E \subseteq V \times V$ is the set of undirected edges, and $\mathcal{F} = \{f_1, f_2, \dots, f_n\}$ denotes node attributes, with each $f_i \in \mathbb{R}^x$ an attribute vector associated with vertex $v_i$, and $x$ the attribute dimension.
 We write $n := |V|$ and $m := |E|$ for the number of vertices and edges, respectively.
-For a vertex $u \in V$, its \emph{neighborhood} is $N(u) := \{v \in V : \{u,v\} \in E\}$, and its \emph{degree} is $deg(u) := |N(u)|$.
+For a vertex $u \in V$, its \emph{neighborhood} is $N(u) := \{v \in V : \{u,v\} \in E\}$, and its \emph{degree} is $\deg(u) := |N(u)|$.
 Let $A \in \{0,1\}^{n \times n}$ denote the adjacency matrix of $G$, where $A_{ij} = 1$ if $\{v_i,v_j\} \in E$ and $A_{ij} = 0$ otherwise.
 Let $\mathbf{d} \in \mathbb{R}^n$ denote the degree vector with $\mathbf{d}_i = \deg(v_i)$.
 
@@ -89,10 +88,10 @@ Classical algorithms operate solely on the graph structure $(V,E)$, while learni
 Learning-based approaches often aim to discover communities that are coherent both in terms of graph connectivity and attribute similarity.
 
 \paragraph*{\textbf{Modularity}.}
-The \emph{modularity} score of a clustering is the fraction of edges that are within one cluster minus the expected fraction if the edges were distributed at random.
+The \emph{modularity} score of a clustering is the fraction of edges that connect two vertices within one cluster, minus the expected fraction if the edges were distributed at random.
 Let $L_i := |\{\{u,v\} \in E : u,v \in V_i\}|$ denote the number of edges internal to block $V_i$.
 The modularity of $C$ is defined as
-\[Q(C) := \sum_{i = 1}^{k}{\left(\frac{L_i}{m} - \left(\sum_{u \in V_i}{\frac{deg(u)}{2m}}\right)^2 \right)} \]
+\[Q(C) := \sum_{i = 1}^{k}{\left(\frac{L_i}{m} - \left(\sum_{u \in V_i}{\frac{\deg(u)}{2m}}\right)^2 \right)} \]
 Equivalently, modularity can be expressed in spectral form.
 Let $C \in \{0,1\}^{n \times k}$ denote the (hard) cluster assignment matrix, where $C_{ip} = 1$ if vertex $v_i$ belongs to cluster $p$ and $C_{ip} = 0$ otherwise.
 Define the \emph{modularity matrix}
@@ -116,7 +115,7 @@ or contrastive criteria defined over these representations or over derived \emph
                     rectangle,
                     rounded corners,
                     align=left,
-                    font=\small,
+                    font=\scriptsize,
                     minimum width=1.5cm,
                     minimum height=0.5cm
                 },
@@ -136,24 +135,24 @@ or contrastive criteria defined over these representations or over derived \emph
         ]
 
         \node[paper, ae] (advnds) at (1, 5) {ADVNDS~\cite{advnds2019}};
-        \node[paper, ae] (vns) at (0, 4) {VNS~\cite{vns2012}};
+        \node[paper, ae] (vns) at (-0.25, 4) {VNS~\cite{vns2012}};
         \node[paper, ae] (cggci) at (2, 4) {CGGCi~\cite{vns2012}};
         \node[paper, ae] (vieclus) at (1, 3) {VieClus~\cite{vieclus2018}};
         \node[paper, ae] (maxsat) at (0, 2) {MaxSAT~\cite{maxsat2025}};
         \node[paper, ae] (clustre) at (2, 2) {CluStRE~\cite{clustre2025}};
-        \node[paper, ml] (gnns) at (4, 5) {GNNS~\cite{gnns2022}};
-        \node[paper, ae] (combo) at (4, 4) {COMBO~\cite{combo2014}};
-        \node[paper, ae] (walktrap) at (4, 3) {Walktrap~\cite{walktrap2005}};
-        \node[paper, ae] (hollocou) at (4, 2) {Hollocou~\cite{hollocou2017}};
+        \node[paper, ml] (gnns) at (4.5, 5) {GNNS~\cite{gnns2022}};
+        \node[paper, ae] (combo) at (4.5, 4) {COMBO~\cite{combo2014}};
+        \node[paper, ae] (walktrap) at (4.5, 3) {Walktrap~\cite{walktrap2005}};
+        \node[paper, ae] (hollocou) at (4.5, 2) {Hollocou~\cite{hollocou2017}};
         \node[paper, ae] (leiden) at (8, 5) {Leiden~\cite{leiden2019}};
-        \node[paper, ae] (bayan) at (7.25, 4) {Bayan~\cite{bayan2024}};
+        \node[paper, ae] (bayan) at (7.3, 4) {Bayan~\cite{bayan2024}};
         \node[paper, ae] (louvain) at (8, 3) {Louvain~\cite{louvain2008}};
         \node[paper, ae] (cnm) at (7, 2) {CNM~\cite{cnm2004}};
         \node[paper, ae] (wt) at (9, 2) {WT~\cite{wt2007}};
         \node[paper, ml] (lim) at (11, 5) {LIM~\cite{lim2025}};
         \node[paper, ml] (commdgi) at (11, 4) {CommDGI~\cite{commdgi2020}};
         \node[paper, ml] (ucode) at (11, 3) {UCoDe~\cite{ucode2023}};
-        \node[paper, ml] (dgcluster) at (13, 4) {DGCluster~\cite{dgcluster2024}};
+        \node[paper, ml] (dgcluster) at (13.25, 4) {DGCluster~\cite{dgcluster2024}};
         \node[paper, ml] (magi) at (14, 5) {MAGI~\cite{magi2024}};
         \node[paper, ml] (dmon) at (14, 3) {DMoN~\cite{dmon2023}};
 
@@ -171,8 +170,8 @@ or contrastive criteria defined over these representations or over derived \emph
         \draw[cite] (leiden.-40) to (louvain.40);
 
         % Bayan
-        \draw[cite] (bayan.-40) to (louvain.150);
-        \draw[cite] (bayan.40) to (leiden.-150);
+        \draw[cite] (bayan.-50) to (louvain.150);
+        \draw[cite] (bayan.50) to (leiden.-150);
         \draw[cite] (bayan.south west) to (walktrap.north east);
 
         % Walktrap
@@ -194,16 +193,16 @@ or contrastive criteria defined over these representations or over derived \emph
         \draw[cite] (lim.south east) to (dgcluster.north west);
 
         % MAGI
-        \draw[cite] (magi.-150) to (dgcluster.25);
+        \draw[cite] (magi.-150) to (dgcluster.45);
         \draw[cite] (magi.-30) to (dmon.30);
 
         % DGCluster
-        \draw[cite] (dgcluster.-25) to (dmon.150);
+        \draw[cite] (dgcluster.-45) to (dmon.150);
 
         % CluStRE
-        \draw[cite, -] (clustre.30) to[out=60, in=180, looseness=0.5] (3.5, 2.45);
-        \draw[cite] (3.35, 2.45) to[out=0, in=180, looseness=1.5] (louvain.west);
-        \draw[cite] (clustre.north) to (vieclus.south east);
+        \draw[cite, -] (clustre.30) to[out=60, in=180, looseness=0.5] (4.5, 2.45);
+        \draw[cite] (4.35, 2.45) to[out=0, in=180, looseness=1.5] (louvain.west);
+        \draw[cite] (clustre.north) to (vieclus.-20);
         \draw[cite] (clustre.east) to (hollocou.west);
 
         % Louvain
@@ -214,15 +213,15 @@ or contrastive criteria defined over these representations or over derived \emph
         \draw[cite] (wt.west) to (cnm.east);
 
         % MaxSAT
-        \draw[cite] (maxsat.north) to (vieclus.south west);
+        \draw[cite] (maxsat.north) to (vieclus.-160);
 
         % VieClus
         \draw[cite] (vieclus.north east) to (cggci.south);
         \draw[cite] (vieclus.north west) to (vns.south);
 
         % ADVCNDS
-        \draw[cite] (advnds.south east) to (cggci.north);
-        \draw[cite] (advnds.south west) to (vns.north);
+        \draw[cite] (advnds.-20) to (cggci.north);
+        \draw[cite] (advnds.-160) to (vns.50);
 
         % VNS
         \draw[cite] (vns.10) to[out=20, in=160] (cggci.170);
@@ -233,7 +232,7 @@ or contrastive criteria defined over these representations or over derived \emph
     \end{tikzpicture}
 
     % Normal caption
-    \caption{Previous experimental comparisons visualized. Each directed edge indicates that the source algorithm used the destination algorithm in the experimental evaluation. The colors indicate either a learning-based method when red, or a classical optimization algorithm when blue.}
+    \caption{Previous experimental comparisons visualized. Each directed edge indicates that the source algorithm used the destination algorithm in the experimental evaluation. The colors indicate either a learning-based method in red, or a classical optimization algorithm in blue.}
     % Description for someone who can't see (only clear text)
     \Description{Test.}
     \label{fig:comparisons}
@@ -250,62 +249,41 @@ Compared to classical heuristics, learning-based methods trade exact modularity 
 Despite extensive work in both paradigms, existing surveys do not provide a unified experimental comparison of classical and learning-based modularity optimization methods. Prior surveys typically focus on either classical heuristics~\cite{survey2023} or learning-based methods~\cite{Liu2020,Jin2023,liang2024,Messias2025}.
 Li et al.~\cite{Li2024} compare classical and deep learning methods, but limit comparison to Python-based solvers, thus lacking a comprehensive comparison of the state-of-the-art. In addition, algorithmic papers in both paradigms rarely evaluate against methods outside their own class (see Figure~\ref{fig:comparisons}).
 
-\begin{table}
-    \caption{Comparison of benchmarked methods. \textit{Code} indicates implementation availability ($\times$: unavailable; $\star$: available but not ready for use; $\star\star$: open source with well-defined I/O). \textit{Features} indicate parallelism (P), automatic or user-specified number of clusters (A/K), learning-based methods (L), use of node features (F), and availability in portable Python packages (Py). The bold methods are exact solvers.}
+\begin{table}[t]
+    \caption{Overview of surveyed community detection methods and software characteristics. The upper block lists the 17 methods integrated into our unified benchmarking framework, the lower block lists surveyed methods whose implementations are unavailable or not evaluated. \textit{Code} reflects original software maturity prior to our integration ($\star\star$: production/package release with standard I/O; $\star$: research prototype adapted into our harness; $\times$: unreleased/unavailable). \textit{Parallel} indicates multi-threading or GPU support, \textit{Fixed $k$} denotes whether the number of clusters must be specified a priori, \textit{Features} indicates utilization of node attributes, and \textit{Py} indicates original availability in standard Python package repositories. Bold denotes exact solvers.}
     \label{tab:comp}
-    \vspace{-0.7em}
-    % \begin{tabular}{rrrrrrrrrr}
-    %     \toprule
-    %     Method    & Year & Code Available    & Stochastic & Parallel   & Learning-Based & Features   & Fixed $|C|$ & Exact      & Approx. Running Time      \\
-    %     \midrule
-    %     CNM       & 2004 & $\star\star\star$ &            &            &                &            &             &            & $\mathcal{O}(n\log^2{}n)$ \\
-    %     Walktrap  & 2005 & $\star\star\star$ & \checkmark &            &                &            &             &            & $\mathcal{O}(n^2\log{}n)$ \\
-    %     WT        & 2007 & $\star\star\star$ &            &            &                &            &             &            & Improved CNM              \\
-    %     Louvain   & 2008 & $\star\star\star$ & \checkmark &            &                &            &             &            & ?                         \\
-    %     CGGCI     & 2012 & $\times$          & ?          &            &                &            &             &            & ?                         \\
-    %     VNS       & 2012 & $\times$          & \checkmark &            &                &            &             &            & ?                         \\
-    %     COMBO     & 2014 & $\star\star\star$ & \checkmark &            &                &            &             &            & ?                         \\
-    %     ADVNDS    & 2017 & $\times$          & \checkmark &            &                &            &             &            & Search-based              \\
-    %     Hollocou  & 2017 & $\star\star$      & ?          &            &                &            &             &            & ?                         \\
-    %     VieClus   & 2018 & $\star\star$      & \checkmark & \checkmark &                &            &             &            & ?                         \\
-    %     Leiden    & 2019 & $\star\star\star$ & \checkmark & \checkmark &                &            &             &            & ?                         \\
-    %     DMoN      & 2020 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
-    %     CommDGI   & 2020 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
-    %     GNNS      & 2022 & $\star$           & \checkmark & \checkmark & \checkmark     &            &             &            & ?                         \\
-    %     UCoDe     & 2023 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
-    %     DGCluster & 2023 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark &             &            & ?                         \\
-    %     MAGI      & 2024 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark & \checkmark  &            & ?                         \\
-    %     Bayan     & 2024 & $\star\star$      &            &            &                &            &             & \checkmark & ?                         \\
-    %     CluStRE   & 2025 & $\star\star$      & ?          &            &                &            &             &            & ?                         \\
-    %     LIM       & 2025 & $\star$           & \checkmark & \checkmark & \checkmark     & \checkmark &             &            & ?                         \\
-    %     MaxSAT    & 2025 & $\times$          &            &            &                &            &             & \checkmark & ?                         \\
-    %     \bottomrule
-    % \end{tabular}
-    \begin{tabular}{lrrlp{2cm}}
+    \vspace{0.5em}
+    \centering
+    \small
+    \begin{tabular}{lccccccc}
         \toprule
-        Method                                     & Year & Code         &                      & Features            \\
+        Method & Year & Code & Source & Parallel & Fixed $k$ & Features & Py \\
         \midrule
-        \textsc{CNM}~\cite{cnm2004}                & 2004 & $\star\star$ & \cite{cdlib2019}     & \texttt{. A . . Py} \\
-        \textsc{Walktrap}~\cite{walktrap2005}      & 2005 & $\star\star$ & \cite{igraph2006}    & \texttt{. A . . Py} \\
-        \textsc{WT}~\cite{wt2007}                  & 2007 & $\star\star$ & \cite{igraph2006}    & \texttt{. A . . Py} \\
-        \textsc{Louvain}~\cite{louvain2008}        & 2008 & $\star\star$ & \cite{igraph2006}    & \texttt{. A . . Py} \\
-        \textsc{CGGCI}~\cite{cggci_rg2012}         & 2012 & $\times$     &                      & \texttt{. A . . .}  \\
-        \textsc{VNS}~\cite{vns2012}                & 2012 & $\times$     &                      & \texttt{. A . . .}  \\
-        \textsc{COMBO}~\cite{combo2014}            & 2014 & $\star\star$ & \cite{comboRepo}     & \texttt{. A . . Py} \\
-        \textsc{ADVNDS}~\cite{advnds2019}          & 2017 & $\times$     &                      & \texttt{. A . . .}  \\
-        \textsc{Hollocou}~\cite{hollocou2017}      & 2017 & $\star\star$ & \cite{hollocouRepo}  & \texttt{. A . . .}  \\
-        \textsc{VieClus}~\cite{vieclus2018}        & 2018 & $\star\star$ & \cite{vieclusRepo}   & \texttt{P A . . Py}  \\
-        \textsc{Leiden}~\cite{leiden2019}          & 2019 & $\star\star$ & \cite{igraph2006}    & \texttt{. A . . Py} \\
-        \textsc{DMoN}~\cite{dmon2023}              & 2020 & $\star$      & \cite{dmonRepo}      & \texttt{P K L F .}  \\
-        \textsc{CommDGI}~\cite{commdgi2020}        & 2020 & $\star$      & \cite{commdgiRepo}   & \texttt{P K L F .}  \\
-        \textsc{GNNS}~\cite{gnns2022}              & 2022 & $\star$      & \cite{gnnsRepo}      & \texttt{P A L . .}  \\
-        \textsc{UCoDe}~\cite{ucode2023}            & 2023 & $\star$      & \cite{ucodeRepo}     & \texttt{P K L F .}  \\
-        \textsc{DGCluster}~\cite{dgcluster2024}    & 2023 & $\star$      & \cite{dgclusterRepo} & \texttt{P A L F .}  \\
-        \textsc{MAGI}~\cite{magi2024}              & 2024 & $\star$      & \cite{magiRepo}      & \texttt{P K L F .}  \\
-        \textbf{\textsc{Bayan}}~\cite{bayan2024}   & 2024 & $\star\star$ & \cite{bayanRepo}     & \texttt{. A . . .}  \\
-        \textsc{CluStRE}~\cite{clustre2025}        & 2025 & $\star\star$ & \cite{clustreRepo}   & \texttt{. A . . .}  \\
-        \textsc{LIM}~\cite{lim2025}                & 2025 & $\star$      & \cite{limRepo}       & \texttt{P A L F .}  \\
-        \textbf{\textsc{MaxSAT}}~\cite{maxsat2025} & 2025 & $\times$     &                      & \texttt{. A . . .}  \\
+        \multicolumn{8}{l}{\textit{\textbf{Benchmarked Methods (Integrated into Framework)}}} \\
+        \textsc{CNM}~\cite{cnm2004}                & 2004 & $\star\star$ & \cite{cdlib2019}     & --         & --         & --         & \checkmark \\
+        \textsc{Walktrap}~\cite{walktrap2005}      & 2005 & $\star\star$ & \cite{igraph2006}    & --         & --         & --         & \checkmark \\
+        \textsc{Louvain}~\cite{louvain2008}        & 2008 & $\star\star$ & \cite{igraph2006}    & --         & --         & --         & \checkmark \\
+        \textsc{Infomap}~\cite{infomap2008}        & 2008 & $\star\star$ & \cite{igraph2006}    & --         & --         & --         & \checkmark \\
+        \textsc{COMBO}~\cite{combo2014}            & 2014 & $\star\star$ & \cite{comboRepo}     & --         & --         & --         & \checkmark \\
+        \textsc{Hollocou}~\cite{hollocou2017}      & 2017 & $\star\star$ & \cite{hollocouRepo}  & --         & --         & --         & --         \\
+        \textsc{VieClus}~\cite{vieclus2018}        & 2018 & $\star\star$ & \cite{vieclusRepo}   & \checkmark & --         & --         & \checkmark \\
+        \textsc{Leiden}~\cite{leiden2019}          & 2019 & $\star\star$ & \cite{igraph2006}    & --         & --         & --         & \checkmark \\
+        \textsc{DMoN}~\cite{dmon2023}              & 2020 & $\star$      & \cite{dmonRepo}      & \checkmark & \checkmark & \checkmark & --         \\
+        \textsc{CommDGI}~\cite{commdgi2020}        & 2020 & $\star$      & \cite{commdgiRepo}   & \checkmark & \checkmark & \checkmark & --         \\
+        \textsc{GNNS}~\cite{gnns2022}              & 2022 & $\star$      & \cite{gnnsRepo}      & \checkmark & --         & --         & --         \\
+        \textsc{UCoDe}~\cite{ucode2023}            & 2023 & $\star$      & \cite{ucodeRepo}     & \checkmark & \checkmark & \checkmark & --         \\
+        \textsc{DGCluster}~\cite{dgcluster2024}    & 2023 & $\star$      & \cite{dgclusterRepo} & \checkmark & --         & \checkmark & --         \\
+        \textsc{MAGI}~\cite{magi2024}              & 2024 & $\star$      & \cite{magiRepo}      & \checkmark & \checkmark & \checkmark & --         \\
+        \textbf{\textsc{Bayan}}~\cite{bayan2024}   & 2024 & $\star\star$ & \cite{bayanRepo}     & --         & --         & --         & --         \\
+        \textsc{CluStRE}~\cite{clustre2025}        & 2025 & $\star\star$ & \cite{clustreRepo}   & --         & --         & --         & --         \\
+        \textsc{LIM}~\cite{lim2025}                & 2025 & $\star$      & \cite{limRepo}       & \checkmark & --         & \checkmark & --         \\
+        \midrule
+        \multicolumn{8}{l}{\textit{\textbf{Surveyed Literature Baselines (Unavailable / Not Benchmarked)}}} \\
+        \textsc{WT}~\cite{wt2007}                  & 2007 & $\times$     &                      & --         & --         & --         & --         \\
+        \textsc{CGGCI}~\cite{cggci_rg2012}         & 2012 & $\times$     &                      & --         & --         & --         & --         \\
+        \textsc{VNS}~\cite{vns2012}                & 2012 & $\times$     &                      & --         & --         & --         & --         \\
+        \textsc{ADVNDS}~\cite{advnds2019}          & 2017 & $\times$     &                      & --         & --         & --         & --         \\
+        \textbf{\textsc{MaxSAT}}~\cite{maxsat2025} & 2025 & $\times$     &                      & --         & --         & --         & --         \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -342,7 +320,7 @@ This phase splits and restructures communities through probabilistic, non-greedy
 We include two widely used non-modularity baselines which rely on random walks to model how information or flow propagates through the network, providing an alternative perspective to modularity optimization.
 
 \textbf{\textsc{WalkTrap}}~\cite{walktrap2005} performs hierarchical clustering based on the intuition that random walks on a graph tend to get "trapped" into densely connected regions corresponding to communities. 
-Each vertex is characterized by the probability distribution over vertices reached by a random walk starting from it, and a structural similarity distance between vertices (and communities) is defined by comparing these distributions. Communities are then obtained by agglomerative merging of the closest pairs under this distance, producing a dendrogram similar to \textsc{CNM}. The algorithm runs in $O(m n d)$ time, where $d$ is the depth of the resulting dendrogram.
+Each vertex is characterized by the probability distribution over vertices reached by a random walk starting from it, and a structural similarity distance between vertices (and communities) is defined by comparing these distributions. Communities are then obtained by agglomerative merging of the closest pairs under this distance, producing a dendrogram similar to \textsc{CNM}, which is then cut at the partition attaining maximal modularity. The algorithm runs in $O(m n d)$ time, where $d$ is the depth of the resulting dendrogram.
 
 \textbf{\textsc{Infomap}}~\cite{infomap2008} formulates community detection as an information-theoretic problem, seeking a clustering that minimizes the expected description length of a random walk under the map equation.
 It uses a \textsc{Louvain} inspired greedy multilevel search, augmented with fine- and coarse-tuning steps to escape local minima like \textsc{Leiden}.
@@ -429,6 +407,7 @@ Compared to combined-objective methods such as \textsc{CommDGI}, \textsc{UCoDe} 
 \textbf{\textsc{MAGI}}~\cite{magi2024} establishes a formal connection between modularity maximization and graph contrastive learning by showing that modularity naturally defines positive and negative node pairs via the sign of the modularity matrix.
 Specifically, node pairs with positive modularity coefficients are treated as positive samples, while pairs with non-positive coefficients are treated as negatives, yielding a contrastive objective equivalent to relaxed modularity maximization.
 A GNN encoder is trained using a community-aware contrastive loss, with mini-batch modularity matrices constructed via random-walk sampling for scalability.
+In our benchmark, we evaluate the authors' scalable GraphSAGE minibatch implementation; their alternative full-graph GCN formulation constructs a dense $n \times n$ affinity matrix, incurring an $\mathcal{O}(n^2)$ computational footprint that is prohibitive on larger graphs.
 
 \section{Evaluation Framework}\label{sec:evaluation}
 In this section, we describe the benchmarking methodology used to evaluate modularity-based graph clustering algorithms under controlled and reproducible conditions. A central contribution is the integration of 17 clustering algorithms behind a unified benchmarking interface, offering a fair comparison across diverse implementations. In addition to enabling the experiments presented in this survey, it will also serve as an openly available resource for future work on graph clustering, simplifying the evaluation of older methods on new data or machines. This section also includes details on the datasets we used to evaluate the clustering algorithms.
