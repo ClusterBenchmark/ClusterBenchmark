@@ -39,8 +39,7 @@
 \date{
   \small
   \textsuperscript{1}Heidelberg University, Heidelberg, Germany\\
-  \textsuperscript{*}Corresponding author: \texttt{kenneth.langedal@informatik.uni-heidelberg.de}\\
-  \today
+  \textsuperscript{*}Corresponding author: \texttt{kenneth.langedal@informatik.uni-heidelberg.de}
 }
 
 \begin{document}
@@ -48,7 +47,8 @@
 \maketitle
 
 \begin{abstract}
-Modularity maximization is one of the most widely used objective functions for community detection in networks, balancing intra-community connectivity against a random null model. Over two decades, algorithmic development has split into two largely isolated research streams: classical discrete optimization heuristics operating on topology alone, and deep learning architectures---primarily graph neural networks (GNNs)---that integrate node attributes into continuous modularity relaxations. Because each literature evaluates almost exclusively against baselines from its own paradigm, empirical trade-offs between optimization quality, scalability, and hyperparameter sensitivity remain poorly understood. Here, we present a systematic experimental benchmark evaluating 18 representative modularity-based graph clustering algorithms across seven algorithmic paradigms (greedy agglomerative, multilevel, memetic, streaming, flow/spectral, exact integer linear programming, and neural/GNNs). We evaluate methods across real-world attributed networks, large-scale pure topology benchmarks up to 3.3 billion edges, and synthetic graphs under controlled topological and attribute signal degradation. Across three standardized evaluation protocols isolating out-of-the-box defaults, hardware acceleration, and hyperparameter tuning, our findings reveal clear trade-offs: classical heuristics (notably \textsc{VieClus} and \textsc{Leiden}) dominate pure modularity and scalability without parameter tuning ($\Delta Q \le 0.002$), while GNN-based methods excel in ground-truth community recovery when informative node attributes exist. However, GNNs carry a heavy hyperparameter tuning tax ($\Delta Q$ up to $0.32$), lower memory ceilings due to accelerator VRAM constraints, and substantial performance drops when attributes degrade. All algorithms, datasets, and execution harnesses are released within an open-source, reproducible framework.
+  \noindent
+  Modularity maximization is one of the most widely used objective functions for community detection in networks, balancing intra-community connectivity against a random null model. Over two decades, algorithmic development has split into two largely isolated research communities: classical discrete optimization heuristics operating on topology alone, and deep learning architectures, primarily graph neural networks (GNNs), that integrate node attributes into continuous modularity relaxations. Because each line of work evaluates almost exclusively against baselines within its own paradigm, practical trade-offs among optimization quality, scalability, and hyperparameter sensitivity remain unexplored. Here, we present a systematic experimental benchmark evaluating 18 representative graph clustering algorithms, centered on modularity maximization alongside key non-modularity reference baselines across seven algorithmic paradigms (greedy agglomerative, multilevel, memetic, streaming, flow/spectral, exact integer linear programming, and neural/GNNs). We evaluate methods across real-world attributed networks, large-scale pure topology benchmarks up to 3.3 billion edges, and synthetic graphs under controlled topological and attribute signal degradation. Across three standardized evaluation protocols isolating out-of-the-box defaults, hardware acceleration, and hyperparameter tuning, our findings reveal clear trade-offs: classical heuristics (notably \textsc{VieClus} and \textsc{Leiden}) dominate pure modularity and scalability without parameter tuning, while GNN-based methods excel in ground-truth community recovery when informative node attributes exist. However, GNNs require heavy hyperparameter tuning, have lower memory ceilings due to accelerator VRAM constraints, and suffer substantial performance drops as attributes degrade. We additionally contribute a unified, open-source framework for interfacing all the evaluated clustering algorithms, supporting reproducibility and future benchmarking.
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
@@ -933,631 +933,8 @@ The authors declare no competing interests.
 \section*{Data and Code Availability}
 The complete benchmarking harness, solver wrappers, and datasets are open-source and publicly available at \url{https://github.com/TODO/ClusterBenchmark}.
 
-\begin{thebibliography}{10}
-\expandafter\ifx\csname url\endcsname\relax
-  \def\url#1{\texttt{#1}}\fi
-\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
-\providecommand{\bibinfo}[2]{#2}
-\providecommand{\eprint}[2][]{\url{#2}}
-
-\bibitem{Newman2003}
-\bibinfo{author}{Newman, M. E.~J.}
-\newblock \bibinfo{title}{Properties of highly clustered networks}.
-\newblock \emph{\bibinfo{journal}{Phys. Rev. E}} \textbf{\bibinfo{volume}{68}},
-  \bibinfo{pages}{026121} (\bibinfo{year}{2003}).
-\newblock \urlprefix\url{https://link.aps.org/doi/10.1103/PhysRevE.68.026121}.
-
-\bibitem{McFarling89}
-\bibinfo{author}{McFarling, S.}
-\newblock \bibinfo{title}{Program optimization for instruction caches}.
-\newblock In \bibinfo{editor}{Emer, J.~S.} \& \bibinfo{editor}{Hennessy, J.~L.}
-  (eds.) \emph{\bibinfo{booktitle}{{ASPLOS-III} Proceedings - Third
-  International Conference on Architectural Support for Programming Languages
-  and Operating Systems, Boston, Massachusetts, USA, April 3-6, 1989}},
-  \bibinfo{pages}{183--191} (\bibinfo{publisher}{{ACM} Press},
-  \bibinfo{year}{1989}).
-\newblock \urlprefix\url{https://doi.org/10.1145/70082.68200}.
-
-\bibitem{Demme2012}
-\bibinfo{author}{Demme, J.} \& \bibinfo{author}{Sethumadhavan, S.}
-\newblock \bibinfo{title}{Approximate graph clustering for program
-  characterization}.
-\newblock \emph{\bibinfo{journal}{{ACM} Trans. Archit. Code Optim.}}
-  \textbf{\bibinfo{volume}{8}}, \bibinfo{pages}{21:1--21:21}
-  (\bibinfo{year}{2012}).
-\newblock \urlprefix\url{https://doi.org/10.1145/2086696.2086700}.
-
-\bibitem{Akoglu2015}
-\bibinfo{author}{Akoglu, L.}, \bibinfo{author}{Tong, H.} \&
-  \bibinfo{author}{Koutra, D.}
-\newblock \bibinfo{title}{Graph based anomaly detection and description: a
-  survey}.
-\newblock \emph{\bibinfo{journal}{Data Min. Knowl. Discov.}}
-  \textbf{\bibinfo{volume}{29}}, \bibinfo{pages}{626--688}
-  (\bibinfo{year}{2015}).
-\newblock \urlprefix\url{https://doi.org/10.1007/s10618-014-0365-y}.
-
-\bibitem{Xu2002}
-\bibinfo{author}{Xu, Y.}, \bibinfo{author}{Olman, V.} \& \bibinfo{author}{Xu,
-  D.}
-\newblock \bibinfo{title}{Clustering gene expression data using a
-  graph-theoretic approach: an application of minimum spanning trees}.
-\newblock \emph{\bibinfo{journal}{Bioinform.}} \textbf{\bibinfo{volume}{18}},
-  \bibinfo{pages}{536--545} (\bibinfo{year}{2002}).
-\newblock \urlprefix\url{https://doi.org/10.1093/bioinformatics/18.4.536}.
-
-\bibitem{Cai2011}
-\bibinfo{author}{Cai, B.}, \bibinfo{author}{Wang, H.}, \bibinfo{author}{Zheng,
-  H.} \& \bibinfo{author}{Wang, H.}
-\newblock \bibinfo{title}{Detection of functional modules from protein
-  interaction networks with an enhanced random walk based algorithm}.
-\newblock \emph{\bibinfo{journal}{Int. J. Comput. Biol. Drug Des.}}
-  \textbf{\bibinfo{volume}{4}}, \bibinfo{pages}{290--306}
-  (\bibinfo{year}{2011}).
-\newblock \urlprefix\url{https://doi.org/10.1504/IJCBDD.2011.041416}.
-
-\bibitem{Newman2006}
-\bibinfo{author}{Newman, M. E.~J.}
-\newblock \bibinfo{title}{Modularity and community structure in networks}.
-\newblock \emph{\bibinfo{journal}{Proceedings of the National Academy of
-  Sciences}} \textbf{\bibinfo{volume}{103}}, \bibinfo{pages}{8577--8582}
-  (\bibinfo{year}{2006}).
-\newblock \urlprefix\url{https://www.pnas.org/doi/abs/10.1073/pnas.0601602103}.
-\newblock \eprint{https://www.pnas.org/doi/pdf/10.1073/pnas.0601602103}.
-
-\bibitem{Brandes2008}
-\bibinfo{author}{Brandes, U.} \emph{et~al.}
-\newblock \bibinfo{title}{On modularity clustering}.
-\newblock \emph{\bibinfo{journal}{{IEEE} Trans. Knowl. Data Eng.}}
-  \textbf{\bibinfo{volume}{20}}, \bibinfo{pages}{172--188}
-  (\bibinfo{year}{2008}).
-\newblock \urlprefix\url{https://doi.org/10.1109/TKDE.2007.190689}.
-
-\bibitem{girvan2002}
-\bibinfo{author}{Girvan, M.} \& \bibinfo{author}{Newman, M. E.~J.}
-\newblock \bibinfo{title}{Community structure in social and biological
-  networks}.
-\newblock \emph{\bibinfo{journal}{Proceedings of the National Academy of
-  Sciences}} \textbf{\bibinfo{volume}{99}}, \bibinfo{pages}{7821--7826}
-  (\bibinfo{year}{2002}).
-\newblock \urlprefix\url{https://www.pnas.org/doi/abs/10.1073/pnas.122653799}.
-\newblock \eprint{https://www.pnas.org/doi/pdf/10.1073/pnas.122653799}.
-
-\bibitem{cnm2004}
-\bibinfo{author}{Clauset, A.}, \bibinfo{author}{Newman, M. E.~J.} \&
-  \bibinfo{author}{Moore, C.}
-\newblock \bibinfo{title}{Finding community structure in very large networks}.
-\newblock \emph{\bibinfo{journal}{Physical Review E}}
-  \textbf{\bibinfo{volume}{70}}, \bibinfo{pages}{066111}
-  (\bibinfo{year}{2004}).
-
-\bibitem{walktrap2005}
-\bibinfo{author}{Pons, P.} \& \bibinfo{author}{Latapy, M.}
-\newblock \bibinfo{title}{Computing communities in large networks using random
-  walks}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 20th International
-  Symposium on Computer and Information Sciences (ISCIS 2005)}},
-  \bibinfo{pages}{284--293} (\bibinfo{publisher}{Springer Berlin Heidelberg},
-  \bibinfo{year}{2005}).
-
-\bibitem{wt2007}
-\bibinfo{author}{Wakita, K.} \& \bibinfo{author}{Tsurumi, T.}
-\newblock \bibinfo{title}{Finding community structure in mega-scale social
-  networks: [extended abstract]}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 16th International
-  Conference on World Wide Web (WWW 2007)}}, \bibinfo{pages}{1275--1276}
-  (\bibinfo{publisher}{Association for Computing Machinery},
-  \bibinfo{year}{2007}).
-
-\bibitem{ln2008}
-\bibinfo{author}{Leicht, E.~A.} \& \bibinfo{author}{Newman, M. E.~J.}
-\newblock \bibinfo{title}{Community structure in directed networks}.
-\newblock \emph{\bibinfo{journal}{Physical Review Letters}}
-  \textbf{\bibinfo{volume}{100}}, \bibinfo{pages}{118703}
-  (\bibinfo{year}{2008}).
-
-\bibitem{infomap2008}
-\bibinfo{author}{Rosvall, M.} \& \bibinfo{author}{Bergstrom, C.~T.}
-\newblock \bibinfo{title}{Maps of random walks on complex networks reveal
-  community structure}.
-\newblock \emph{\bibinfo{journal}{Proceedings of the National Academy of
-  Sciences}} \textbf{\bibinfo{volume}{105}}, \bibinfo{pages}{1118--1123}
-  (\bibinfo{year}{2008}).
-
-\bibitem{louvain2008}
-\bibinfo{author}{Blondel, V.~D.}, \bibinfo{author}{Guillaume, J.-L.},
-  \bibinfo{author}{Lambiotte, R.} \& \bibinfo{author}{Lefebvre, E.}
-\newblock \bibinfo{title}{Fast unfolding of communities in large networks}.
-\newblock \emph{\bibinfo{journal}{Journal of Statistical Mechanics: Theory and
-  Experiment}} \textbf{\bibinfo{volume}{2008}}, \bibinfo{pages}{P10008}
-  (\bibinfo{year}{2008}).
-
-\bibitem{vns2012}
-\bibinfo{author}{Aloise, D.} \emph{et~al.}
-\newblock \bibinfo{title}{Modularity maximization in networks by variable
-  neighborhood search}.
-\newblock In \emph{\bibinfo{booktitle}{Graph Partitioning and Graph
-  Clustering}}, vol. \bibinfo{volume}{588} of
-  \emph{\bibinfo{series}{Contemporary Mathematics}}, \bibinfo{pages}{113--127}
-  (\bibinfo{publisher}{American Mathematical Society}, \bibinfo{year}{2012}).
-
-\bibitem{cggci_rg2012}
-\bibinfo{author}{Ovelg\"{o}nne, M.} \& \bibinfo{author}{Geyer-Schulz, A.}
-\newblock \bibinfo{title}{An ensemble learning strategy for graph clustering}.
-\newblock In \emph{\bibinfo{booktitle}{Graph Partitioning and Graph
-  Clustering}}, vol. \bibinfo{volume}{588} of
-  \emph{\bibinfo{series}{Contemporary Mathematics}}, \bibinfo{pages}{187--205}
-  (\bibinfo{publisher}{American Mathematical Society}, \bibinfo{year}{2012}).
-
-\bibitem{scd2014}
-\bibinfo{author}{Prat-P\'{e}rez, A.}, \bibinfo{author}{Dominguez-Sal, D.} \&
-  \bibinfo{author}{Larriba-Pey, J.-L.}
-\newblock \bibinfo{title}{High quality, scalable and parallel community
-  detection for large real graphs}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 23rd International
-  Conference on World Wide Web (WWW 2014)}}, \bibinfo{pages}{225--236}
-  (\bibinfo{publisher}{Association for Computing Machinery},
-  \bibinfo{year}{2014}).
-
-\bibitem{combo2014}
-\bibinfo{author}{Sobolevsky, S.}, \bibinfo{author}{Campari, R.},
-  \bibinfo{author}{Belyi, A.} \& \bibinfo{author}{Ratti, C.}
-\newblock \bibinfo{title}{General optimization technique for high-quality
-  community detection in complex networks}.
-\newblock \emph{\bibinfo{journal}{Physical Review E}}
-  \textbf{\bibinfo{volume}{90}}, \bibinfo{pages}{012811}
-  (\bibinfo{year}{2014}).
-
-\bibitem{belief2014}
-\bibinfo{author}{Zhang, P.} \& \bibinfo{author}{Moore, C.}
-\newblock \bibinfo{title}{Scalable detection of statistically significant
-  communities and hierarchies, using message passing for modularity}.
-\newblock \emph{\bibinfo{journal}{Proceedings of the National Academy of
-  Sciences}} \textbf{\bibinfo{volume}{111}}, \bibinfo{pages}{18144--18149}
-  (\bibinfo{year}{2014}).
-
-\bibitem{hollocou2017}
-\bibinfo{author}{Hollocou, A.}, \bibinfo{author}{Maudet, J.},
-  \bibinfo{author}{Bonald, T.} \& \bibinfo{author}{Lelarge, M.}
-\newblock \bibinfo{title}{A streaming algorithm for graph clustering}.
-\newblock \bibinfo{howpublished}{arXiv preprint} (\bibinfo{year}{2017}).
-
-\bibitem{vieclus2018}
-\bibinfo{author}{Biedermann, S.}, \bibinfo{author}{Henzinger, M.},
-  \bibinfo{author}{Schulz, C.} \& \bibinfo{author}{Schuster, B.}
-\newblock \bibinfo{title}{Memetic graph clustering}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 17th International
-  Symposium on Experimental Algorithms (SEA 2018)}}, \bibinfo{pages}{3:1--3:15}
-  (\bibinfo{publisher}{Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
-  \bibinfo{year}{2018}).
-
-\bibitem{dane2018}
-\bibinfo{author}{Gao, H.} \& \bibinfo{author}{Huang, H.}
-\newblock \bibinfo{title}{Deep attributed network embedding}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 27th International
-  Joint Conference on Artificial Intelligence (IJCAI 2018)}},
-  \bibinfo{pages}{3364--3370} (\bibinfo{publisher}{International Joint
-  Conferences on Artificial Intelligence Organization}, \bibinfo{year}{2018}).
-
-\bibitem{infoflow2019}
-\bibinfo{author}{Fung, P.~K.}
-\newblock \bibinfo{title}{{InfoFlow}: A distributed algorithm to detect
-  communities according to the map equation}.
-\newblock \emph{\bibinfo{journal}{Big Data and Cognitive Computing}}
-  \textbf{\bibinfo{volume}{3}}, \bibinfo{pages}{42} (\bibinfo{year}{2019}).
-
-\bibitem{leiden2019}
-\bibinfo{author}{Traag, V.~A.}, \bibinfo{author}{Waltman, L.} \&
-  \bibinfo{author}{van Eck, N.~J.}
-\newblock \bibinfo{title}{From {Louvain} to {Leiden}: guaranteeing
-  well-connected communities}.
-\newblock \emph{\bibinfo{journal}{Scientific Reports}}
-  \textbf{\bibinfo{volume}{9}}, \bibinfo{pages}{5233} (\bibinfo{year}{2019}).
-
-\bibitem{advnds2019}
-\bibinfo{author}{D\v{z}ami\'{c}, D.}, \bibinfo{author}{Aloise, D.} \&
-  \bibinfo{author}{Mladenovi\'{c}, N.}
-\newblock \bibinfo{title}{Ascent-descent variable neighborhood decomposition
-  search for community detection by modularity maximization}.
-\newblock \emph{\bibinfo{journal}{Annals of Operations Research}}
-  \textbf{\bibinfo{volume}{272}} (\bibinfo{year}{2019}).
-
-\bibitem{commdgi2020}
-\bibinfo{author}{Zhang, T.} \emph{et~al.}
-\newblock \bibinfo{title}{{CommDGI}: Community detection oriented deep graph
-  infomax}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 29th ACM
-  International Conference on Information \& Knowledge Management (CIKM
-  2020)}}, \bibinfo{pages}{1843--1852} (\bibinfo{publisher}{Association for
-  Computing Machinery}, \bibinfo{year}{2020}).
-
-\bibitem{dmon2023}
-\bibinfo{author}{Tsitsulin, A.}, \bibinfo{author}{Palowitch, J.},
-  \bibinfo{author}{Perozzi, B.} \& \bibinfo{author}{M\"{u}ller, E.}
-\newblock \bibinfo{title}{Graph clustering with graph neural networks}.
-\newblock \emph{\bibinfo{journal}{Journal of Machine Learning Research}}
-  \textbf{\bibinfo{volume}{24}}, \bibinfo{pages}{1--21} (\bibinfo{year}{2023}).
-\newblock \urlprefix\url{http://jmlr.org/papers/v24/20-998.html}.
-
-\bibitem{gnns2022}
-\bibinfo{author}{Sobolevsky, S.} \& \bibinfo{author}{Belyi, A.}
-\newblock \bibinfo{title}{Graph neural network inspired algorithm for
-  unsupervised network community detection}.
-\newblock \emph{\bibinfo{journal}{Applied Network Science}}
-  \textbf{\bibinfo{volume}{7}}, \bibinfo{pages}{63} (\bibinfo{year}{2022}).
-
-\bibitem{ucode2023}
-\bibinfo{author}{Moradan, A.}, \bibinfo{author}{Draganov, A.},
-  \bibinfo{author}{Mottin, D.} \& \bibinfo{author}{Assent, I.}
-\newblock \bibinfo{title}{{UCoDe}: Unified community detection with graph
-  convolutional networks}.
-\newblock \emph{\bibinfo{journal}{Machine Learning}}
-  \textbf{\bibinfo{volume}{112}}, \bibinfo{pages}{5057--5080}
-  (\bibinfo{year}{2023}).
-
-\bibitem{survey2023}
-\bibinfo{author}{Aref, S.}, \bibinfo{author}{Mostajabdaveh, M.} \&
-  \bibinfo{author}{Chheda, H.}
-\newblock \bibinfo{title}{Heuristic modularity maximization algorithms for
-  community detection rarely return an optimal partition or anything similar}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 23th International
-  Conference on Computational Science (ICCS 2023)}}, \bibinfo{pages}{612--626}
-  (\bibinfo{publisher}{Springer Nature Switzerland}, \bibinfo{year}{2023}).
-
-\bibitem{paris2024}
-\bibinfo{author}{Madi, S.~A.} \& \bibinfo{author}{Pirr\`{o}, G.}
-\newblock \bibinfo{title}{Node-centric community deception based on safeness}.
-\newblock \emph{\bibinfo{journal}{IEEE Transactions on Computational Social
-  Systems}} \textbf{\bibinfo{volume}{11}}, \bibinfo{pages}{2955--2965}
-  (\bibinfo{year}{2024}).
-
-\bibitem{dgcluster2024}
-\bibinfo{author}{Bhowmick, A.}, \bibinfo{author}{Kosan, M.},
-  \bibinfo{author}{Huang, Z.}, \bibinfo{author}{Singh, A.} \&
-  \bibinfo{author}{Medya, S.}
-\newblock \bibinfo{title}{{DGCLUSTER}: A neural framework for attributed graph
-  clustering via modularity maximization}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 38th AAAI Conference
-  on Artificial Intelligence (AAAI 2024)}}, \bibinfo{pages}{11069--11077}
-  (\bibinfo{publisher}{AAAI Press, Washington, DC, USA}, \bibinfo{year}{2024}).
-
-\bibitem{magi2024}
-\bibinfo{author}{Liu, Y.} \emph{et~al.}
-\newblock \bibinfo{title}{Revisiting modularity maximization for graph
-  clustering: A contrastive learning perspective}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 30th ACM SIGKDD
-  Conference on Knowledge Discovery and Data Mining (KDD 2024)}},
-  \bibinfo{pages}{1968--1979} (\bibinfo{publisher}{Association for Computing
-  Machinery, New York, NY, United States}, \bibinfo{year}{2024}).
-
-\bibitem{bayan2024}
-\bibinfo{author}{Aref, S.}, \bibinfo{author}{Mostajabdaveh, M.} \&
-  \bibinfo{author}{Chheda, H.}
-\newblock \bibinfo{title}{Bayan algorithm: Detecting communities in networks
-  through exact and approximate optimization of modularity}.
-\newblock \emph{\bibinfo{journal}{Physical Review E}}
-  \textbf{\bibinfo{volume}{110}}, \bibinfo{pages}{044315}
-  (\bibinfo{year}{2024}).
-
-\bibitem{neuromap2024}
-\bibinfo{author}{Bl{\"o}cker, C.}, \bibinfo{author}{Tan, C.} \&
-  \bibinfo{author}{Scholtes, I.}
-\newblock \bibinfo{title}{The map equation goes neural: Mapping network flows
-  with graph neural networks}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 38th Conference on
-  Neural Information Processing Systems (NeurIPS 2024)}},
-  \bibinfo{pages}{17428--17456} (\bibinfo{publisher}{Curran Associates, Inc.},
-  \bibinfo{year}{2024}).
-
-\bibitem{clustre2025}
-\bibinfo{author}{Chhabra, A.}, \bibinfo{author}{Dorian~Peretz, S.} \&
-  \bibinfo{author}{Schulz, C.}
-\newblock \bibinfo{title}{{CluStRE}: Streaming graph clustering with
-  multi-stage refinement}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 23rd International
-  Symposium on Experimental Algorithms (SEA 2025)}},
-  \bibinfo{pages}{11:1--11:20} (\bibinfo{publisher}{Schloss Dagstuhl --
-  Leibniz-Zentrum f{\"u}r Informatik}, \bibinfo{year}{2025}).
-
-\bibitem{lim2025}
-\bibinfo{author}{Wang, H.} \emph{et~al.}
-\newblock \bibinfo{title}{Simple yet effective heuristic community detection
-  with graph convolution network}.
-\newblock \emph{\bibinfo{journal}{Scientific Reports}}
-  \textbf{\bibinfo{volume}{15}}, \bibinfo{pages}{39249} (\bibinfo{year}{2025}).
-
-\bibitem{maxsat2025}
-\bibinfo{author}{Ans{\'o}tegui, C.}, \bibinfo{author}{Ramaswamy, V.~P.},
-  \bibinfo{author}{Szeider, S.} \& \bibinfo{author}{Xia, H.}
-\newblock \bibinfo{title}{Uncovering and verifying optimal community structure
-  in complex networks: A {MaxSAT} approach}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 25th International
-  Conference on Computational Science (ICCS 2025)}}, \bibinfo{pages}{35--49}
-  (\bibinfo{publisher}{Springer Nature Switzerland}, \bibinfo{year}{2025}).
-
-\bibitem{adcsbm2022}
-\bibinfo{author}{Tsitsulin, A.}, \bibinfo{author}{Rozemberczki, B.},
-  \bibinfo{author}{Palowitch, J.} \& \bibinfo{author}{Perozzi, B.}
-\newblock \bibinfo{title}{Synthetic graph generation to benchmark graph
-  learning}.
-\newblock \bibinfo{howpublished}{arXiv preprint} (\bibinfo{year}{2022}).
-
-\bibitem{perf2002}
-\bibinfo{author}{Dolan, E.~D.} \& \bibinfo{author}{Mor\'{e}, J.~J.}
-\newblock \bibinfo{title}{Benchmarking optimization software with performance
-  profiles}.
-\newblock \emph{\bibinfo{journal}{Mathematical Programming}}
-  \textbf{\bibinfo{volume}{91}}, \bibinfo{pages}{201--213}
-  (\bibinfo{year}{2002}).
-
-\bibitem{gurobi}
-\bibinfo{author}{{Gurobi Optimization, LLC}}.
-\newblock \bibinfo{title}{{Gurobi Optimizer Reference Manual}}
-  (\bibinfo{year}{2026}).
-\newblock \urlprefix\url{https://www.gurobi.com}.
-
-\bibitem{resolution2007}
-\bibinfo{author}{Fortunato, S.} \& \bibinfo{author}{Barthelemy, M.}
-\newblock \bibinfo{title}{Resolution limit in community detection}.
-\newblock \emph{\bibinfo{journal}{Proceedings of the national academy of
-  sciences}} \textbf{\bibinfo{volume}{104}}, \bibinfo{pages}{36--41}
-  (\bibinfo{year}{2007}).
-
-\bibitem{wcc2012}
-\bibinfo{author}{Prat-P{\'e}rez, A.}, \bibinfo{author}{Dominguez-Sal, D.},
-  \bibinfo{author}{Brunat, J.~M.} \& \bibinfo{author}{Larriba-Pey, J.-L.}
-\newblock \bibinfo{title}{Shaping communities out of triangles}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 21st ACM
-  international conference on Information and knowledge management}},
-  \bibinfo{pages}{1677--1681} (\bibinfo{publisher}{Association for Computing
-  Machinery}, \bibinfo{year}{2012}).
-
-\bibitem{Li2024}
-\bibinfo{author}{Li, J.} \emph{et~al.}
-\newblock \bibinfo{title}{A comprehensive review of community detection in
-  graphs}.
-\newblock \emph{\bibinfo{journal}{Neurocomputing}}
-  \textbf{\bibinfo{volume}{600}}, \bibinfo{pages}{128169}
-  (\bibinfo{year}{2024}).
-\newblock \urlprefix\url{https://doi.org/10.1016/j.neucom.2024.128169}.
-
-\bibitem{Jin2023}
-\bibinfo{author}{Jin, D.} \emph{et~al.}
-\newblock \bibinfo{title}{A survey of community detection approaches: From
-  statistical modeling to deep learning}.
-\newblock \emph{\bibinfo{journal}{{IEEE} Trans. Knowl. Data Eng.}}
-  \textbf{\bibinfo{volume}{35}}, \bibinfo{pages}{1149--1170}
-  (\bibinfo{year}{2023}).
-\newblock \urlprefix\url{https://doi.org/10.1109/TKDE.2021.3104155}.
-
-\bibitem{Liu2020}
-\bibinfo{author}{Liu, F.} \emph{et~al.}
-\newblock \bibinfo{title}{Deep learning for community detection: Progress,
-  challenges and opportunities}.
-\newblock In \bibinfo{editor}{Bessiere, C.} (ed.)
-  \emph{\bibinfo{booktitle}{Proceedings of the Twenty-Ninth International Joint
-  Conference on Artificial Intelligence, {IJCAI} 2020}},
-  \bibinfo{pages}{4981--4987} (\bibinfo{publisher}{ijcai.org},
-  \bibinfo{year}{2020}).
-\newblock \urlprefix\url{https://doi.org/10.24963/ijcai.2020/693}.
-
-\bibitem{Messias2025}
-\bibinfo{author}{Messias, G.~H.}, \bibinfo{author}{Gonçalves~Botelho, T.},
-  \bibinfo{author}{Iasulaitis, S.}, \bibinfo{author}{Coelho~Naldi, M.} \&
-  \bibinfo{author}{Demétrius Baria~Valejo, A.}
-\newblock \bibinfo{title}{A systematic review of graph neural network for node
-  clustering in homogeneous attributed networks}.
-\newblock \emph{\bibinfo{journal}{IEEE Access}} \textbf{\bibinfo{volume}{13}},
-  \bibinfo{pages}{215265--215285} (\bibinfo{year}{2025}).
-
-\bibitem{liang2024}
-\bibinfo{author}{Liang, K.} \emph{et~al.}
-\newblock \bibinfo{title}{A survey of knowledge graph reasoning on graph types:
-  Static, dynamic, and multi-modal}.
-\newblock \emph{\bibinfo{journal}{IEEE Transactions on Pattern Analysis and
-  Machine Intelligence}} \textbf{\bibinfo{volume}{46}},
-  \bibinfo{pages}{9456--9478} (\bibinfo{year}{2024}).
-
-\bibitem{Gaertler2005}
-\bibinfo{author}{Gaertler, M.}
-\newblock \bibinfo{title}{Clustering}.
-\newblock In \bibinfo{editor}{Brandes, U.} \& \bibinfo{editor}{Erlebach, T.}
-  (eds.) \emph{\bibinfo{booktitle}{Network Analysis: Methodological Foundations
-  [outcome of a Dagstuhl seminar, 13-16 April 2004]}}, vol.
-  \bibinfo{volume}{3418} of \emph{\bibinfo{series}{Lecture Notes in Computer
-  Science}}, \bibinfo{pages}{178--215} (\bibinfo{publisher}{Springer},
-  \bibinfo{year}{2004}).
-\newblock \urlprefix\url{https://doi.org/10.1007/978-3-540-31955-9\_8}.
-
-\bibitem{kannan2004clusterings}
-\bibinfo{author}{Kannan, R.}, \bibinfo{author}{Vempala, S.~S.} \&
-  \bibinfo{author}{Vetta, A.}
-\newblock \bibinfo{title}{On clusterings: Good, bad and spectral}.
-\newblock \emph{\bibinfo{journal}{J. {ACM}}} \textbf{\bibinfo{volume}{51}},
-  \bibinfo{pages}{497--515} (\bibinfo{year}{2004}).
-\newblock \urlprefix\url{https://doi.org/10.1145/990308.990313}.
-
-\bibitem{arnau2004iterative}
-\bibinfo{author}{Arnau, V.}, \bibinfo{author}{Mars, S.} \&
-  \bibinfo{author}{Marı\'{i}n, I.}
-\newblock \bibinfo{title}{{I}terative {C}luster {A}nalysis of {P}rotein
-  {I}nteraction {D}ata}.
-\newblock \emph{\bibinfo{journal}{Bioinformatics}}
-  \textbf{\bibinfo{volume}{21}}, \bibinfo{pages}{364--378}
-  (\bibinfo{year}{2004}).
-
-\bibitem{dimacschallengegraphpartandcluster}
-\bibinfo{editor}{Bader, D.~A.}, \bibinfo{editor}{Meyerhenke, H.},
-  \bibinfo{editor}{Sanders, P.} \& \bibinfo{editor}{Wagner, D.} (eds.).
-\newblock \emph{\bibinfo{title}{Graph Partitioning and Graph Clustering, 10th
-  {DIMACS} Implementation Challenge Workshop, Georgia Institute of Technology,
-  Atlanta, GA, USA, February 13-14, 2012. Proceedings}}, vol.
-  \bibinfo{volume}{588} of \emph{\bibinfo{series}{Contemporary Mathematics}}
-  (\bibinfo{publisher}{American Mathematical Society}, \bibinfo{year}{2013}).
-\newblock \urlprefix\url{https://doi.org/10.1090/conm/588}.
-
-\bibitem{licommunitydetectionsurvey24}
-\bibinfo{author}{Li, J.} \emph{et~al.}
-\newblock \bibinfo{title}{{A} {C}omprehensive {R}eview of {C}ommunity
-  {D}etection in {G}raphs}.
-\newblock \emph{\bibinfo{journal}{Neurocomputing}}
-  \textbf{\bibinfo{volume}{600}}, \bibinfo{pages}{128169}
-  (\bibinfo{year}{2024}).
-
-\bibitem{rosvall2009map}
-\bibinfo{author}{Rosvall, M.}, \bibinfo{author}{Axelsson, D.} \&
-  \bibinfo{author}{Bergstrom, C.~T.}
-\newblock \bibinfo{title}{{T}he {M}ap {E}quation}.
-\newblock \emph{\bibinfo{journal}{The European Physical J. Special Topics}}
-  \textbf{\bibinfo{volume}{178}}, \bibinfo{pages}{13--23}
-  (\bibinfo{year}{2009}).
-
-\bibitem{Peel2016}
-\bibinfo{author}{Peel, L.}, \bibinfo{author}{Larremore, D.~B.} \&
-  \bibinfo{author}{Clauset, A.}
-\newblock \bibinfo{title}{The ground truth about metadata and community
-  detection in networks}.
-\newblock \emph{\bibinfo{journal}{CoRR}}
-  \textbf{\bibinfo{volume}{abs/1608.05878}} (\bibinfo{year}{2016}).
-\newblock \urlprefix\url{http://arxiv.org/abs/1608.05878}.
-\newblock \eprint{1608.05878}.
-
-\bibitem{Wani2024}
-\bibinfo{author}{Wani, A.~A.}
-\newblock \bibinfo{title}{Comprehensive analysis of clustering algorithms:
-  exploring limitations and innovative solutions}.
-\newblock \emph{\bibinfo{journal}{PeerJ Comput. Sci.}}
-  \textbf{\bibinfo{volume}{10}}, \bibinfo{pages}{e2286} (\bibinfo{year}{2024}).
-\newblock \urlprefix\url{https://doi.org/10.7717/peerj-cs.2286}.
-
-\bibitem{10.1145/235968.233324}
-\bibinfo{author}{Zhang, T.}, \bibinfo{author}{Ramakrishnan, R.} \&
-  \bibinfo{author}{Livny, M.}
-\newblock \bibinfo{title}{Birch: an efficient data clustering method for very
-  large databases}.
-\newblock \emph{\bibinfo{journal}{SIGMOD Rec.}} \textbf{\bibinfo{volume}{25}},
-  \bibinfo{pages}{103–114} (\bibinfo{year}{1996}).
-\newblock \urlprefix\url{https://doi.org/10.1145/235968.233324}.
-
-\bibitem{birch1996}
-\bibinfo{author}{Zhang, T.}, \bibinfo{author}{Ramakrishnan, R.} \&
-  \bibinfo{author}{Livny, M.}
-\newblock \bibinfo{title}{Birch: an efficient data clustering method for very
-  large databases}.
-\newblock In \emph{\bibinfo{booktitle}{Proceedings of the 1996 ACM SIGMOD
-  International Conference on Management of Data}}, SIGMOD '96,
-  \bibinfo{pages}{103–114} (\bibinfo{publisher}{Association for Computing
-  Machinery}, \bibinfo{address}{New York, NY, USA}, \bibinfo{year}{1996}).
-\newblock \urlprefix\url{https://doi.org/10.1145/233269.233324}.
-
-\bibitem{cdlib2019}
-\bibinfo{author}{Rossetti, G.}, \bibinfo{author}{Milli, L.} \&
-  \bibinfo{author}{Cazabet, R.}
-\newblock \bibinfo{title}{{CDLIB}: a python library to extract, compare and
-  evaluate communities from complex networks}.
-\newblock \emph{\bibinfo{journal}{Applied Network Science}}
-  \textbf{\bibinfo{volume}{4}}, \bibinfo{pages}{2364--8228}
-  (\bibinfo{year}{2019}).
-
-\bibitem{igraph2006}
-\bibinfo{author}{Csardi, G.} \& \bibinfo{author}{Nepusz, T.}
-\newblock \bibinfo{title}{The igraph software package for complex network
-  research}.
-\newblock \emph{\bibinfo{journal}{InterJournal}}
-  \textbf{\bibinfo{volume}{Complex Systems}}, \bibinfo{pages}{1695}
-  (\bibinfo{year}{2006}).
-\newblock \urlprefix\url{https://igraph.org}.
-
-\bibitem{comboRepo}
-\bibinfo{author}{Kats, P.} \& \bibinfo{author}{Belyi, A.}
-\newblock \bibinfo{title}{{COMBO} repository}.
-\newblock \bibinfo{howpublished}{\url{https://github.com/Casyfill/pyCombo.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{hollocouRepo}
-\bibinfo{author}{Hollocou, A.}
-\newblock \bibinfo{title}{{Hollocou} repository}.
-\newblock
-  \bibinfo{howpublished}{\url{https://github.com/ahollocou/graph-streaming.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{vieclusRepo}
-\bibinfo{author}{Schulz, C.} \& \bibinfo{author}{Seemaier, D.}
-\newblock \bibinfo{title}{{VieClus} repository}.
-\newblock \bibinfo{howpublished}{\url{https://github.com/VieClus/VieClus.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{dmonRepo}
-\bibinfo{author}{Tsitsulin, A.}, \bibinfo{author}{Palowitch, J.},
-  \bibinfo{author}{Perozzi, B.} \& \bibinfo{author}{M\"uller, E.}
-\newblock \bibinfo{title}{{DMoN} repository}.
-\newblock
-  \bibinfo{howpublished}{\url{https://github.com/google-research/google-research.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{commdgiRepo}
-\bibinfo{author}{Zhang, T.} \emph{et~al.}
-\newblock \bibinfo{title}{{CommDGI} repository}.
-\newblock \bibinfo{howpublished}{\url{https://github.com/FDUDSDE/CommDGI.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{gnnsRepo}
-\bibinfo{author}{Belyi, A.}
-\newblock \bibinfo{title}{{GNNS} repository}.
-\newblock
-  \bibinfo{howpublished}{\url{https://github.com/Alexander-Belyi/GNNS.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{ucodeRepo}
-\bibinfo{author}{Moradan, A.}, \bibinfo{author}{Draganov, A.},
-  \bibinfo{author}{Mottin, D.} \& \bibinfo{author}{Assent, I.}
-\newblock \bibinfo{title}{{UCoDe} repository}.
-\newblock \bibinfo{howpublished}{\url{https://github.com/AU-DIS/UCODE.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{dgclusterRepo}
-\bibinfo{author}{Kosan, M.}
-\newblock \bibinfo{title}{{DGCluster} repository}.
-\newblock
-  \bibinfo{howpublished}{\url{https://github.com/pyrobits/DGCluster.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{magiRepo}
-\bibinfo{author}{Li, J.}
-\newblock \bibinfo{title}{{MAGI} repository}.
-\newblock
-  \bibinfo{howpublished}{\url{https://github.com/EdisonLeeeee/MAGI.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{bayanRepo}
-\bibinfo{author}{Mostajabdaveh, M.} \& \bibinfo{author}{Aref, S.}
-\newblock \bibinfo{title}{{Bayan} repository}.
-\newblock \bibinfo{howpublished}{\url{https://github.com/saref/bayan.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{clustreRepo}
-\bibinfo{author}{Chhabra, A.}
-\newblock \bibinfo{title}{{CluStRE} repository}.
-\newblock \bibinfo{howpublished}{\url{https://github.com/KaHIP/CluStRE.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{limRepo}
-\bibinfo{author}{Wang, H.}
-\newblock \bibinfo{title}{{LIM} repository}.
-\newblock
-  \bibinfo{howpublished}{\url{https://github.com/wuanghoong/Less-is-More.git}}
-  (\bibinfo{year}{2026}).
-
-\bibitem{danon2005comparing}
-\bibinfo{author}{Danon, L.}, \bibinfo{author}{Diaz-Guilera, A.},
-  \bibinfo{author}{Duch, J.} \& \bibinfo{author}{Arenas, A.}
-\newblock \bibinfo{title}{Comparing community structure identification}.
-\newblock \emph{\bibinfo{journal}{Journal of Statistical Mechanics: Theory and
-  Experiment}} \textbf{\bibinfo{volume}{2005}}, \bibinfo{pages}{2364--8228}
-  (\bibinfo{year}{2005}).
-
-\end{thebibliography}
-
+\bibliographystyle{naturemag}
+\bibliography{\jobname}
 
 \appendix
 
@@ -1682,5 +1059,1026 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
         \bottomrule
     \end{tabular}
 \end{table}
+
+
+% =========================================================================
+% Embedded BibTeX Database (Self-Contained for Nature Communications)
+% =========================================================================
+\begin{filecontents*}{\jobname.bib}
+@article{Newman2003,
+  title     = {Properties of highly clustered networks},
+  author    = {Newman, M. E. J.},
+  journal   = {Phys. Rev. E},
+  volume    = {68},
+  issue     = {2},
+  pages     = {026121},
+  numpages  = {6},
+  year      = {2003},
+  month     = {Aug},
+  publisher = {American Physical Society},
+  doi       = {10.1103/PhysRevE.68.026121},
+  url       = {https://link.aps.org/doi/10.1103/PhysRevE.68.026121}
+}
+
+@inproceedings{McFarling89,
+  author    = {Scott McFarling},
+  editor    = {Joel S. Emer and
+               John L. Hennessy},
+  title     = {Program Optimization for Instruction Caches},
+  booktitle = {{ASPLOS-III} Proceedings - Third International Conference on Architectural
+               Support for Programming Languages and Operating Systems, Boston, Massachusetts,
+               USA, April 3-6, 1989},
+  pages     = {183--191},
+  publisher = {{ACM} Press},
+  year      = {1989},
+  url       = {https://doi.org/10.1145/70082.68200},
+  doi       = {10.1145/70082.68200},
+  timestamp = {Wed, 07 Jul 2021 13:23:09 +0200},
+  biburl    = {https://dblp.org/rec/conf/asplos/McFarling89.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Demme2012,
+  author    = {John Demme and
+               Simha Sethumadhavan},
+  title     = {Approximate graph clustering for program characterization},
+  journal   = {{ACM} Trans. Archit. Code Optim.},
+  volume    = {8},
+  number    = {4},
+  pages     = {21:1--21:21},
+  year      = {2012},
+  url       = {https://doi.org/10.1145/2086696.2086700},
+  doi       = {10.1145/2086696.2086700},
+  timestamp = {Wed, 17 Feb 2021 22:02:37 +0100},
+  biburl    = {https://dblp.org/rec/journals/taco/DemmeS12.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Akoglu2015,
+  author    = {Leman Akoglu and
+               Hanghang Tong and
+               Danai Koutra},
+  title     = {Graph based anomaly detection and description: a survey},
+  journal   = {Data Min. Knowl. Discov.},
+  volume    = {29},
+  number    = {3},
+  pages     = {626--688},
+  year      = {2015},
+  url       = {https://doi.org/10.1007/s10618-014-0365-y},
+  doi       = {10.1007/S10618-014-0365-Y},
+  timestamp = {Mon, 03 Mar 2025 21:36:44 +0100},
+  biburl    = {https://dblp.org/rec/journals/datamine/AkogluTK15.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Xu2002,
+  author    = {Ying Xu and
+               Victor Olman and
+               Dong Xu},
+  title     = {Clustering gene expression data using a graph-theoretic approach:
+               an application of minimum spanning trees},
+  journal   = {Bioinform.},
+  volume    = {18},
+  number    = {4},
+  pages     = {536--545},
+  year      = {2002},
+  url       = {https://doi.org/10.1093/bioinformatics/18.4.536},
+  doi       = {10.1093/BIOINFORMATICS/18.4.536},
+  timestamp = {Mon, 02 Mar 2020 16:26:24 +0100},
+  biburl    = {https://dblp.org/rec/journals/bioinformatics/XuOX02.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Cai2011,
+  author    = {Bingjing Cai and
+               Haiying Wang and
+               Huiru Zheng and
+               Hui Wang},
+  title     = {Detection of functional modules from protein interaction networks
+               with an enhanced random walk based algorithm},
+  journal   = {Int. J. Comput. Biol. Drug Des.},
+  volume    = {4},
+  number    = {3},
+  pages     = {290--306},
+  year      = {2011},
+  url       = {https://doi.org/10.1504/IJCBDD.2011.041416},
+  doi       = {10.1504/IJCBDD.2011.041416},
+  timestamp = {Thu, 14 Oct 2021 08:55:44 +0200},
+  biburl    = {https://dblp.org/rec/journals/ijcbdd/CaiWZW11.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Newman2006,
+  author   = {M. E. J. Newman },
+  title    = {Modularity and community structure in networks},
+  journal  = {Proceedings of the National Academy of Sciences},
+  volume   = {103},
+  number   = {23},
+  pages    = {8577-8582},
+  year     = {2006},
+  doi      = {10.1073/pnas.0601602103},
+  url      = {https://www.pnas.org/doi/abs/10.1073/pnas.0601602103},
+  eprint   = {https://www.pnas.org/doi/pdf/10.1073/pnas.0601602103},
+  abstract = {Many networks of interest in the sciences, including social networks, computer networks, and metabolic and regulatory networks, are found to divide naturally into communities or modules. The problem of detecting and characterizing this community structure is one of the outstanding issues in the study of networked systems. One highly effective approach is the optimization of the quality function known as “modularity” over the possible divisions of a network. Here I show that the modularity can be expressed in terms of the eigenvectors of a characteristic matrix for the network, which I call the modularity matrix, and that this expression leads to a spectral algorithm for community detection that returns results of demonstrably higher quality than competing methods in shorter running times. I illustrate the method with applications to several published network data sets.}
+}
+
+@article{Brandes2008,
+  author    = {Ulrik Brandes and
+               Daniel Delling and
+               Marco Gaertler and
+               Robert G{\"{o}}rke and
+               Martin Hoefer and
+               Zoran Nikoloski and
+               Dorothea Wagner},
+  title     = {On Modularity Clustering},
+  journal   = {{IEEE} Trans. Knowl. Data Eng.},
+  volume    = {20},
+  number    = {2},
+  pages     = {172--188},
+  year      = {2008},
+  url       = {https://doi.org/10.1109/TKDE.2007.190689},
+  doi       = {10.1109/TKDE.2007.190689},
+  timestamp = {Sun, 02 Oct 2022 15:51:31 +0200},
+  biburl    = {https://dblp.org/rec/journals/tkde/BrandesDGGHNW08.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{girvan2002,
+  author   = {M. Girvan  and M. E. J. Newman },
+  title    = {Community structure in social and biological networks},
+  journal  = {Proceedings of the National Academy of Sciences},
+  volume   = {99},
+  number   = {12},
+  pages    = {7821-7826},
+  year     = {2002},
+  doi      = {10.1073/pnas.122653799},
+  url      = {https://www.pnas.org/doi/abs/10.1073/pnas.122653799},
+  eprint   = {https://www.pnas.org/doi/pdf/10.1073/pnas.122653799},
+  abstract = {A number of recent studies have focused on the statistical properties of networked systems such as social networks and the Worldwide Web. Researchers have concentrated particularly on a few properties that seem to be common to many networks: the small-world property, power-law degree distributions, and network transitivity. In this article, we highlight another property that is found in many networks, the property of community structure, in which network nodes are joined together in tightly knit groups, between which there are only looser connections. We propose a method for detecting such communities, built around the idea of using centrality indices to find community boundaries. We test our method on computer-generated and real-world graphs whose community structure is already known and find that the method detects this known structure with high sensitivity and reliability. We also apply the method to two networks whose community structure is not well known—a collaboration network and a food web—and find that it detects significant and informative community divisions in both cases.}
+}
+
+@article{cnm2004,
+  author  = {Clauset, Aaron 
+             and Newman, Mark E. J. 
+             and Moore, Cristopher},
+  title   = {Finding community structure in very large networks},
+  journal = {Physical Review E},
+  volume  = {70},
+  number  = {6},
+  pages   = {066111},
+  year    = {2004},
+  doi     = {10.1103/PhysRevE.70.066111}
+}
+
+@inproceedings{walktrap2005,
+  author    = {Pons, Pascal
+               and Latapy, Matthieu},
+  title     = {Computing Communities in Large Networks Using Random Walks},
+  booktitle = {Proceedings of the 20th International Symposium on Computer and Information Sciences (ISCIS 2005)},
+  pages     = {284--293},
+  year      = {2005},
+  publisher = {Springer Berlin Heidelberg},
+  doi       = {10.1007/11569596_31}
+}
+
+@inproceedings{wt2007,
+  author    = {Wakita, Ken 
+               and Tsurumi, Toshiyuki},
+  title     = {Finding community structure in mega-scale social networks: [extended abstract]},
+  booktitle = {Proceedings of the 16th International Conference on World Wide Web (WWW 2007)},
+  pages     = {1275--1276},
+  year      = {2007},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/1242572.1242805}
+}
+
+@article{ln2008,
+  title   = {Community Structure in Directed Networks},
+  author  = {Leicht, Elizabeth A. and 
+             Newman, Mark E. J.},
+  journal = {Physical Review Letters},
+  volume  = {100},
+  number  = {11},
+  pages   = {118703},
+  year    = {2008},
+  doi     = {10.1103/PhysRevLett.100.118703}
+}
+
+@article{infomap2008,
+  author  = {Martin Rosvall 
+             and Carl T. Bergstrom},
+  title   = {Maps of random walks on complex networks reveal community structure},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {105},
+  number  = {4},
+  pages   = {1118--1123},
+  year    = {2008},
+  doi     = {10.1073/pnas.0706851105}
+}
+
+@article{louvain2008,
+  author  = {Blondel, Vincent D. 
+             and Guillaume, Jean-Loup 
+             and Lambiotte, Renaud 
+             and Lefebvre, Etienne},
+  title   = {Fast unfolding of communities in large networks},
+  journal = {Journal of Statistical Mechanics: Theory and Experiment},
+  volume  = {2008},
+  number  = {10},
+  pages   = {P10008},
+  year    = {2008},
+  doi     = {10.1088/1742-5468/2008/10/P10008}
+}
+
+@incollection{vns2012,
+  author    = {Aloise, Daniel 
+               and Caporossi, Gilles 
+               and Hansen, Pierre 
+               and Liberti, Leo 
+               and Perron, Sylvain 
+               and Ruiz, Manuel},
+  title     = {Modularity maximization in networks by variable neighborhood search},
+  booktitle = {Graph Partitioning and Graph Clustering},
+  series    = {Contemporary Mathematics},
+  volume    = {588},
+  pages     = {113--127},
+  year      = {2012},
+  publisher = {American Mathematical Society},
+  doi       = {10.1090/conm/588/11705}
+}
+
+@incollection{cggci_rg2012,
+  author    = {Ovelg\"{o}nne, Michael
+               and Geyer-Schulz, Andreas},
+  title     = {An ensemble learning strategy for graph clustering},
+  booktitle = {Graph Partitioning and Graph Clustering},
+  series    = {Contemporary Mathematics},
+  volume    = {588},
+  pages     = {187--205},
+  year      = {2012},
+  publisher = {American Mathematical Society},
+  doi       = {10.1090/conm/588/11705}
+}
+
+@inproceedings{scd2014,
+  author    = {Prat-P\'{e}rez, Arnau 
+               and Dominguez-Sal, David 
+               and Larriba-Pey, Josep-Lluis},
+  title     = {High quality, scalable and parallel community detection for large real graphs},
+  booktitle = {Proceedings of the 23rd International Conference on World Wide Web (WWW 2014)},
+  pages     = {225--236},
+  year      = {2014},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/2566486.2568010}
+}
+
+@article{combo2014,
+  author  = {Sobolevsky, Stanislav 
+             and Campari, Riccardo 
+             and Belyi, Alexander 
+             and Ratti, Carlo},
+  title   = {General optimization technique for high-quality community detection in complex networks},
+  journal = {Physical Review E},
+  volume  = {90},
+  number  = {1},
+  pages   = {012811},
+  year    = {2014},
+  doi     = {10.1103/PhysRevE.90.012811}
+}
+
+@article{belief2014,
+  author  = {Pan Zhang 
+             and Cristopher Moore },
+  title   = {Scalable detection of statistically significant communities and hierarchies, using message passing for modularity},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {111},
+  number  = {51},
+  pages   = {18144--18149},
+  year    = {2014},
+  doi     = {10.1073/pnas.1409770111}
+}
+
+
+@misc{hollocou2017,
+  author       = {Alexandre Hollocou 
+                  and Julien Maudet 
+                  and Thomas Bonald 
+                  and Marc Lelarge},
+  title        = {A Streaming Algorithm for Graph Clustering},
+  year         = {2017},
+  howpublished = {arXiv preprint},
+  doi          = {10.48550/arXiv.1712.04337}
+}
+
+@inproceedings{vieclus2018,
+  author    = {Biedermann, Sonja 
+               and Henzinger, Monika 
+               and Schulz, Christian 
+               and Schuster, Bernhard},
+  title     = {Memetic Graph Clustering},
+  year      = {2018},
+  booktitle = {Proceedings of the 17th International Symposium on Experimental Algorithms (SEA 2018)},
+  pages     = {3:1--3:15},
+  publisher = {Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  doi       = {10.4230/LIPIcs.SEA.2018.3}
+}
+
+@inproceedings{dane2018,
+  author    = {Gao, Hongchang 
+               and Huang, Heng},
+  title     = {Deep Attributed Network Embedding},
+  year      = {2018},
+  booktitle = {Proceedings of the 27th International Joint Conference on Artificial Intelligence (IJCAI 2018)},
+  pages     = {3364--3370},
+  publisher = {International Joint Conferences on Artificial Intelligence Organization},
+  doi       = {10.24963/ijcai.2018/467}
+}
+
+
+@article{infoflow2019,
+  author  = {Fung, Park K.},
+  title   = {{InfoFlow}: A Distributed Algorithm to Detect Communities According to the Map Equation},
+  journal = {Big Data and Cognitive Computing},
+  volume  = {3},
+  number  = {3},
+  pages   = {42},
+  year    = {2019},
+  doi     = {10.3390/bdcc3030042}
+}
+
+@article{leiden2019,
+  author  = {Traag, Vincent A.
+             and Waltman, Ludo
+             and van Eck, Nees Jan},
+  title   = {From {Louvain} to {Leiden}: guaranteeing well-connected communities},
+  journal = {Scientific Reports},
+  volume  = {9},
+  number  = {1},
+  pages   = {5233},
+  year    = {2019},
+  doi     = {10.1038/s41598-019-41695-z}
+}
+
+@article{advnds2019,
+  author  = {D\v{z}ami\'{c}, Du\v{s}an
+             and Aloise, Daniel
+             and Mladenovi\'{c}, Nenad},
+  title   = {Ascent-descent variable neighborhood decomposition search for community detection by modularity maximization},
+  journal = {Annals of Operations Research},
+  volume  = {272},
+  number  = {1},
+  year    = {2019},
+  doi     = {10.1007/s10479-017-2553-9}
+}
+
+@inproceedings{commdgi2020,
+  author    = {Zhang, Tianqi 
+               and Xiong, Yun 
+               and Zhang, Jiawei 
+               and Zhang, Yao 
+               and Jiao, Yizhu 
+               and Zhu, Yangyong},
+  title     = {{CommDGI}: Community Detection Oriented Deep Graph Infomax},
+  year      = {2020},
+  booktitle = {Proceedings of the 29th ACM International Conference on Information \& Knowledge Management (CIKM 2020)},
+  pages     = {1843--1852},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/3340531.3412042}
+}
+
+@article{dmon2023,
+  author  = {Anton Tsitsulin 
+             and John Palowitch 
+             and Bryan Perozzi 
+             and Emmanuel M\"{u}ller},
+  title   = {Graph Clustering with Graph Neural Networks},
+  journal = {Journal of Machine Learning Research},
+  volume  = {24},
+  number  = {127},
+  pages   = {1--21},
+  year    = {2023},
+  url     = {http://jmlr.org/papers/v24/20-998.html}
+}
+
+@article{gnns2022,
+  author  = {Stanislav Sobolevsky
+             and Alexander Belyi},
+  title   = {Graph neural network inspired algorithm for unsupervised network community detection},
+  journal = {Applied Network Science},
+  volume  = {7},
+  number  = {1},
+  pages   = {63},
+  year    = {2022},
+  doi     = {10.1007/s41109-022-00500-z}
+}
+
+@article{ucode2023,
+  author  = {Moradan, Atefeh
+             and Draganov, Andrew
+             and Mottin, Davide
+             and Assent, Ira},
+  title   = {{UCoDe}: Unified community detection with graph convolutional networks},
+  journal = {Machine Learning},
+  volume  = {112},
+  number  = {12},
+  pages   = {5057--5080},
+  year    = {2023},
+  doi     = {10.1007/s10994-023-06402-0}
+}
+
+@inproceedings{survey2023,
+  author    = {Aref, Samin
+               and Mostajabdaveh, Mahdi
+               and Chheda, Hriday},
+  title     = {Heuristic Modularity Maximization Algorithms for Community Detection Rarely Return an Optimal Partition or Anything Similar},
+  year      = {2023},
+  booktitle = {Proceedings of the 23th International Conference on Computational Science (ICCS 2023)},
+  pages     = {612--626},
+  publisher = {Springer Nature Switzerland},
+  doi       = {10.1007/978-3-031-36027-5_48}
+}
+
+
+@article{paris2024,
+  author  = {Madi, Saif Aldeen 
+             and Pirr\`{o}, Giuseppe},
+  title   = {Node-Centric Community Deception Based on Safeness},
+  journal = {IEEE Transactions on Computational Social Systems},
+  volume  = {11},
+  number  = {2},
+  pages   = {2955--2965},
+  year    = {2024},
+  doi     = {10.1109/TCSS.2023.3306787}
+}
+
+@inproceedings{dgcluster2024,
+  author    = {Bhowmick, Aritra 
+               and Kosan, Mert 
+               and Huang, Zexi 
+               and Singh, Ambuj 
+               and Medya, Sourav},
+  title     = {{DGCLUSTER}: A Neural Framework for Attributed Graph Clustering via Modularity Maximization},
+  year      = {2024},
+  booktitle = {Proceedings of the 38th AAAI Conference on Artificial Intelligence (AAAI 2024)},
+  pages     = {11069--11077},
+  publisher = {AAAI Press, Washington, DC, USA},
+  doi       = {10.1609/aaai.v38i10.28983}
+}
+
+@inproceedings{magi2024,
+  author    = {Liu, Yunfei 
+               and Li, Jintang 
+               and Chen, Yuehe 
+               and Wu, Ruofan 
+               and Wang, Ericbk 
+               and Zhou, Jing 
+               and Tian, Sheng 
+               and Shen, Shuheng 
+               and Fu, Xing 
+               and Meng, Changhua 
+               and Wang, Weiqiang 
+               and Chen, Liang},
+  title     = {Revisiting Modularity Maximization for Graph Clustering: A Contrastive Learning Perspective},
+  year      = {2024},
+  booktitle = {Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD 2024)},
+  pages     = {1968--1979},
+  publisher = {Association for Computing Machinery, New York, NY, United States},
+  doi       = {10.1145/3637528.3671967}
+}
+
+@article{bayan2024,
+  author  = {Aref, Samin 
+             and Mostajabdaveh, Mahdi 
+             and Chheda, Hriday},
+  title   = {Bayan algorithm: Detecting communities in networks through exact and approximate optimization of modularity},
+  journal = {Physical Review E},
+  volume  = {110},
+  number  = {4},
+  pages   = {044315},
+  year    = {2024},
+  doi     = {10.1103/PhysRevE.110.044315}
+}
+
+@inproceedings{neuromap2024,
+  author    = {Bl{\"o}cker, Christopher 
+               and Tan, Chester 
+               and Scholtes, Ingo},
+  title     = {The map equation goes neural: Mapping network flows with graph neural networks},
+  year      = {2024},
+  booktitle = {Proceedings of the 38th Conference on Neural Information Processing Systems (NeurIPS 2024)},
+  pages     = {17428--17456},
+  publisher = {Curran Associates, Inc.},
+  doi       = {10.52202/079017-0554}
+}
+
+@inproceedings{clustre2025,
+  author    = {Chhabra, Adil 
+               and Dorian Peretz, Shai 
+               and Schulz, Christian},
+  title     = {{CluStRE}: Streaming Graph Clustering with Multi-Stage Refinement},
+  year      = {2025},
+  booktitle = {Proceedings of the 23rd International Symposium on Experimental Algorithms (SEA 2025)},
+  pages     = {11:1--11:20},
+  publisher = {Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  doi       = {10.4230/LIPIcs.SEA.2025.11}
+}
+
+@article{lim2025,
+  author  = {Wang, Hong
+             and Zhang, Yinglong
+             and Zhao, Zhangqi
+             and Cai, Zhicong
+             and Xia, Xuewen
+             and Xu, Xing},
+  title   = {Simple yet effective heuristic community detection with graph convolution network},
+  journal = {Scientific Reports},
+  volume  = {15},
+  number  = {1},
+  pages   = {39249},
+  year    = {2025},
+  doi     = {10.1038/s41598-025-22860-z}
+}
+
+@inproceedings{maxsat2025,
+  author    = {Ans{\'o}tegui, Carlos
+               and Ramaswamy, Vaidyanathan Peruvemba
+               and Szeider, Stefan
+               and Xia, Hai},
+  title     = {Uncovering and Verifying Optimal Community Structure in Complex Networks: A {MaxSAT} Approach},
+  year      = {2025},
+  booktitle = {Proceedings of the 25th International Conference on Computational Science (ICCS 2025)},
+  pages     = {35--49},
+  publisher = {Springer Nature Switzerland},
+  doi       = {10.1007/978-3-031-97629-2_3}
+}
+
+@misc{adcsbm2022,
+  author       = {Anton Tsitsulin 
+                  and Benedek Rozemberczki 
+                  and John Palowitch 
+                  and Bryan Perozzi},
+  title        = {Synthetic Graph Generation to Benchmark Graph Learning},
+  year         = {2022},
+  howpublished = {arXiv preprint},
+  doi          = {10.48550/arXiv.2204.01376}
+}
+
+@article{perf2002,
+  author  = {Dolan, Elizabeth D.
+             and Mor\'{e}, Jorge J.},
+  title   = {Benchmarking optimization software with performance profiles},
+  journal = {Mathematical Programming},
+  volume  = {91},
+  number  = {2},
+  pages   = {201--213},
+  year    = {2002},
+  doi     = {10.1007/s101070100263}
+}
+
+@misc{gurobi,
+  author = {{Gurobi Optimization, LLC}},
+  title  = {{Gurobi Optimizer Reference Manual}},
+  year   = 2026,
+  url    = {https://www.gurobi.com}
+}
+
+@article{resolution2007,
+  author  = {Fortunato, Santo and Barthelemy, Marc},
+  title   = {Resolution limit in community detection},
+  journal = {Proceedings of the national academy of sciences},
+  volume  = {104},
+  number  = {1},
+  pages   = {36--41},
+  year    = {2007},
+  doi     = {10.1073/pnas.0605965104}
+}
+
+@inproceedings{wcc2012,
+  author    = {Prat-P{\'e}rez, Arnau 
+               and Dominguez-Sal, David 
+               and Brunat, Josep M. 
+               and Larriba-Pey, Josep-Lluis},
+  title     = {Shaping communities out of triangles},
+  year      = {2012},
+  booktitle = {Proceedings of the 21st ACM international conference on Information and knowledge management},
+  pages     = {1677--1681},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/2396761.2398496}
+}
+
+@article{Li2024,
+  author    = {Jiakang Li and
+               Songning Lai and
+               Zhihao Shuai and
+               Yuan Tan and
+               Yifan Jia and
+               Mianyang Yu and
+               Zichen Song and
+               Xiaokang Peng and
+               Ziyang Xu and
+               Yongxin Ni and
+               Haifeng Qiu and
+               Jiayu Yang and
+               Yutong Liu and
+               Yonggang Lu},
+  title     = {A comprehensive review of community detection in graphs},
+  journal   = {Neurocomputing},
+  volume    = {600},
+  pages     = {128169},
+  year      = {2024},
+  url       = {https://doi.org/10.1016/j.neucom.2024.128169},
+  doi       = {10.1016/J.NEUCOM.2024.128169},
+  timestamp = {Sat, 15 Nov 2025 13:50:18 +0100},
+  biburl    = {https://dblp.org/rec/journals/ijon/LiLSTJYSPXNQYLL24.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Jin2023,
+  author    = {Di Jin and
+               Zhizhi Yu and
+               Pengfei Jiao and
+               Shirui Pan and
+               Dongxiao He and
+               Jia Wu and
+               Philip S. Yu and
+               Weixiong Zhang},
+  title     = {A Survey of Community Detection Approaches: From Statistical Modeling
+               to Deep Learning},
+  journal   = {{IEEE} Trans. Knowl. Data Eng.},
+  volume    = {35},
+  number    = {2},
+  pages     = {1149--1170},
+  year      = {2023},
+  url       = {https://doi.org/10.1109/TKDE.2021.3104155},
+  doi       = {10.1109/TKDE.2021.3104155},
+  timestamp = {Tue, 31 Jan 2023 20:44:56 +0100},
+  biburl    = {https://dblp.org/rec/journals/tkde/JinYJPHWYZ23.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{Liu2020,
+  author    = {Fanzhen Liu and
+               Shan Xue and
+               Jia Wu and
+               Chuan Zhou and
+               Wenbin Hu and
+               C{\'{e}}cile Paris and
+               Surya Nepal and
+               Jian Yang and
+               Philip S. Yu},
+  editor    = {Christian Bessiere},
+  title     = {Deep Learning for Community Detection: Progress, Challenges and Opportunities},
+  booktitle = {Proceedings of the Twenty-Ninth International Joint Conference on
+               Artificial Intelligence, {IJCAI} 2020},
+  pages     = {4981--4987},
+  publisher = {ijcai.org},
+  year      = {2020},
+  url       = {https://doi.org/10.24963/ijcai.2020/693},
+  doi       = {10.24963/IJCAI.2020/693},
+  timestamp = {Tue, 15 Oct 2024 16:43:28 +0200},
+  biburl    = {https://dblp.org/rec/conf/ijcai/LiuX0ZHPNYY20.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Messias2025,
+  author   = {Messias, Guilherme Henrique and Gonçalves Botelho, Tiago and Iasulaitis, Sylvia and Coelho Naldi, Murilo and Demétrius Baria Valejo, Alan},
+  journal  = {IEEE Access},
+  title    = {A Systematic Review of Graph Neural Network for Node Clustering in Homogeneous Attributed Networks},
+  year     = {2025},
+  volume   = {13},
+  number   = {},
+  pages    = {215265-215285},
+  keywords = {Systematic literature review;Taxonomy;Graph neural networks;Clustering algorithms;Surveys;Protocols;Planning;Focusing;Data models;Computational efficiency;Community detection;graph neural networks;homogeneous networks;node clustering;systematic literature review;unsupervised learning},
+  doi      = {10.1109/ACCESS.2025.3646597}
+}
+
+@article{liang2024,
+  author   = {Liang, Ke and Meng, Lingyuan and Liu, Meng and Liu, Yue and Tu, Wenxuan and Wang, Siwei and Zhou, Sihang and Liu, Xinwang and Sun, Fuchun and He, Kunlun},
+  journal  = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  title    = {A Survey of Knowledge Graph Reasoning on Graph Types: Static, Dynamic, and Multi-Modal},
+  year     = {2024},
+  volume   = {46},
+  number   = {12},
+  pages    = {9456-9478},
+  keywords = {Knowledge graphs;Cognition;Surveys;Extrapolation;Taxonomy;Interpolation;Fasteners;Knowledge graph reasoning;knowledge graph;temporal knowledge graph;multi-modal knowledge graph},
+  doi      = {10.1109/TPAMI.2024.3417451}
+}
+	
+@inproceedings{Gaertler2005,
+  abstract           = {Clustering is a synonym for the decomposition of a set of entities into `natural groups'. There are two major aspects to this task: the first involves algorithmic issues on how to find such decompositions, i.e., tractability, while the second concerns quality assignment, i.e., how good is the computed decomposition. Owing to the informal notion of natural groups, many different disciplines have developed their view of clustering independently.},
+  author             = {Marco Gaertler},
+  booktitle          = {Network Analysis: Methodological Foundations [outcome of a Dagstuhl seminar, 13-16 April 2004]},
+  isbn               = {978-3-540-31955-9},
+  pages              = {178--215},
+  publisher          = {Springer},
+  title              = {Clustering},
+  year               = {2004},
+  timestamp          = {Sun, 02 Oct 2022 01:00:00 +0200},
+  biburl             = {https://dblp.org/rec/conf/dagstuhl/Gaertler04.bib},
+  bibsource          = {dblp computer science bibliography, https://dblp.org},
+  doi                = {10.1007/978-3-540-31955-9_8},
+  volume             = {3418},
+  url                = {https://doi.org/10.1007/978-3-540-31955-9\_8},
+  editor             = {Ulrik Brandes and Thomas Erlebach},
+  series             = {Lecture Notes in Computer Science},
+  _bib2doi_selected  = {dblp:/rec/conf/dagstuhl/Gaertler04.bib},
+  _bib2doi_confirmed = {true},
+  _bib2doi_finished  = {true}
+}
+
+@article{kannan2004clusterings,
+  abstract           = {We motivate and develop a natural bicriteria measure for assessing the quality of a clustering that avoids the drawbacks of existing measures. A simple recursive heuristic is shown to have poly-logarithmic worst-case guarantees under the new measure. The main result of the article is the analysis of a popular spectral algorithm. One variant of spectral clustering turns out to have effective worst-case guarantees; another finds a "good" clustering, if one exists.},
+  author             = {Ravi Kannan and Santosh S. Vempala and Adrian Vetta},
+  issn               = {0004-5411},
+  issue_date         = {May 2004},
+  journal            = {J. {ACM}},
+  keywords           = {spectral methods, graph algorithms, Clustering},
+  month              = {May},
+  number             = {3},
+  numpages           = {19},
+  pages              = {497--515},
+  title              = {On clusterings: Good, bad and spectral},
+  volume             = {51},
+  year               = {2004},
+  timestamp          = {Thu, 24 Oct 2019 01:00:00 +0200},
+  biburl             = {https://dblp.org/rec/journals/jacm/KannanVV04.bib},
+  bibsource          = {dblp computer science bibliography, https://dblp.org},
+  doi                = {10.1145/990308.990313},
+  url                = {https://doi.org/10.1145/990308.990313},
+  _bib2doi_selected  = {dblp:/rec/journals/jacm/KannanVV04.bib},
+  _bib2doi_confirmed = {true},
+  _bib2doi_finished  = {true}
+}
+
+@article{arnau2004iterative,
+  abstract           = {MOTIVATION: Generation of fast tools of hierarchical clustering to be applied when distances among elements of a set are constrained, causing frequent distance ties, as happens in protein interaction data. RESULTS: We present in this work the program UVCLUSTER, that iteratively explores distance datasets using hierarchical clustering. Once the user selects a group of proteins, UVCLUSTER converts the set of primary distances among them (i.e. the minimum number of steps, or interactions, required to connect two proteins) into secondary distances that measure the strength of the connection between each pair of proteins when the interactions for all the proteins in the group are considered. We show that this novel strategy has advantages over conventional clustering methods to explore protein-protein interaction data. UVCLUSTER easily incorporates the information of the largest available interaction datasets to generate comprehensive primary distance tables. The versatility, simplicity of use and high speed of UVCLUSTER on standard personal computers suggest that it can be a benchmark analytical tool for interactome data analysis. AVAILABILITY: The program is available upon request from the authors, free for academic users. Additional information available at http://www.uv.es/genomica/UVCLUSTER.},
+  author             = {Arnau, V. and Mars, S. and Marı\'{i}n, I.},
+  journal            = {Bioinformatics},
+  language           = {en},
+  month              = {September},
+  number             = {3},
+  pages              = {364--378},
+  title              = {{I}terative {C}luster {A}nalysis of {P}rotein {I}nteraction {D}ata},
+  volume             = {21},
+  year               = {2004},
+  timestamp          = {Mon, 02 Mar 2020 00:00:00 +0100},
+  biburl             = {https://dblp.org/rec/journals/bioinformatics/ArnauMM05.bib},
+  bibsource          = {dblp computer science bibliography, https://dblp.org},
+  doi                = {10.1093/bioinformatics/bti021},
+  _bib2doi_selected  = {dblp:/rec/journals/bioinformatics/ArnauMM05.bib},
+  _bib2doi_confirmed = {true}
+}
+
+@proceedings{dimacschallengegraphpartandcluster,
+  publisher          = {American Mathematical Society},
+  series             = {Contemporary Mathematics},
+  title              = {Graph Partitioning and Graph Clustering, 10th {DIMACS} Implementation Challenge Workshop, Georgia Institute of Technology, Atlanta, GA, USA, February 13-14, 2012. Proceedings},
+  timestamp          = {Tue, 03 Nov 2020 00:00:00 +0100},
+  biburl             = {https://dblp.org/rec/conf/dimacs/2012.bib},
+  bibsource          = {dblp computer science bibliography, https://dblp.org},
+  doi                = {10.1090/conm/588},
+  volume             = {588},
+  year               = {2013},
+  url                = {https://doi.org/10.1090/conm/588},
+  editor             = {David A. Bader and Henning Meyerhenke and Peter Sanders and Dorothea Wagner},
+  isbn               = {978-0-8218-9038-7},
+  _bib2doi_selected  = {dblp:/rec/conf/dimacs/2012.bib},
+  _bib2doi_confirmed = {true},
+  _bib2doi_finished  = {true}
+}
+
+@article{licommunitydetectionsurvey24,
+  abstract           = {The study of complex networks has significantly advanced our understanding of community structures which serves as a crucial feature of real-world graphs. Detecting communities in graphs is a challenging problem with applications in sociology, biology, and computer science. Despite the efforts of an interdisciplinary community of scientists, a satisfactory solution to this problem has not yet been achieved. This review article delves into the topic of community detection in graphs, which serves as a thorough exposition of various community detection methods from perspectives of modularity-based methods, spectral clustering, probabilistic modeling, and deep learning. Along with the methods, a new community detection method designed by us is also presented. Additionally, the performance of these methods on the datasets with and without ground truth is compared. In conclusion, this comprehensive review provides a deep understanding of community detection in graphs.},
+  author             = {J. Li and S. Lai and Z. Shuai and Y. Tan and Y. Jia and M. Yu and Z. Song and X. Peng and Z. Xu and Y. Ni and H. Qiu and J. Yang and Y. Liu and Y. Lu},
+  issn               = {0925-2312},
+  journal            = {Neurocomputing},
+  keywords           = {Modularity-based clustering, Spectral clustering, Deep learning, Probabilistic modeling, Medoid-Shift, K-nearest neighbors, Community detection, Graph clustering, Data mining},
+  pages              = {128169},
+  title              = {{A} {C}omprehensive {R}eview of {C}ommunity {D}etection in {G}raphs},
+  volume             = {600},
+  year               = {2024},
+  timestamp          = {Sun, 06 Oct 2024 01:00:00 +0200},
+  biburl             = {https://dblp.org/rec/journals/ijon/LiLSTJYSPXNQYLL24.bib},
+  bibsource          = {dblp computer science bibliography, https://dblp.org},
+  doi                = {10.1016/j.neucom.2024.128169},
+  _bib2doi_selected  = {dblp:/rec/journals/ijon/LiLSTJYSPXNQYLL24.bib},
+  _bib2doi_confirmed = {true}
+}
+
+@article{rosvall2009map,
+  abstract          = {Many real-world networks are so large that we must simplify their structure before we can extract useful information about the systems they represent. As the tools for doing these simplifications proliferate within the network literature, researchers would benefit from some guidelines about which of the so-called community detection algorithms are most appropriate for the structures they are studying and the questions they are asking. Here we show that different methods highlight different aspects of a network's structure and that the the sort of information that we seek to extract about the system must guide us in our decision. For example, many community detection algorithms, including the popular modularity maximization approach, infer module assignments from an underlying model of the network formation process. However, we are not always as interested in how a system's network structure was formed, as we are in how a network's extant structure influences the system's behavior. To see how structure influences current behavior, we will recognize that links in a network induce movement across the network and result in system-wide interdependence. In doing so, we explicitly acknowledge that most networks carry flow. To highlight and simplify the network structure with respect to this flow, we use the map equation. We present an intuitive derivation of this flow-based and information-theoretic method and provide an interactive on-line application that anyone can use to explore the mechanics of the map equation. The differences between the map equation and the modularity maximization approach are not merely conceptual. Because the map equation attends to patterns of flow on the network and the modularity maximization approach does not, the two methods can yield dramatically different results for some network structures. To illustrate this and build our understanding of each method, we partition several sample networks. We also describe an algorithm and provide source code to efficiently decompose large weighted and directed networks based on the map equation.},
+  author            = {Rosvall, M. and Axelsson, D. and Bergstrom, C. T.},
+  day               = {01},
+  issn              = {1951-6401},
+  journal           = {The European Physical J. Special Topics},
+  month             = {Nov},
+  number            = {1},
+  pages             = {13-23},
+  title             = {{T}he {M}ap {E}quation},
+  volume            = {178},
+  year              = {2009},
+  _bib2doi_finished = {true}
+}
+
+@article{Peel2016,
+  author     = {Leto Peel and
+                Daniel B. Larremore and
+                Aaron Clauset},
+  title      = {The ground truth about metadata and community detection in networks},
+  journal    = {CoRR},
+  volume     = {abs/1608.05878},
+  year       = {2016},
+  url        = {http://arxiv.org/abs/1608.05878},
+  eprinttype = {arXiv},
+  eprint     = {1608.05878},
+  timestamp  = {Mon, 13 Aug 2018 16:46:19 +0200},
+  biburl     = {https://dblp.org/rec/journals/corr/PeelLC16.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{Wani2024,
+  author    = {Aasim Ayaz Wani},
+  title     = {Comprehensive analysis of clustering algorithms: exploring limitations
+               and innovative solutions},
+  journal   = {PeerJ Comput. Sci.},
+  volume    = {10},
+  pages     = {e2286},
+  year      = {2024},
+  url       = {https://doi.org/10.7717/peerj-cs.2286},
+  doi       = {10.7717/PEERJ-CS.2286},
+  timestamp = {Thu, 03 Oct 2024 00:46:22 +0200},
+  biburl    = {https://dblp.org/rec/journals/peerj-cs/Wani24.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{10.1145/235968.233324,
+  author     = {Zhang, Tian and Ramakrishnan, Raghu and Livny, Miron},
+  title      = {BIRCH: an efficient data clustering method for very large databases},
+  year       = {1996},
+  issue_date = {June 1996},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {25},
+  number     = {2},
+  issn       = {0163-5808},
+  url        = {https://doi.org/10.1145/235968.233324},
+  doi        = {10.1145/235968.233324},
+  abstract   = {Finding useful patterns in large datasets has attracted considerable interest recently, and one of the most widely studied problems in this area is the identification of clusters, or densely populated regions, in a multi-dimensional dataset. Prior work does not adequately address the problem of large datasets and minimization of I/O costs.This paper presents a data clustering method named BIRCH (Balanced Iterative Reducing and Clustering using Hierarchies), and demonstrates that it is especially suitable for very large databases. BIRCH incrementally and dynamically clusters incoming multi-dimensional metric data points to try to produce the best quality clustering with the available resources (i.e., available memory and time constraints). BIRCH can typically find a good clustering with a single scan of the data, and improve the quality further with a few additional scans. BIRCH is also the first clustering algorithm proposed in the database area to handle "noise" (data points that are not part of the underlying pattern) effectively.We evaluate BIRCH's time/space efficiency, data input order sensitivity, and clustering quality through several experiments. We also present a performance comparisons of BIRCH versus CLARANS, a clustering method proposed recently for large datasets, and show that BIRCH is consistently superior.},
+  journal    = {SIGMOD Rec.},
+  month      = jun,
+  pages      = {103–114},
+  numpages   = {12}
+}
+
+@inproceedings{birch1996,
+  author    = {Zhang, Tian and Ramakrishnan, Raghu and Livny, Miron},
+  title     = {BIRCH: an efficient data clustering method for very large databases},
+  year      = {1996},
+  isbn      = {0897917944},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/233269.233324},
+  doi       = {10.1145/233269.233324},
+  abstract  = {Finding useful patterns in large datasets has attracted considerable interest recently, and one of the most widely studied problems in this area is the identification of clusters, or densely populated regions, in a multi-dimensional dataset. Prior work does not adequately address the problem of large datasets and minimization of I/O costs.This paper presents a data clustering method named BIRCH (Balanced Iterative Reducing and Clustering using Hierarchies), and demonstrates that it is especially suitable for very large databases. BIRCH incrementally and dynamically clusters incoming multi-dimensional metric data points to try to produce the best quality clustering with the available resources (i.e., available memory and time constraints). BIRCH can typically find a good clustering with a single scan of the data, and improve the quality further with a few additional scans. BIRCH is also the first clustering algorithm proposed in the database area to handle "noise" (data points that are not part of the underlying pattern) effectively.We evaluate BIRCH's time/space efficiency, data input order sensitivity, and clustering quality through several experiments. We also present a performance comparisons of BIRCH versus CLARANS, a clustering method proposed recently for large datasets, and show that BIRCH is consistently superior.},
+  booktitle = {Proceedings of the 1996 ACM SIGMOD International Conference on Management of Data},
+  pages     = {103–114},
+  numpages  = {12},
+  location  = {Montreal, Quebec, Canada},
+  series    = {SIGMOD '96}
+}
+
+@article{cdlib2019,
+  author  = {Rossetti, Giulio
+             and Milli, Letizia
+             and Cazabet, R{\'e}my},
+  title   = {{CDLIB}: a python library to extract, compare and evaluate communities from complex networks},
+  journal = {Applied Network Science},
+  volume  = {4},
+  number  = {52},
+  pages   = {2364--8228},
+  year    = {2019},
+  doi     = {10.1007/s41109-019-0165-9}
+}
+
+@article{igraph2006,
+  author  = {Gabor Csardi 
+             and Tamas Nepusz},
+  title   = {The igraph software package for complex network research},
+  journal = {InterJournal},
+  volume  = {Complex Systems},
+  pages   = {1695},
+  year    = {2006},
+  url     = {https://igraph.org}
+}
+
+@misc{comboRepo,
+  author       = {Philipp Kats
+                  and Alexander Belyi},
+  howpublished = {\url{https://github.com/Casyfill/pyCombo.git}},
+  title        = {{COMBO} Repository},
+  year         = {2026}
+}
+
+@misc{hollocouRepo,
+  author       = {Alexandre Hollocou},
+  howpublished = {\url{https://github.com/ahollocou/graph-streaming.git}},
+  title        = {{Hollocou} Repository},
+  year         = {2026}
+}
+
+@misc{vieclusRepo,
+  author       = {Christian Schulz
+                  and Daniel Seemaier},
+  howpublished = {\url{https://github.com/VieClus/VieClus.git}},
+  title        = {{VieClus} Repository},
+  year         = {2026}
+}
+
+@misc{dmonRepo,
+  author       = {Tsitsulin, Anton 
+                  and Palowitch, John 
+                  and Perozzi, Bryan 
+                  and M\"uller, Emmanuel},
+  howpublished = {\url{https://github.com/google-research/google-research.git}},
+  title        = {{DMoN} Repository},
+  year         = {2026}
+}
+
+@misc{commdgiRepo,
+  author       = {Zhang, Tianqi 
+                  and Xiong, Yun 
+                  and Zhang, Jiawei 
+                  and Zhang, Yao 
+                  and Jiao, Yizhu 
+                  and Zhu, Yangyong},
+  howpublished = {\url{https://github.com/FDUDSDE/CommDGI.git}},
+  title        = {{CommDGI} Repository},
+  year         = {2026}
+}
+
+@misc{gnnsRepo,
+  author       = {Alexander Belyi},
+  howpublished = {\url{https://github.com/Alexander-Belyi/GNNS.git}},
+  title        = {{GNNS} Repository},
+  year         = {2026}
+}
+
+@misc{ucodeRepo,
+  author       = {Moradan, Atefeh 
+                  and Draganov, Andrew 
+                  and Mottin, Davide 
+                  and Assent, Ira},
+  howpublished = {\url{https://github.com/AU-DIS/UCODE.git}},
+  title        = {{UCoDe} Repository},
+  year         = {2026}
+}
+
+@misc{dgclusterRepo,
+  author       = {Mert Kosan},
+  howpublished = {\url{https://github.com/pyrobits/DGCluster.git}},
+  title        = {{DGCluster} Repository},
+  year         = {2026}
+}
+
+@misc{magiRepo,
+  author       = {Jintang Li},
+  howpublished = {\url{https://github.com/EdisonLeeeee/MAGI.git}},
+  title        = {{MAGI} Repository},
+  year         = {2026}
+}
+
+@misc{bayanRepo,
+  author       = {Mahdi Mostajabdaveh
+                  and Samin Aref},
+  howpublished = {\url{https://github.com/saref/bayan.git}},
+  title        = {{Bayan} Repository},
+  year         = {2026}
+}
+
+@misc{clustreRepo,
+  author       = {Adil Chhabra},
+  howpublished = {\url{https://github.com/KaHIP/CluStRE.git}},
+  title        = {{CluStRE} Repository},
+  year         = {2026}
+}
+
+@misc{limRepo,
+  author       = {Hong Wang},
+  howpublished = {\url{https://github.com/wuanghoong/Less-is-More.git}},
+  title        = {{LIM} Repository},
+  year         = {2026}
+}
+
+@article{danon2005comparing,
+  title   = {Comparing community structure identification},
+  author  = {Danon, Leon and Diaz-Guilera, Albert and Duch, Jordi and Arenas, Alex},
+  journal = {Journal of Statistical Mechanics: Theory and Experiment},
+  volume  = {2005},
+  number  = {9},
+  pages   = {2364--8228},
+  year    = {2005},
+  doi     = {10.1088/1742-5468/2005/09/P09008}
+}
+\end{filecontents*}
 
 \end{document}

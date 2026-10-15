@@ -45,3 +45,12 @@ __pycache__/
 .cb_work/
 scripts/assortativity/*
 scripts/feature_std/*
+
+paper/*.out
+paper/*.log
+paper/*.blg
+paper/*.bbl
+paper/*.aux
+paper/*.cut
+paper/*.synctex.gz
+paper/manuscript_natcomm.bib
