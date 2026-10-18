@@ -48,7 +48,7 @@
 
 \begin{abstract}
   \noindent
-  Modularity maximization is one of the most widely used objective functions for community detection in networks, balancing intra-community connectivity against a random null model. Over two decades, algorithmic development has split into two largely isolated research communities: classical discrete optimization heuristics operating on topology alone, and deep learning architectures, primarily graph neural networks (GNNs), that integrate node attributes into continuous modularity relaxations. Because each line of work evaluates almost exclusively against baselines within its own paradigm, practical trade-offs among optimization quality, scalability, and hyperparameter sensitivity remain unexplored. Here, we present a systematic experimental benchmark evaluating 18 representative graph clustering algorithms, centered on modularity maximization alongside key non-modularity reference baselines across seven algorithmic paradigms (greedy agglomerative, multilevel, memetic, streaming, flow/spectral, exact integer linear programming, and neural/GNNs). We evaluate methods across real-world attributed networks, large-scale pure topology benchmarks up to 3.3 billion edges, and synthetic graphs under controlled topological and attribute signal degradation. Across three standardized evaluation protocols isolating out-of-the-box defaults, hardware acceleration, and hyperparameter tuning, our findings reveal clear trade-offs: classical heuristics (notably \textsc{VieClus} and \textsc{Leiden}) dominate pure modularity and scalability without parameter tuning, while GNN-based methods excel in ground-truth community recovery when informative node attributes exist. However, GNNs require heavy hyperparameter tuning, have lower memory ceilings due to accelerator VRAM constraints, and suffer substantial performance drops as attributes degrade. We additionally contribute a unified, open-source framework for interfacing all the evaluated clustering algorithms, supporting reproducibility and future benchmarking.
+  Modularity maximization is one of the most widely used objective functions for community detection in networks, balancing intra-community connectivity against a random null model. Over two decades, algorithmic development has split into two largely isolated research communities: classical discrete optimization heuristics operating on topology alone, and deep learning architectures, primarily graph neural networks (GNNs), that integrate node attributes into continuous modularity relaxations. Because each line of work evaluates almost exclusively against baselines within its own paradigm, practical trade-offs among optimization quality, scalability, and hyperparameter sensitivity remain unexplored. Here, we present a systematic experimental benchmark evaluating 17 representative graph clustering algorithms, centered on modularity maximization alongside key non-modularity reference baselines across seven algorithmic paradigms (greedy agglomerative, multilevel, memetic, streaming, flow/spectral, exact integer linear programming, and neural/GNNs). We evaluate methods across real-world attributed networks, large-scale pure topology benchmarks up to 3.3 billion edges, and synthetic graphs under controlled topological and attribute signal degradation. Across three standardized evaluation protocols isolating out-of-the-box defaults, hardware acceleration, and hyperparameter tuning, our findings reveal clear trade-offs: classical heuristics (notably \textsc{VieClus} and \textsc{Leiden}) dominate pure modularity and scalability without parameter tuning, while GNN-based methods excel in ground-truth community recovery when informative node attributes exist. However, GNNs require heavy hyperparameter tuning, have lower memory ceilings due to accelerator VRAM constraints, and suffer substantial performance drops as attributes degrade. We additionally contribute a unified, open-source framework for interfacing all the evaluated clustering algorithms, supporting reproducibility and future benchmarking.
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
@@ -68,7 +68,7 @@ Despite existing surveys~\cite{Liu2020, Jin2023, survey2023, Li2024, liang2024, 
 \subsection*{Contributions}
 
 \begin{itemize}
-	\item We present the first large-scale experimental benchmark that jointly evaluates classical heuristics and modern learning-based algorithms across 18 representative modularity-based clustering methods.
+	\item We present the first large-scale experimental benchmark that jointly evaluates classical heuristics and modern learning-based algorithms across 17 representative modularity-based clustering methods.
 	\item We release a unified open-source experimental framework that adapts both classical and learning-based methods behind a common interface, enabling reproducible benchmarking and future research.
 	\item We establish a conceptual taxonomy and comparative survey organizing modularity-based algorithms across seven optimization paradigms, detailing how classical discrete heuristics and deep GNN architectures formulate and optimize modularity objectives.
 	\item We provide comprehensive empirical insights across three standardized evaluation protocols (default settings, hardware acceleration, and per-instance hyperparameter tuning) evaluated on real-world attributed graphs, large-scale benchmarks up to 3.3 billion edges, and synthetic graphs under controlled signal degradation. Our findings uncover significant trade-offs: classical heuristics (\textsc{VieClus} and \textsc{Leiden}) dominate pure modularity and scalability without tuning, whereas GNNs excel when attributes align with ground truth but incur a steep hyperparameter tuning tax and strict accelerator VRAM capacity limits.
@@ -255,11 +255,11 @@ Li et al.~\cite{Li2024} compare classical and deep learning methods, but limit c
     \vspace{0.5em}
     \centering
     \small
-    \begin{tabular}{lccccccc}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc}
         \toprule
         Method & Year & Code & Source & Parallel & Fixed $k$ & Features & Py \\
         \midrule
-        \multicolumn{8}{l}{\textit{\textbf{Benchmarked Methods (Integrated into Framework)}}} \\
+        \multicolumn{8}{@{}l}{\textit{\textbf{Benchmarked Methods (Integrated into Framework)}}} \\
         \textsc{CNM}~\cite{cnm2004}                & 2004 & $\star\star$ & \cite{cdlib2019}     & --         & --         & --         & \checkmark \\
         \textsc{Walktrap}~\cite{walktrap2005}      & 2005 & $\star\star$ & \cite{igraph2006}    & --         & --         & --         & \checkmark \\
         \textsc{Louvain}~\cite{louvain2008}        & 2008 & $\star\star$ & \cite{igraph2006}    & --         & --         & --         & \checkmark \\
@@ -278,14 +278,14 @@ Li et al.~\cite{Li2024} compare classical and deep learning methods, but limit c
         \textsc{CluStRE}~\cite{clustre2025}        & 2025 & $\star\star$ & \cite{clustreRepo}   & --         & --         & --         & --         \\
         \textsc{LIM}~\cite{lim2025}                & 2025 & $\star$      & \cite{limRepo}       & \checkmark & --         & \checkmark & --         \\
         \midrule
-        \multicolumn{8}{l}{\textit{\textbf{Surveyed Literature Baselines (Unavailable / Not Benchmarked)}}} \\
+        \multicolumn{8}{@{}l}{\textit{\textbf{Surveyed Literature Baselines (Unavailable / Not Benchmarked)}}} \\
         \textsc{WT}~\cite{wt2007}                  & 2007 & $\times$     &                      & --         & --         & --         & --         \\
         \textsc{CGGCi-RG}~\cite{cggci_rg2012}      & 2012 & $\times$     &                      & --         & --         & --         & --         \\
         \textsc{VNS}~\cite{vns2012}                & 2012 & $\times$     &                      & --         & --         & --         & --         \\
         \textsc{ADVNDS}~\cite{advnds2019}          & 2017 & $\times$     &                      & --         & --         & --         & --         \\
         \textbf{\textsc{MaxSAT}}~\cite{maxsat2025} & 2025 & $\times$     &                      & --         & --         & --         & --         \\
         \bottomrule
-    \end{tabular}
+    \end{tabular*}
 \end{table}
 
 %First,  The main motivation for this survey, and reason for focusing primarily on modularity optimization, is highlighted in Figure~\ref{fig:comparisons}. Despite high interest from multiple scientific communities and the rapid development of new methods, comparisons between methods remain fragmented. This is a problem for both practitioners who want the best algorithm and for future researchers who need to decide which baseline algorithms to use.
@@ -429,29 +429,30 @@ Whenever possible, we use the authors' implementations or the most commonly used
 
 \subsection{Parameter Settings}
 
-Where possible, we use the default configurations for all algorithms. Here, we detail the exact parameters chosen for each algorithm. Algorithms that are not listed do not expose any parameters.
+Where possible, we use the default configurations for all algorithms. To reflect how algorithms are typically used in practice, our primary evaluation (\textbf{Protocol~A}) deliberately avoids any dataset-specific or instance-specific parameter tuning, benchmarking available implementations out-of-the-box with their author-recommended defaults. To isolate the effects of hardware resources and hyperparameter sensitivity, we complement Protocol~A with two targeted protocols: \textbf{Protocol~S} (scalability and accelerators), which varies CPU thread counts and GPU acceleration while holding algorithm hyperparameters fixed at their defaults; and \textbf{Protocol~B} (per-instance parameter tuning), which runs a 50-trial Bayesian hyperparameter search (via Optuna) maximizing modularity on representative small graphs.
 
-\paragraph*{\textbf{Parameter selection policy.}}
-To reflect how algorithms are typically used in practice, our primary evaluation (\textbf{Protocol~A}) deliberately avoids any dataset-specific or instance-specific parameter tuning, benchmarking available implementations out-of-the-box with their author-recommended defaults. To isolate the effects of hardware resources and hyperparameter sensitivity, we complement Protocol~A with two targeted protocols: \textbf{Protocol~S} (scalability and accelerators), which varies CPU thread counts and GPU acceleration while holding algorithm hyperparameters fixed at their defaults; and \textbf{Protocol~B} (per-instance parameter tuning), which runs a 50-trial Bayesian hyperparameter search (via Optuna) maximizing modularity on representative small graphs. Under Protocol~A, the default configurations are:
+\paragraph*{\textbf{Default configurations (Protocol~A).}}
+Among classical and topology-only methods (\textsc{CNM} exposes no tunable parameters), \textsc{Louvain}, \textsc{COMBO}, \textsc{Leiden} ($\beta = 0.01$, $2$ iterations), and \textsc{Bayan} (using the Gurobi LP/ILP solver~\cite{gurobi} with optimality gap $10^{-3}$) all use a default resolution of $1$. \textsc{Walktrap} uses a random-walk length of $4$, \textsc{Infomap} uses $1$ outer trial, \textsc{Hollocou} sets the maximum volume threshold to $v_{\max} = 10\,000$, \textsc{CluStRE} runs in its one-pass light streaming mode optimizing modularity, \textsc{VieClus} runs with a $1$-hour time limit, and \textsc{GNNS} uses the \textsc{GNNS100} configuration ($100$ random initializations, keep fraction $1/3$). The default architectures and training hyperparameters for the six neural methods are summarized in Table~\ref{tab:gnn_defaults}.
 
-\begin{itemize}
-    \item \textsc{Walktrap}: walk length $=4$.
-    \item \textsc{Louvain}: resolution $=1$.
-    \item \textsc{Infomap}: trials $=1$.
-    \item \textsc{COMBO}: resolution $=1$.
-    \item \textsc{Hollocou}: $v_{\max}=10\,000$.
-    \item \textsc{VieClus}: time limit $=1$ hour.
-    \item \textsc{Leiden}: resolution $=1$, $\beta=0.01$, iterations $=2$.
-    \item \textsc{DMoN}: 1 hidden layer (512), $1\,000$ epochs, collapse regularization $=1.0$, dropout $=0.5$, lr $=0.001$.
-    \item \textsc{CommDGI}: 1 hidden layer (64), $1\,000$ epochs, $\alpha=2.0$, $\beta=5.0$, temperature $=30$, lr $=0.001$.
-    \item \textsc{GNNS}: \textsc{GNNS100} variant (100 random configurations, keep fraction $=1/3$).
-    \item \textsc{UCoDe}: 1 hidden layer (256), $1\,000$ epochs, weight decay $=0.1$, lr $=0.001$.
-    \item \textsc{DGCluster}: GCN backbone, hidden layers (256, 128), 300 epochs, BIRCH threshold $=0.5$, lr $=0.001$.
-    \item \textsc{MAGI}: 2 hidden layers (256, 256), 400 epochs, neighbor samples $(10, 10)$, walk length $=4$, walks $=20$, $\tau=0.5$, lr $=0.01$.
-    \item \textsc{Bayan}: Gurobi LP/ILP solver~\cite{gurobi}, optimality gap $=10^{-3}$, resolution $=1$.
-    \item \textsc{CluStRE}: light mode, modularity objective.
-    \item \textsc{LIM}: 1 hidden layer (512), 300 epochs, Louvain resolution $=0.3$, temperature $=30$, $\alpha=0.001$, \hbox{lr $=0.001$.}
-\end{itemize}
+\begin{table}[h]
+    \centering
+    \caption{Default architectures and training hyperparameters for the benchmarked neural clustering methods under Protocol~A.}
+    \label{tab:gnn_defaults}
+    \vspace{0.5em}
+    \small
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrrl}
+        \toprule
+        Method & Hidden Layers & Epochs & LR & Method-Specific Hyperparameters \\
+        \midrule
+        \textsc{DMoN}      & $1 \times (512)$      & \numprint{1000} & $0.001$ & collapse regularization $= 1.0$, dropout $= 0.5$ \\
+        \textsc{CommDGI}   & $1 \times (64)$       & \numprint{1000} & $0.001$ & $\alpha = 2.0$, $\beta = 5.0$, temperature $= 30$ \\
+        \textsc{UCoDe}     & $1 \times (256)$      & \numprint{1000} & $0.001$ & weight decay $= 0.1$ \\
+        \textsc{DGCluster} & $2 \times (256, 128)$ & \numprint{300}  & $0.001$ & GCN backbone, BIRCH threshold $= 0.5$ \\
+        \textsc{MAGI}      & $2 \times (256, 256)$ & \numprint{400}  & $0.010$ & samples $(10, 10)$, walks $= 20 \times 4$, $\tau = 0.5$ \\
+        \textsc{LIM}       & $1 \times (512)$      & \numprint{300}  & $0.001$ & Louvain res.\ $= 0.3$, temp.\ $= 30$, $\alpha = 0.001$ \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
 
 For stochastic algorithms with an explicitly specified seed, we use the run ID as the seed for each of the five runs. While many of these algorithms include multiple configurations, we use either the configuration recommended by the authors or the default configuration provided with the implementation.
 
@@ -464,7 +465,7 @@ We consider three datasets commonly used in the literature. The first set consis
     \caption{\textsc{Ground-Truth} graphs. The $|C|$ column shows the number of clusters and $x$ the number of features.}
     \label{tab:ground_truth_graphs}
     \vspace{0.5em}
-    \begin{tabular}{lrrrr}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrr}
         \toprule
         Instance         & $n$                & $m$                 & $x$ & $|C|$         \\
         \midrule
@@ -479,7 +480,7 @@ We consider three datasets commonly used in the literature. The first set consis
         Reddit           & \numprint{232965}  & \numprint{57307946} & \numprint{602}  & \numprint{41} \\
         ogbn-Products    & \numprint{2449029} & \numprint{61859012} & \numprint{100}  & \numprint{47} \\
         \bottomrule
-    \end{tabular}
+    \end{tabular*}
 \end{table}
 
 \section{Experiments}\label{sec:experiments}
