@@ -136,7 +136,7 @@ or contrastive criteria defined over these representations or over derived \emph
 
         \node[paper, ae] (advnds) at (1, 5) {ADVNDS~\cite{advnds2019}};
         \node[paper, ae] (vns) at (-0.25, 4) {VNS~\cite{vns2012}};
-        \node[paper, ae] (cggci) at (2, 4) {CGGCi~\cite{vns2012}};
+        \node[paper, ae] (cggci) at (2, 4) {CGGCi~\cite{cggci_rg2012}};
         \node[paper, ae] (vieclus) at (1, 3) {VieClus~\cite{vieclus2018}};
         \node[paper, ae] (maxsat) at (0, 2) {MaxSAT~\cite{maxsat2025}};
         \node[paper, ae] (clustre) at (2, 2) {CluStRE~\cite{clustre2025}};
@@ -164,18 +164,18 @@ or contrastive criteria defined over these representations or over derived \emph
 
         % COMBO
         \draw[cite] (combo.east) to[out=0, in=180, looseness=1.5] (louvain.west);
-        \draw[cite] (combo.east) to (bayan.west);
 
         % Leiden
         \draw[cite] (leiden.-40) to (louvain.40);
 
         % Bayan
+        \draw[cite] (bayan.west) to (combo.east);
         \draw[cite] (bayan.-50) to (louvain.150);
         \draw[cite] (bayan.50) to (leiden.-150);
         \draw[cite] (bayan.south west) to (walktrap.north east);
 
-        % Walktrap
-        \draw[cite] (walktrap) to (louvain);
+        % Louvain -> Walktrap
+        \draw[cite] (louvain) to (walktrap);
 
         % Hollocou
         \draw[cite] (hollocou.east) to[out=0, in=180, looseness=1.5] (louvain.west);
@@ -239,9 +239,9 @@ or contrastive criteria defined over these representations or over derived \emph
 \end{figure*}
 We review objective functions and algorithmic paradigms for community detection and introduce the taxonomy used in this work.
 
-Many clustering quality measures have been proposed, including \emph{coverage}, \emph{performance}~\cite{Gaertler2005}, \emph{inter-cluster conductance}~\cite{kannan2004clusterings}, \emph{surprise}~\cite{arnau2004iterative}, and \emph{modularity}~\cite{girvan2002}. Coverage, the fraction of intra-cluster edges, is simple but favors trivial solutions. Modularity mitigates this by comparing observed coverage to its expectation under a null model, and has become one of the most widely used objectives for community detection~\cite{licommunitydetectionsurvey24}. It is the primary quality function in large-scale benchmarks such as the DIMACS challenges~\cite{dimacschallengegraphpartandcluster} and is the focus of this work. While Aref et al.~\cite{survey2023} report that modularity heuristics rarely attain optimal solutions, Ans{'o}tegui et al.~\cite{maxsat2025} show that the \textsc{VieClus}'s modularity maximization heuristic routinely computes optimal solutions on small to medium-sized graphs.
+Many clustering quality measures have been proposed, including \emph{coverage}, \emph{performance}~\cite{Gaertler2005}, \emph{inter-cluster conductance}~\cite{kannan2004clusterings}, \emph{surprise}~\cite{arnau2004iterative}, and \emph{modularity}~\cite{girvan2002}. Coverage, the fraction of intra-cluster edges, is simple but favors trivial solutions. Modularity mitigates this by comparing observed coverage to its expectation under a null model, and has become one of the most widely used objectives for community detection~\cite{licommunitydetectionsurvey24}. It is the primary quality function in large-scale benchmarks such as the DIMACS challenges~\cite{dimacschallengegraphpartandcluster} and is the focus of this work. While Aref et al.~\cite{survey2023} report that modularity heuristics rarely attain optimal solutions, Ans{\'o}tegui et al.~\cite{maxsat2025} show that the \textsc{VieClus} modularity maximization heuristic routinely computes optimal solutions on small to medium-sized graphs.
 %A well-known limitation in modularity is the resolution limit~\cite{resolution2007},which can cause small but well-defined communities to be merged into larger ones. Many modularity-based algorithms provide a \textsc{resolution} parameter to detect smaller communities in large graphs~\cite{louvain2008, leiden2019}. 
-Alternative objectives capture complementary notions of community structure: \textit{Weighted Community Cluster} (WCC) maximizes the number of triangles within each community~\cite{wcc2012}, implemented in the  \textsc{Scalable Community Detection} algorithm~\cite{scd2014}, and the \textit{Map Equation}, which measures the expected description length of a random walk~\cite{infomap2008}, used in \textsc{Infomap}~\cite{infomap2008}, \textsc{Infoflow}~\cite{infoflow2019}, and the recent learning-based \textsc{Neuromap}~\cite{neuromap2024}. We do not include all the methods based on alternative objective functions in order to maintain our focus on modularity maximization.
+Alternative objectives capture complementary notions of community structure: \textit{Weighted Community Cluster} (WCC) maximizes the number of triangles within each community~\cite{wcc2012}, implemented in the \textsc{Scalable Community Detection} algorithm~\cite{scd2014}, and the \textit{Map Equation}, which measures the expected description length of a random walk~\cite{infomap2008}, used in \textsc{Infomap}~\cite{infomap2008}, \textsc{Infoflow}~\cite{infoflow2019}, and the recent learning-based \textsc{Neuromap}~\cite{neuromap2024}. We do not include all the methods based on alternative objective functions in order to maintain our focus on modularity maximization.
 
 Classical modularity-based algorithms use discrete optimization heuristics that consider graph topology only. More recently, learning-based approaches to community detection have been proposed, motivated by the development of GNNs that can model node attributes as feature vectors to capture additional graph information beyond topology alone. 
 These methods typically optimize training objectives that are explicitly aligned with modularity or related structural principles.
@@ -250,7 +250,7 @@ Despite extensive work in both paradigms, existing surveys do not provide a unif
 Li et al.~\cite{Li2024} compare classical and deep learning methods, but limit comparison to Python-based solvers, thus lacking a comprehensive comparison of the state-of-the-art. In addition, algorithmic papers in both paradigms rarely evaluate against methods outside their own class (see Figure~\ref{fig:comparisons}).
 
 \begin{table}[t]
-    \caption{Overview of surveyed community detection methods and software characteristics. The upper block lists the 17 methods integrated into our unified benchmarking framework, the lower block lists surveyed methods whose implementations are unavailable or not evaluated. \textit{Code} reflects original software maturity prior to our integration ($\star\star$: production/package release with standard I/O; $\star$: research prototype adapted into our harness; $\times$: unreleased/unavailable). \textit{Parallel} indicates multi-threading or GPU support, \textit{Fixed $k$} denotes whether the number of clusters must be specified a priori, \textit{Features} indicates utilization of node attributes, and \textit{Py} indicates original availability in standard Python package repositories. Bold denotes exact solvers.}
+    \caption{Overview of surveyed community detection methods and software characteristics. The upper block lists the 17 methods integrated into our unified benchmarking framework; the lower block lists surveyed methods whose implementations are unavailable or not evaluated. \textit{Code} reflects original software maturity prior to our integration ($\star\star$: production/package release with standard I/O; $\star$: research prototype adapted into our harness; $\times$: unreleased/unavailable). \textit{Parallel} indicates multi-threading or GPU support; \textit{Fixed $k$} denotes whether the number of clusters must be specified a priori; \textit{Features} indicates utilization of node attributes; and \textit{Py} indicates original availability in standard Python package repositories. Bold denotes exact solvers.}
     \label{tab:comp}
     \vspace{0.5em}
     \centering
@@ -280,7 +280,7 @@ Li et al.~\cite{Li2024} compare classical and deep learning methods, but limit c
         \midrule
         \multicolumn{8}{l}{\textit{\textbf{Surveyed Literature Baselines (Unavailable / Not Benchmarked)}}} \\
         \textsc{WT}~\cite{wt2007}                  & 2007 & $\times$     &                      & --         & --         & --         & --         \\
-        \textsc{CGGCI}~\cite{cggci_rg2012}         & 2012 & $\times$     &                      & --         & --         & --         & --         \\
+        \textsc{CGGCi-RG}~\cite{cggci_rg2012}      & 2012 & $\times$     &                      & --         & --         & --         & --         \\
         \textsc{VNS}~\cite{vns2012}                & 2012 & $\times$     &                      & --         & --         & --         & --         \\
         \textsc{ADVNDS}~\cite{advnds2019}          & 2017 & $\times$     &                      & --         & --         & --         & --         \\
         \textbf{\textsc{MaxSAT}}~\cite{maxsat2025} & 2025 & $\times$     &                      & --         & --         & --         & --         \\
@@ -290,7 +290,7 @@ Li et al.~\cite{Li2024} compare classical and deep learning methods, but limit c
 
 %First,  The main motivation for this survey, and reason for focusing primarily on modularity optimization, is highlighted in Figure~\ref{fig:comparisons}. Despite high interest from multiple scientific communities and the rapid development of new methods, comparisons between methods remain fragmented. This is a problem for both practitioners who want the best algorithm and for future researchers who need to decide which baseline algorithms to use.
 
-This work addresses this gap by providing a comprehensive experimental comparison of modularity-based community detection algorithms under a unified framework. Here, we provide a taxonomy of the considered methods listed in Table~\ref{tab:comp}. We organize methods by \emph{optimization paradigm}, distinguishing between \emph{classical} combinatorial algorithms and \emph{learning-based} approaches with trainable parameters. Classical methods are further grouped by their dominant optimization mechanism (e.g., greedy, multilevel, or metaheuristic) and by computational setting (e.g., streaming and exact solvers). Learning-based methods are categorized by how modularity is used during training, separating approaches that directly optimize continuous relaxations of modularity from those that use modularity as a guiding signal within broader learning objectives. 
+This work addresses this gap by providing a comprehensive experimental comparison of modularity-based community detection algorithms under a unified framework. Here, we provide a taxonomy of the considered methods listed in Table~\ref{tab:comp}. We organize methods by \emph{optimization paradigm}, distinguishing between \emph{classical} combinatorial algorithms and \emph{learning-based} (or GNN-inspired continuous) approaches. Classical methods are further grouped by their dominant optimization mechanism (e.g., greedy, multilevel, or metaheuristic) and by computational setting (e.g., streaming and exact solvers). Learning-based methods are categorized by how modularity is used during training, separating approaches that directly optimize continuous relaxations of modularity from those that use modularity as a guiding signal within broader learning objectives. 
 Within each subgroup, algorithms are listed chronologically.
 
 \subsection{Classical Modularity Optimization Methods}
@@ -305,7 +305,7 @@ Starting from singleton communities (each vertex assigned to its own cluster), i
 The algorithm produces a dendrogram representing the full merge hierarchy and returns the clustering attaining maximum modularity. Its running time is $O(md \log n)$, where $d$ is the dendrogram depth.
 
 \textbf{Wakita--Tsurumi (\textsc{WT})}~\cite{wt2007} refines \textsc{CNM} by addressing its tendency to produce highly unbalanced merges that degrade scalability on large graphs.
-While preserving the same agglomerative structure, \textsc{WT} modifies merge selection to account for both modularity gain and a community-size ratio, biasing the process toward more balanced agglomerations and improving scalability.
+While preserving the same agglomerative structure, \textsc{WT} modifies merge selection to account for both modularity gain and a community-size consolidation ratio, biasing the process toward more balanced agglomerations and improving scalability.
 
 \textbf{\textsc{Louvain}}~\cite{louvain2008} replaces community-pair merging with greedy local vertex moves.
 Vertices are iteratively moved to neighboring communities whenever the induced modularity gain is positive.
@@ -319,21 +319,21 @@ This phase splits and restructures communities through probabilistic, non-greedy
 
 We include two widely used non-modularity baselines which rely on random walks to model how information or flow propagates through the network, providing an alternative perspective to modularity optimization.
 
-\textbf{\textsc{WalkTrap}}~\cite{walktrap2005} performs hierarchical clustering based on the intuition that random walks on a graph tend to get "trapped" into densely connected regions corresponding to communities. 
+\textbf{\textsc{Walktrap}}~\cite{walktrap2005} performs hierarchical clustering based on the intuition that short random walks on a graph tend to get ``trapped'' into densely connected regions corresponding to communities. 
 Each vertex is characterized by the probability distribution over vertices reached by a random walk starting from it, and a structural similarity distance between vertices (and communities) is defined by comparing these distributions. Communities are then obtained by agglomerative merging of the closest pairs under this distance, producing a dendrogram similar to \textsc{CNM}, which is then cut at the partition attaining maximal modularity. The algorithm runs in $O(m n d)$ time, where $d$ is the depth of the resulting dendrogram.
 
 \textbf{\textsc{Infomap}}~\cite{infomap2008} formulates community detection as an information-theoretic problem, seeking a clustering that minimizes the expected description length of a random walk under the map equation.
-It uses a \textsc{Louvain} inspired greedy multilevel search, augmented with fine- and coarse-tuning steps to escape local minima like \textsc{Leiden}.
+It uses a \textsc{Louvain}-inspired greedy multilevel search, augmented with fine- and coarse-tuning steps (submodule and supermodule movements) to escape local minima.
 
 \subsubsection{Metaheuristics and ensemble/hybrid search}
 
 Beyond greedy and multilevel heuristics, several methods apply metaheuristic or ensemble-learning strategies to modularity maximization.
-Representative examples include Variable Neighborhood Search (\textsc{VNS})~\cite{vns2012}, which systematically perturbs the current clustering to escape local optima, and ensemble-based approaches such as \textsc{CGGCi-RG}~\cite{cggci_rg2012}, which stabilize modularity optimization by consolidating recurring community structures across multiple runs.
+Representative examples include Variable Neighborhood Search (\textsc{VNS})~\cite{vns2012} and its decomposition-based extension \textsc{ADVNDS}~\cite{advnds2019}, which systematically perturb and decompose the current clustering to escape local optima, as well as ensemble-based approaches such as \textsc{CGGCi-RG}~\cite{cggci_rg2012}, which stabilize modularity optimization by consolidating recurring community structures across multiple runs.
 These methods combine diversification mechanisms (e.g., randomized perturbations or multiple initializations) with intensification via modularity-based local refinement.
 While more computationally expensive than purely greedy algorithms, such strategies often achieve higher modularity by exploring a larger search space.
 
-\textbf{\textsc{COMBO}}~\cite{combo2014} considers pairs of communities and evaluates full redistributions of vertices between them using Kernighan--Lin–style refinements, instead of relocating individual vertices as in \textsc{Louvain}.
-By unifying merges, splits, and partial recombinations, \textsc{COMBO} can escape local optima that trap multilevel greedy methods, at the cost of higher computational complexity. The algorithm runs in $O(n^2 C)$ time, where $C$ is the number of clusters.
+\textbf{\textsc{COMBO}}~\cite{combo2014} considers pairs of communities and evaluates full redistributions of vertices between them using Kernighan--Lin-style refinements, instead of relocating individual vertices as in \textsc{Louvain}.
+By unifying merges, splits, and partial recombinations, \textsc{COMBO} can escape local optima that trap multilevel greedy methods, at the cost of higher computational complexity. The authors report an upper bound on running time of $O(n^2 \log C)$, where $C$ is the number of clusters.
 
 \textbf{\textsc{VieClus}}~\cite{vieclus2018} further extends ensemble-based optimization by adopting a memetic (evolutionary) framework.
 Rather than refining a single partition, it maintains a population of clusterings and generates new solutions through recombination and mutation.
@@ -347,15 +347,13 @@ Streaming algorithms address this limitation by processing the graph incremental
 
 \textbf{\textsc{Hollocou}}~\cite{hollocou2017} is a one-pass edge-streaming algorithm.
 The algorithm starts from the singleton clustering and processes edges sequentially.
-For an arriving edge $(u,v)$, \textsc{Hollocou} decides whether to merge the communities of $u$ and $v$ based on their current community volumes.
+For an arriving edge $(u,v)$, \textsc{Hollocou} decides whether one endpoint should join the other's community based on their current community volumes.
 If both volumes are below a fixed threshold, the node belonging to the smaller-volume community joins the other.
-The authors show that under random stream orderings, this local, volume-based merging rule corresponds to a greedy optimization of modularity in the streaming setting.
+The authors show that under random stream orderings, this local, volume-based assignment rule corresponds to a greedy optimization of modularity in the streaming setting.
 
 \textbf{\textsc{CluStRE}}~\cite{clustre2025} follows the node-streaming model unlike the edge-streaming model of \textsc{Hollocou}. Here, nodes arrive sequentially together with their neighborhood lists.
 Starting from singleton clustering, each node is assigned to the cluster among its neighbors that maximizes the modularity gain similar to a \textsc{Louvain} local move.
-During streaming, a quotient graph is constructed whose nodes represent clusters and whose weighted edges summarize inter- and intra-cluster connectivity, preserving modularity exactly.
-This quotient graph is optionally refined using \textsc{VieClus}.
-The graph may be re-streamed to perform further improvements until convergence.
+In its multi-stage configurations, a quotient graph is constructed during streaming whose nodes represent clusters and whose weighted edges summarize inter- and intra-cluster connectivity, preserving modularity exactly; this quotient graph is optionally refined using \textsc{VieClus}, and the graph may be re-streamed until convergence. In our benchmark, we evaluate the one-pass \emph{light} streaming configuration to measure pure streaming performance.
 
 \subsubsection{Exact solvers}
 
@@ -369,22 +367,22 @@ Branching decisions either contract node triples into supernodes or discourage t
 
 \subsection{Learning-Based Methods}
 
-\subsubsection{Continuous and differentiable modularity maximization}\hfill
+\subsubsection{Continuous and differentiable modularity maximization}
 
-\noindent These approaches replace discrete community assignments with continuous representations, often learned using GNNs, expressing modularity as a continuous or differentiable objective optimized over node representations or soft cluster assignments.
+These approaches replace discrete community assignments with continuous representations, often learned using GNNs, expressing modularity as a continuous or differentiable objective optimized over node representations or soft cluster assignments.
 
 \textbf{\textsc{DMoN}}~\cite{dmon2023} introduces a differentiable relaxation of modularity and realizes it using a GNN.
 A GNN followed by a softmax function produces soft cluster assignments, which are optimized using an objective whose main term corresponds to modularity in spectral form. 
 The objective further includes a \emph{collapse regularization} term that prevents trivial solutions in which all nodes are assigned to the same cluster.
 
-\textbf{\textsc{GNNS}}~\cite{gnns2022} formulates modularity maximization as a continuous optimization process over soft cluster assignments.
+\textbf{\textsc{GNNS}}~\cite{gnns2022} is a GNN-inspired algorithm that formulates modularity maximization as a recurrent continuous optimization process directly over soft cluster assignments (without trainable neural weights or node features).
 Starting from random assignments, node assignments are iteratively updated by combining previous assignments with modularity-weighted aggregation of neighboring assignments.
 Activation functions and normalization steps amplify valid assignments supported by positive modularity contributions.
 The procedure is repeated for multiple random initializations and parameter choices, and the best converged solution is discretized to obtain the final clustering.
 
 Most learning-based modularity methods, including \textsc{DMoN}, require the number of communities to be specified a priori. \textbf{\textsc{DGCluster}}~\cite{dgcluster2024} eliminates this requirement by learning node embeddings with a GNN and clustering implicitly through a joint optimization objective.
-Node embeddings learned by a GNN induce soft pairwise community assignments, which parameterize a differentiable modularity objective.
-A secondary loss incorporates auxiliary local information, such as partial labels or clusterings from classical heuristics, by aligning embedding similarities with a pairwise similarity matrix.
+Node embeddings learned by a GNN are projected onto the positive unit hypersphere to induce soft pairwise community memberships, which parameterize a differentiable modularity objective.
+A secondary loss optionally incorporates auxiliary local information, such as partial labels or clusterings from classical heuristics, by aligning embedding similarities with a pairwise similarity matrix.
 After end-to-end optimization, final communities are obtained by clustering the learned embeddings using \textsc{BIRCH}~\cite{birch1996}.
 
 While \textsc{DGCluster} removes the need to predefine the number of communities, it relies on jointly optimizing multiple objectives which increases model and training complexity.
@@ -398,9 +396,9 @@ Soft cluster assignments are computed by measuring similarity between node repre
 These methods do not optimize modularity directly, but instead use it to guide representation learning through alternative objectives.
 
 \textbf{Community Deep Graph Infomax (\textsc{CommDGI})}~\cite{commdgi2020} learns community-aware node representations by jointly maximizing mutual information between nodes and the graph and between nodes and their communities.
-Unlike other methods that directly optimize modularity, modularity is used here as an auxiliary objective together with mutual information, via a soft $k$-means–style clustering layer, to encourage structurally coherent communities.
+Unlike other methods that directly optimize modularity, modularity is used here as an auxiliary objective together with mutual information, via a soft $k$-means-style clustering layer, to encourage structurally coherent communities.
 
-\textbf{Unified Community Detection (\textsc{UCoDe})}~\cite{ucode2023} optimizes a single contrastive objective derived from the modularity matrix, encouraging high similarity within communities and low similarity across communities.
+\textbf{Unified Community Detection (\textsc{UCoDe})}~\cite{ucode2023} optimizes a single contrastive objective over the community-wise modularity matrix $C^\top B C$, encouraging high intra-community modularity along the diagonal and low inter-community values off the diagonal.
 This contrastive formulation allows \textsc{UCoDe} to recover non-overlapping communities while naturally supporting overlap, without requiring separate objectives or post-processing.
 Compared to combined-objective methods such as \textsc{CommDGI}, \textsc{UCoDe} uses a single, interpretable loss and requires minimal hyperparameter tuning.
 
@@ -410,7 +408,7 @@ A GNN encoder is trained using a community-aware contrastive loss, with mini-bat
 In our benchmark, we evaluate the authors' scalable GraphSAGE minibatch implementation; their alternative full-graph GCN formulation constructs a dense $n \times n$ affinity matrix, incurring an $\mathcal{O}(n^2)$ computational footprint that is prohibitive on larger graphs.
 
 \section{Evaluation Framework}\label{sec:evaluation}
-In this section, we describe the benchmarking methodology used to evaluate modularity-based graph clustering algorithms under controlled and reproducible conditions. A central contribution is the integration of 17 clustering algorithms behind a unified benchmarking interface, offering a fair comparison across diverse implementations. In addition to enabling the experiments presented in this survey, it will also serve as an openly available resource for future work on graph clustering, simplifying the evaluation of older methods on new data or machines. This section also includes details on the datasets we used to evaluate the clustering algorithms.
+In this section, we describe the benchmarking methodology used to evaluate modularity-based graph clustering algorithms under controlled and reproducible conditions. A central contribution is the integration of 17 clustering algorithms behind a unified benchmarking interface, offering a fair comparison across diverse implementations. In addition to enabling the experiments presented in this work, it will also serve as an openly available resource for future work on graph clustering, simplifying the evaluation of older methods on new data or machines. This section also includes details on the datasets we used to evaluate the clustering algorithms.
 
 \subsection{Benchmarking Interface}
 
@@ -418,7 +416,7 @@ As shown in Table~\ref{tab:comp}, over half of the clustering algorithms in the 
 
 To address this problem, we aim to provide an interface with a single common input and output format and consistent time and memory monitoring. The interface exposes a common set of inputs, while allowing solver-specific parameters to be provided when applicable:
 \[\textsc{Cluster}(G, T_{\max}, p, k, M_{\max}, \mathcal{F})\]
-where $G$ is the input graph, $T_{\max}$ is the wall-clock time limit, $p$ is the number of threads available to the algorithm, $k$ is the number of clusters to compute, $M_{\max}$ is the memory limit in gigabytes, and~$\mathcal{F}$ are the graph features. Parameters $p$, $k$, and~$\mathcal{F}$ are only used by a subset of the solvers. From Table~\ref{tab:comp}, parallel solvers use $p$, those that compute a fixed number of clusters use $k$, and any solver that uses graph features can optionally accept $\mathcal{F}$. When $\mathcal{F}$ is not provided, but the solver expects features, a single 1.0 value is assigned to each vertex as the feature. This interface is designed to capture the most common operational requirements across clustering algorithms while enforcing consistent resource limits and output reporting.
+where $G$ is the input graph, $T_{\max}$ is the wall-clock time limit, $p$ is the number of threads available to the algorithm, $k$ is the number of clusters to compute, $M_{\max}$ is the memory limit in gigabytes, and~$\mathcal{F}$ are the graph features. Parameters $p$, $k$, and~$\mathcal{F}$ are only used by a subset of the solvers. From Table~\ref{tab:comp}, parallel solvers use $p$, those that compute a fixed number of clusters use $k$, and any solver that uses graph features can optionally accept $\mathcal{F}$. When $\mathcal{F}$ is not provided by the dataset, but the solver expects features, we generate a 69-dimensional synthetic feature vector (\texttt{ldp+rni}) for each vertex by concatenating a 5-dimensional standardized Local Degree Profile (vertex degree and the minimum, maximum, mean, and standard deviation of neighbor degrees) with a 64-dimensional seeded Gaussian Random Node Initialization, providing structural and node-distinguishing signals without quadratic memory overhead. Similarly, when a solver requires a target cluster count $k$, labeled \textsc{Ground-Truth} graphs provide $|C|$ (or $\max(16, |C|)$ for over-provisioning methods \textsc{DMoN}, \textsc{UCoDe}, and \textsc{GNNS}, following their original evaluation protocols), while unlabeled \textsc{DIMACS} graphs use $k = \lceil\sqrt{n}\rceil$. This interface is designed to capture the most common operational requirements across clustering algorithms while enforcing consistent resource limits and output reporting.
 
 %Regarding code changes, we have tried to make as few modifications to the original source code as possible.
 Whenever possible, we use the authors' implementations or the most commonly used library implementation. The exact setup for each algorithm is described in our openly available GitHub repository\footnote{\url{https://github.com/ClusterBenchmark/ClusterBenchmark}}. We make only minimal, deliberate modifications where necessary to ensure consistent timing, memory accounting, and output quality measures based on the following rules:
@@ -434,35 +432,38 @@ Whenever possible, we use the authors' implementations or the most commonly used
 Where possible, we use the default configurations for all algorithms. Here, we detail the exact parameters chosen for each algorithm. Algorithms that are not listed do not expose any parameters.
 
 \paragraph*{\textbf{Parameter selection policy.}}
-To reflect how algorithms are typically used in practice, we deliberately avoid any dataset-specific or instance-specific parameter tuning. Our goal is to benchmark available implementations as they are, rather than hypothetical optimal configurations that would require extensive tuning effort.
+To reflect how algorithms are typically used in practice, our primary evaluation (\textbf{Protocol~A}) deliberately avoids any dataset-specific or instance-specific parameter tuning, benchmarking available implementations out-of-the-box with their author-recommended defaults. To isolate the effects of hardware resources and hyperparameter sensitivity, we complement Protocol~A with two targeted protocols: \textbf{Protocol~S} (scalability and accelerators), which varies CPU thread counts and GPU acceleration while holding algorithm hyperparameters fixed at their defaults; and \textbf{Protocol~B} (per-instance parameter tuning), which runs a 50-trial Bayesian hyperparameter search (via Optuna) maximizing modularity on representative small graphs. Under Protocol~A, the default configurations are:
 
 \begin{itemize}
     \item \textsc{Walktrap}: walk length $=4$.
     \item \textsc{Louvain}: resolution $=1$.
+    \item \textsc{Infomap}: trials $=1$.
+    \item \textsc{COMBO}: resolution $=1$.
     \item \textsc{Hollocou}: $v_{\max}=10\,000$.
     \item \textsc{VieClus}: time limit $=1$ hour.
-    \item \textsc{Leiden}: resolution $=1$, $\beta=0.02$, iterations $=2$.
-    \item \textsc{DMoN}: 1 hidden layer (64), $1\,000$ epochs, lr $=0.001$.
-    \item \textsc{CommDGI}: 1 hidden layer (512), $1\,000$ epochs, lr $=0.001$.
-    \item \textsc{GNNS}: \textsc{GNNS100} variant.
-    \item \textsc{UCoDe}: 2 hidden layers (256), $1\,000$ epochs, lr $=0.001$.
-    \item \textsc{DGCluster}: hidden layers (256, 128), 300 epochs, lr $=0.001$.
-    \item \textsc{MAGI}: hidden layers (512, 256), 100 epochs, lr $=0.01$.
-    \item \textsc{Bayan}: Gurobi ILP solver~\cite{gurobi}, gap $=10^{-4}$, resolution $=1$.
+    \item \textsc{Leiden}: resolution $=1$, $\beta=0.01$, iterations $=2$.
+    \item \textsc{DMoN}: 1 hidden layer (512), $1\,000$ epochs, collapse regularization $=1.0$, dropout $=0.5$, lr $=0.001$.
+    \item \textsc{CommDGI}: 1 hidden layer (64), $1\,000$ epochs, $\alpha=2.0$, $\beta=5.0$, temperature $=30$, lr $=0.001$.
+    \item \textsc{GNNS}: \textsc{GNNS100} variant (100 random configurations, keep fraction $=1/3$).
+    \item \textsc{UCoDe}: 1 hidden layer (256), $1\,000$ epochs, weight decay $=0.1$, lr $=0.001$.
+    \item \textsc{DGCluster}: GCN backbone, hidden layers (256, 128), 300 epochs, BIRCH threshold $=0.5$, lr $=0.001$.
+    \item \textsc{MAGI}: 2 hidden layers (256, 256), 400 epochs, neighbor samples $(10, 10)$, walk length $=4$, walks $=20$, $\tau=0.5$, lr $=0.01$.
+    \item \textsc{Bayan}: Gurobi LP/ILP solver~\cite{gurobi}, optimality gap $=10^{-3}$, resolution $=1$.
     \item \textsc{CluStRE}: light mode, modularity objective.
-    \item \textsc{LIM}: 1 hidden layer (512), $1\,000$ epochs, patience $=200$, \hbox{lr $=0.001$.}
+    \item \textsc{LIM}: 1 hidden layer (512), 300 epochs, Louvain resolution $=0.3$, temperature $=30$, $\alpha=0.001$, \hbox{lr $=0.001$.}
 \end{itemize}
 
 For stochastic algorithms with an explicitly specified seed, we use the run ID as the seed for each of the five runs. While many of these algorithms include multiple configurations, we use either the configuration recommended by the authors or the default configuration provided with the implementation.
 
 \subsection{Dataset}
 
-We consider three datasets commonly used in the literature. The first set consists of 10 real-world graphs with known community labels; we refer to this dataset as the \textsc{Ground-Truth} graphs. The machine learning algorithms commonly use these graphs, and the details of the instances are shown in Table~\ref{tab:ground_truth_graphs}. Next, we consider the instances used in the 10th DIMACS implementation challenge on graph clustering~\cite{dimacschallengegraphpartandcluster}; we call this dataset \textsc{DIMACS} graphs. This dataset is popular among the classical modularity optimization methods, and the details of these graphs are shown in Appendix~\ref{sec:instances}. Finally, we use synthetically generated graphs with node features generated using the attributed, degree-corrected stochastic block model (ADC-SBM)~\cite{adcsbm2022}. This generator plants $k$ clusters in the graph, and generates random edges via a distribution that is conditional on those clusters. It does so using the two input parameters $d$ and $d_{out} \leq d$, where $d$ is the expected degree for each vertex and $d_{out}$ is the expected number of neighbors for a node in a different cluster than its own. The ADC-SBM generator also produces node features that are correlated with the community structure. It does so using the two input parameters $\sigma$ for intra-cluster center variance and $\sigma_c$ for cluster center variance.
+We consider three datasets commonly used in the literature. The first set consists of 10 real-world graphs with known community labels; we refer to this dataset as the \textsc{Ground-Truth} graphs. The machine learning algorithms commonly use these graphs, and the details of the instances are shown in Table~\ref{tab:ground_truth_graphs}. Next, we consider the instances used in the 10th DIMACS implementation challenge on graph clustering~\cite{dimacschallengegraphpartandcluster}; we call this dataset \textsc{DIMACS} graphs. This dataset is popular among the classical modularity optimization methods, and the details of these graphs are shown in Appendix~\ref{sec:instances}. Finally, we use synthetically generated graphs with node features generated using the attributed, degree-corrected stochastic block model (ADC-SBM)~\cite{adcsbm2022}. This generator plants $k$ clusters in the graph, and generates random edges via a distribution that is conditional on those clusters. It does so using the two input parameters $d$ and $d_{out} \leq d$, where $d$ is the expected degree for each vertex and $d_{out}$ is the expected number of neighbors for a node in a different cluster than its own. The ADC-SBM generator also produces node features that are correlated with the community structure. It does so using the two input parameters $\sigma$ for intra-cluster variance and $\sigma_c$ for cluster center variance.
 
-\begin{table}
+\begin{table}[t]
+    \centering
     \caption{\textsc{Ground-Truth} graphs. The $|C|$ column shows the number of clusters and $x$ the number of features.}
     \label{tab:ground_truth_graphs}
-    \vspace{-0.7em}
+    \vspace{0.5em}
     \begin{tabular}{lrrrr}
         \toprule
         Instance         & $n$                & $m$                 & $x$ & $|C|$         \\
@@ -479,7 +480,6 @@ We consider three datasets commonly used in the literature. The first set consis
         ogbn-Products    & \numprint{2449029} & \numprint{61859012} & \numprint{100}  & \numprint{47} \\
         \bottomrule
     \end{tabular}
-    \vspace{-1em}
 \end{table}
 
 \section{Experiments}\label{sec:experiments}
