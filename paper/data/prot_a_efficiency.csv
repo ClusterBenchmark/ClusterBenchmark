@@ -1,0 +1,17 @@
+solver,plot_name,label,paradigm,gt_solved,gt_us_per_edge,gt_modularity,gt_nmi,gt_f1,gt_peak_mb,dimacs_solved,dimacs_us_per_edge,dimacs_modularity,dimacs_peak_mb
+vieclus,vieclus,VieClus,classical,9,22837.5749,0.7531,0.5003,0.8659,148.59,30,120333.6631,0.6323,106.25
+leiden,leiden,Leiden,classical,10,0.7780,0.7621,0.5007,0.8724,148.02,31,0.8480,0.6385,82.41
+louvain,louvain,Louvain,classical,10,2.1158,0.7545,0.4877,0.8683,146.40,30,1.7438,0.6206,67.61
+combo,combo,COMBO,classical,5,6405.0486,0.7662,0.5100,0.8796,891.23,18,192.1474,0.5585,117.45
+cnm,cnm,CNM,classical,8,18.2937,0.6642,0.3883,0.8617,50.70,29,5.3247,0.5751,65.46
+infomap,infomap,Infomap,classical,10,8.8570,0.4276,0.3843,0.8761,419.78,28,8.0143,0.4736,152.69
+walktrap,walktrap,Walktrap,classical,8,124.4355,0.6728,0.4437,0.8366,777.20,26,26.0735,0.5049,207.76
+clustre-fast,clustre_fast,CluStRE,classical,10,0.2596,0.4902,0.4492,0.6568,52.39,32,0.6433,0.4823,52.63
+hollocou,hollocou,Hollocou,classical,9,0.0366,0.2093,0.3026,0.4246,38.42,22,0.0525,0.1817,71.95
+gnns,gnns,GNNS,learned,10,374.8965,0.7274,0.3116,0.8528,4199.09,28,1130.6619,0.5863,2286.56
+dgcluster,dgcluster,DGCluster,learned,8,4338.4055,0.7263,0.4769,0.8700,1348.62,28,2505.2151,0.4338,1192.22
+magi-sage,magi,MAGI,learned,9,12726.6594,0.6665,0.5082,0.8732,3908.27,23,2136.0585,0.1311,1090.43
+lim,lim,LIM,learned,7,17865.2940,0.6615,0.4990,0.8962,3468.56,10,22498.9052,0.4327,3275.46
+dmon,dmon,DMoN,learned,8,10243.6279,0.5121,0.3458,0.8164,2041.95,26,12183.2490,0.2954,988.37
+ucode,ucode,UCoDe,learned,7,19798.3992,0.6102,0.4703,0.8819,3310.24,21,9330.9482,0.3518,1040.75
+commdgi,commdgi,CommDGI,learned,7,26423.0914,0.5619,0.4419,0.8811,4044.53,21,13615.3531,0.2875,1201.20

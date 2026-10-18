@@ -429,7 +429,7 @@ Whenever possible, we use the authors' implementations or the most commonly used
 
 \subsection{Parameter Settings}
 
-Where possible, we use the default configurations for all algorithms. To reflect how algorithms are typically used in practice, our primary evaluation (\textbf{Protocol~A}) deliberately avoids any dataset-specific or instance-specific parameter tuning, benchmarking available implementations out-of-the-box with their author-recommended defaults. To isolate the effects of hardware resources and hyperparameter sensitivity, we complement Protocol~A with two targeted protocols: \textbf{Protocol~S} (scalability and accelerators), which varies CPU thread counts and GPU acceleration while holding algorithm hyperparameters fixed at their defaults; and \textbf{Protocol~B} (per-instance parameter tuning), which runs a 50-trial Bayesian hyperparameter search (via Optuna) maximizing modularity on representative small graphs.
+Where possible, we use the default configurations for all algorithms. To reflect how algorithms are typically used in practice, our primary evaluation (\textbf{Protocol~A}) deliberately avoids any dataset-specific or instance-specific parameter tuning, benchmarking available implementations out-of-the-box on a single CPU thread with their author-recommended defaults. To isolate the effects of hardware resources and hyperparameter sensitivity, we complement Protocol~A with two targeted protocols: \textbf{Protocol~S} (scalability and accelerators), which evaluates full-machine multi-threaded CPU execution (32 threads) and GPU acceleration while holding algorithm hyperparameters fixed at their defaults; and \textbf{Protocol~B} (per-instance parameter tuning), which runs a 50-trial Bayesian hyperparameter search (via Optuna) maximizing modularity on representative small graphs.
 
 \paragraph*{\textbf{Default configurations (Protocol~A).}}
 Among classical and topology-only methods (\textsc{CNM} exposes no tunable parameters), \textsc{Louvain}, \textsc{COMBO}, \textsc{Leiden} ($\beta = 0.01$, $2$ iterations), and \textsc{Bayan} (using the Gurobi LP/ILP solver~\cite{gurobi} with optimality gap $10^{-3}$) all use a default resolution of $1$. \textsc{Walktrap} uses a random-walk length of $4$, \textsc{Infomap} uses $1$ outer trial, \textsc{Hollocou} sets the maximum volume threshold to $v_{\max} = 10\,000$, \textsc{CluStRE} runs in its one-pass light streaming mode optimizing modularity, \textsc{VieClus} runs with a $1$-hour time limit, and \textsc{GNNS} uses the \textsc{GNNS100} configuration ($100$ random initializations, keep fraction $1/3$). The default architectures and training hyperparameters for the six neural methods are summarized in Table~\ref{tab:gnn_defaults}.
@@ -496,150 +496,181 @@ every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},
 every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=halfdiamond*\\
 every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=10-pointed star\\
 },
-perf/.style={
-        ymin=0, ymax=1, xmax=1, xmin=0.0,
-        axis lines=middle,
-        axis x line*=bottom,
-        axis y line*=left,
+stripperf/.style={
+        ymin=0.4, ymax=16.6,
+        xmin=-0.03, xmax=1.17,
+        axis lines=box,
         cycle list/Dark2,
         cycle multiindex* list={
                 my marks\nextlist
                 Dark2\nextlist
-                linestyles\nextlist
             },
-        mark list fill={.!75!white},
+        mark list fill={.!80!white},
+        mark size=2.1pt,
         tick label style={font=\footnotesize},
-        x dir=reverse,
-        x axis line style={-},
-        y axis line style={-}
+        label style={font=\small},
+        title style={font=\small\bfseries},
+        ytick={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16},
+        yticklabels={
+            \textsc{CommDGI},
+            \textsc{UCoDe},
+            \textsc{DMoN},
+            \textsc{LIM},
+            \textsc{MAGI},
+            \textsc{DGCluster},
+            \textsc{GNNS},
+            \textsc{Hollocou},
+            \textsc{CluStRE},
+            \textsc{Walktrap},
+            \textsc{Infomap},
+            \textsc{CNM},
+            \textsc{COMBO},
+            \textsc{Louvain},
+            \textsc{Leiden},
+            \textsc{VieClus}
+        },
+        extra y ticks={1.5,2.5,3.5,4.5,5.5,6.5,8.5,9.5,10.5,11.5,12.5,13.5,14.5,15.5},
+        extra y tick labels={},
+        extra y tick style={grid=major, major grid style={gray!22, thin}},
+        extra x ticks={0.5},
+        extra x tick labels={},
+        extra x tick style={grid=major, major grid style={black!45, dashed, thin}}
     }
 }
 
 \begin{figure*}[!ht]
-
+    \centering
     \begin{tikzpicture}
         \begin{groupplot}[
                 group style={
-                        group size=4 by 1,
-                        horizontal sep=0cm
+                        group size=2 by 1,
+                        horizontal sep=0.45cm
                     },
-                height=0.3\textwidth,
-                perf,
-                legend style={
-                        draw=none,
-                        legend columns=8,
-                        legend cell align=left
-                    }
+                height=0.58\textwidth,
+                width=0.47\textwidth,
+                stripperf
             ]
 
+            % Panel 1: Ground-Truth Modularity
             \nextgroupplot[
-                width=0.35\textwidth,
-                xmin=0.92,
-                ylabel near ticks,
-                ylabel={Fraction of instances},
-                title={\textsc{Ground-Truth} Set -- F1 Scores},
-                title style={xshift=1.5cm, yshift=0.06cm}
+                xtick={0.0, 0.25, 0.5, 0.6667, 0.8333, 1.0, 1.10},
+                xticklabels={$1$, $0.95$, $0.9$, $0.6$, $0.3$, $0$, \tiny Fail},
+                xlabel={$\tau = Q_{\text{alg}} / Q_{\max}$},
+                title={\textsc{Ground-Truth} Set ($N=10$)}
             ]
-
-            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
-                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/real_world_perf.csv};
+            \fill[gray!8] (axis cs:1.03,0.4) rectangle (axis cs:1.17,16.6);
+            \draw[black!50, thin] (axis cs:1.03,0.4) -- (axis cs:1.03,16.6);
+            \draw[black!60, semithick] (axis cs:-0.03,7.5) -- (axis cs:1.17,7.5);
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot+[only marks] table[x=u_\alg, y=y_\alg, col sep=comma] {data/prot_a_gt_modularity_strip.csv};
                     \label{\alg}
                 }
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot[only marks, mark=x, mark size=2.0pt, draw=black!45] table[x=uf_\alg, y=yf_\alg, col sep=comma] {data/prot_a_gt_modularity_strip.csv};
+                }
 
+            % Panel 2: DIMACS Modularity
             \nextgroupplot[
-                width=0.25\textwidth,
-                xmax=0.9,
                 yticklabels=\empty,
-                xtick={0.6, 0.3, 0.0},
-                xlabel={$\tau$}
+                xtick={0.0, 0.25, 0.5, 0.6667, 0.8333, 1.0, 1.10},
+                xticklabels={$1$, $0.95$, $0.9$, $0.6$, $0.3$, $0$, \tiny Fail},
+                xlabel={$\tau = Q_{\text{alg}} / Q_{\max}$},
+                title={\textsc{DIMACS} Set ($N=32$)}
             ]
-
-            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
-                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/real_world_perf.csv};
+            \fill[gray!8] (axis cs:1.03,0.4) rectangle (axis cs:1.17,16.6);
+            \draw[black!50, thin] (axis cs:1.03,0.4) -- (axis cs:1.03,16.6);
+            \draw[black!60, semithick] (axis cs:-0.03,7.5) -- (axis cs:1.17,7.5);
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot+[only marks] table[x=u_\alg, y=y_\alg, col sep=comma] {data/prot_a_dimacs_modularity_strip.csv};
                 }
-
-            \nextgroupplot[
-                xshift=1.5cm,
-                width=0.25\textwidth,
-                xmin=0.90,
-                xtick={1.0, 0.95, 0.90},
-                ylabel near ticks,
-                ylabel={Fraction of instances},
-                title={\textsc{DIMACS} Set -- Modularity},
-                title style={xshift=2cm}
-            ]
-
-            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
-                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/dimacs_perf.csv};
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot[only marks, mark=x, mark size=2.0pt, draw=black!45] table[x=uf_\alg, y=yf_\alg, col sep=comma] {data/prot_a_dimacs_modularity_strip.csv};
                 }
-
-            \nextgroupplot[
-                legend to name=sharedlegend,
-                width=0.35\textwidth,
-                xmax=0.90,
-                yticklabels=\empty,
-                xtick={0.8, 0.6, 0.4, 0.2, 0.0},
-                xlabel={$\tau$}
-            ]
-
-            \foreach \alg in {vieclus,leiden,louvain,combo,gnns,wt,cnm,walktrap,commdgi,clustre_fast,dmon,lim,hollocou,magi,dgcluster,ucode}{
-                    \addplot+[] table[x={\alg}, y=fraction, col sep=comma] {data/dimacs_perf.csv};
-                }
-
-            \addlegendentry{VieClus}
-            \addlegendentry{Leiden}
-            \addlegendentry{Louvain}
-            \addlegendentry{COMBO}
-            \addlegendentry{GNNS}
-            \addlegendentry{WT}
-            \addlegendentry{CNM}
-            \addlegendentry{Walktrap}
-            \addlegendentry{CommDGI}
-            \addlegendentry{CluStRE}
-            \addlegendentry{DMoN}
-            \addlegendentry{LIM}
-            \addlegendentry{Hollocou}
-            \addlegendentry{MAGI}
-            \addlegendentry{DGCluster}
-            \addlegendentry{UCoDe}
 
         \end{groupplot}
     \end{tikzpicture}
 
-    \ref{sharedlegend}
-
-    \vspace{-0.7em}
-    % Normal caption
-    \caption{Performance profiles for our first two datasets. We use F1 scores for the \textsc{Ground-Truth} set and modularity for the \textsc{DIMACS} instances. For clarity, we split the x-axis to highlight the differences between the best algorithms near one. }
-    % Description for someone who can't see (only clear text)
-    \Description{Test.}
+    \caption{Modularity ($Q$) performance distributions under Protocol~A (out-of-the-box defaults, single-threaded CPU) on the \textsc{Ground-Truth} ($N=10$, left) and \textsc{DIMACS} ($N=32$, right) datasets. Each horizontal lane corresponds to one algorithm (classical heuristics above the solid horizontal line; continuous and learning-based methods below). Colored markers show solved instances at their relative modularity ratio $\tau = Q_{\text{alg}} / Q_{\max}$ (with vertical jitter to separate overlapping points), while gray $\times$ markers in the right-hand \emph{Fail} band indicate instances that exceeded the time or memory limit (or collapsed to a trivial single cluster). The vertical dashed line at $\tau = 0.90$ separates the high-precision regime ($\tau \in [0.90, 1.0]$) from the tail ($\tau \in [0.0, 0.90]$).}
+    \Description{Horizontal strip plots of Modularity relative performance on Ground-Truth and DIMACS datasets.}
     \label{fig:perf_quality}
-    \vspace{-1em}
+\end{figure*}
+
+\begin{figure*}[!ht]
+    \centering
+    \begin{tikzpicture}
+        \begin{groupplot}[
+                group style={
+                        group size=2 by 1,
+                        horizontal sep=0.45cm
+                    },
+                height=0.58\textwidth,
+                width=0.47\textwidth,
+                stripperf
+            ]
+
+            % Panel 1: Ground-Truth NMI
+            \nextgroupplot[
+                xtick={0.0, 0.1667, 0.3333, 0.5, 0.6765, 0.8235, 1.0, 1.10},
+                xticklabels={$1$, $0.95$, $0.9$, $0.85$, $0.55$, $0.3$, $0$, \tiny Fail},
+                xlabel={$\tau = \text{NMI}_{\text{alg}} / \text{NMI}_{\max}$},
+                title={\textsc{Ground-Truth} ($N=10$) -- NMI}
+            ]
+            \fill[gray!8] (axis cs:1.03,0.4) rectangle (axis cs:1.17,16.6);
+            \draw[black!50, thin] (axis cs:1.03,0.4) -- (axis cs:1.03,16.6);
+            \draw[black!60, semithick] (axis cs:-0.03,7.5) -- (axis cs:1.17,7.5);
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot+[only marks] table[x=u_\alg, y=y_\alg, col sep=comma] {data/prot_a_gt_nmi_strip.csv};
+                }
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot[only marks, mark=x, mark size=2.0pt, draw=black!45] table[x=uf_\alg, y=yf_\alg, col sep=comma] {data/prot_a_gt_nmi_strip.csv};
+                }
+
+            % Panel 2: Ground-Truth Pairwise F1
+            \nextgroupplot[
+                yticklabels=\empty,
+                xtick={0.0, 0.25, 0.5, 0.6667, 0.8333, 1.0, 1.10},
+                xticklabels={$1$, $0.95$, $0.9$, $0.6$, $0.3$, $0$, \tiny Fail},
+                xlabel={$\tau = \text{F1}_{\text{alg}} / \text{F1}_{\max}$},
+                title={\textsc{Ground-Truth} ($N=10$) -- Pairwise F1}
+            ]
+            \fill[gray!8] (axis cs:1.03,0.4) rectangle (axis cs:1.17,16.6);
+            \draw[black!50, thin] (axis cs:1.03,0.4) -- (axis cs:1.03,16.6);
+            \draw[black!60, semithick] (axis cs:-0.03,7.5) -- (axis cs:1.17,7.5);
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot+[only marks] table[x=u_\alg, y=y_\alg, col sep=comma] {data/prot_a_gt_f1_strip.csv};
+                }
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot[only marks, mark=x, mark size=2.0pt, draw=black!45] table[x=uf_\alg, y=yf_\alg, col sep=comma] {data/prot_a_gt_f1_strip.csv};
+                }
+
+        \end{groupplot}
+    \end{tikzpicture}
+
+    \caption{Ground-truth community recovery distributions under Protocol~A on the \textsc{Ground-Truth} dataset ($N=10$), measured by Normalized Mutual Information (NMI, left) and edge-restricted Pairwise F1 (right). Colored markers denote solved instances at their relative recovery ratio $\tau$, and gray $\times$ markers in the right-hand \emph{Fail} band denote unresolved instances.}
+    \Description{Horizontal strip plots of NMI and Pairwise F1 relative performance on the Ground-Truth dataset.}
+    \label{fig:perf_gt_recovery}
 \end{figure*}
 
 In this section, we present benchmark results obtained using the unified benchmarking interface described in Section~\ref{sec:evaluation}. We report results on real-world graphs with and without ground-truth labels, as well as on synthetically generated graphs with controlled structural and feature noise. Rather than exhaustively ranking algorithms, these experiments illustrate how different algorithmic design choices behave under a standardized benchmarking setup. To support this, we also provide a dynamic website reporting updated results\footnote{\url{https://clusterbenchmark.github.io/}}.
 
 \subsection{Computational Environment}
 
-All algorithms are evaluated on the same machine to eliminate variability due to hardware differences and ensure fair comparison. While some methods could potentially benefit from specialized accelerators such as GPUs, we intentionally restrict all experiments to a shared CPU-based environment to maintain consistency across algorithms. We use a machine with an AMD EPYC 9754 128-core processor with 755 GB of memory, running Ubuntu 24.04.3 with Linux kernel 6.8.0-87. For algorithms with compiled software, we use GCC version 13.3.0, and for Python implementations we use Python version 3.12.3.
+All algorithms are evaluated on identical hardware nodes to eliminate variability and ensure fair comparisons. Each machine is equipped with a 16-core (32-thread) Intel Xeon w5-3435X processor, 125~GiB of system memory, and an NVIDIA GeForce RTX~4090 GPU with 24~GiB of VRAM (driver version 560.35.03, CUDA~12.6), running Ubuntu~24.04.3~LTS with Linux kernel 6.8.0-107. Compiled C/C++ implementations are built with GCC~13.3.0, and Python implementations run on Python~3.12.13.
 
-To accelerate the overall benchmarking process, we evaluate up to three algorithm instances concurrently on the same machine. This level of concurrency is deliberately conservative relative to the available hardware: the system provides 128 CPU cores and 755~GB of memory, ensuring substantial resource headroom for each run and minimizing contention effects. In particular, we observed that a single process cannot saturate memory bandwidth on this platform, making cross-talk between concurrently evaluated algorithms negligible in practice. Algorithms that support parallel execution internally are evaluated with 16 threads. We also record results using a single thread to test scalability. Each algorithm–instance pair is subject to a wall-clock time limit of one hour and a memory limit of 250~GB. Runs exceeding the memory limit are terminated and recorded as \emph{memory limit exceeded} (MLE). Time limits are enforced more leniently, as several learning-based methods train for a fixed number of iterations rather than converging to a stopping criterion; only runs exceeding the time limit by more than 50\% are terminated and recorded as \emph{time limit exceeded} (TLE).
+To prevent resource contention and cross-talk, each benchmark job runs exclusively on a node under Linux \texttt{cgroup} memory tracking. Under our primary out-of-the-box evaluation (\textbf{Protocol~A}), all 17 algorithms are restricted to a single CPU thread ($p = 1$, \texttt{device=cpu}) to establish a uniform sequential baseline across both single-threaded and parallel implementations. Under \textbf{Protocol~S}, we evaluate the parallel and neural methods using all 32 hardware threads on CPU ($p = 32$, \texttt{device=cpu}) as well as GPU acceleration ($p = 32$, \texttt{device=cuda}) for CUDA-enabled architectures. Each algorithm--instance run is subject to a wall-clock time limit of one hour ($3\,600$~s) and a host memory limit of 120~GB (or the 24~GiB VRAM ceiling when executing on the GPU). Runs exceeding the memory limit are terminated and recorded as \emph{memory limit exceeded} (MLE). Time limits include a 50\% watchdog grace period ($4\,500$~s) so that fixed-epoch neural training loops can terminate cleanly; runs exceeding the one-hour budget are recorded as \emph{time limit exceeded} (TLE).
 
-For algorithms requiring a prescribed number of clusters, we provide the ground-truth value when available and set $k=16$ otherwise, following common practice. For stochastic methods, we report the best result over five independent runs. In addition to modularity (Section~\ref{sec:preliminary}), we evaluate clustering quality using Normalized Mutual Information (NMI) and an edge-restricted pairwise F1 score. The NMI score measures the level of agreement between the predicted clusters and the ground-truth clusters. For more detailed information, refer to Danon et al.~\cite{danon2005comparing}. The F1 score is computed over adjacent vertex pairs: an edge $(u,v)$ is a true positive (TP) if $u$ and $v$ are assigned to the same cluster by the algorithm as well as in the ground-truth clusters. Similarly, we define false positives (FP), true negatives (TN), and false negatives (FN). The F1 score is then calculated using the formula:  $F1 := \frac{2TP}{2TP + FP + FN}$.
+For stochastic methods, we execute five independent runs seeded by the run index and report the best solution quality achieved. In addition to modularity (Section~\ref{sec:preliminary}), we evaluate ground-truth community recovery using Normalized Mutual Information (NMI)~\cite{danon2005comparing} and an edge-restricted pairwise F1 score. The F1 score is computed over adjacent vertex pairs: an edge $(u,v)$ is a true positive (TP) if $u$ and $v$ are assigned to the same cluster by the algorithm as well as in the ground-truth partition. Defining false positives (FP) and false negatives (FN) analogously over graph edges, $F1 := \frac{2\mathit{TP}}{2\mathit{TP} + \mathit{FP} + \mathit{FN}}$.
 
-\paragraph*{\textbf{Performance profiles}}
+\paragraph*{\textbf{Relative performance distributions.}}
+To compare multiple algorithms across heterogeneous benchmark instances without sensitive raw-score averaging, we follow the relative-ratio normalization of Dolan and Mor{\'e}~\cite{perf2002}. For each benchmark instance and quality metric, an algorithm's score is normalized by the best score observed across all evaluated methods on that instance, yielding a relative quality ratio $\tau \in [0, 1]$. Rather than superimposing 16 cumulative step functions that cross when algorithms time out, we display a horizontal strip lane for each algorithm in which every solved instance is plotted as an individual marker at its ratio $\tau$ (with small vertical jitter to separate overlapping points near $\tau = 1$), and unresolved instances (TLE/MLE) are shown as $\times$ markers in a dedicated \emph{Fail} band on the right. Algorithms whose markers cluster tightly near $\tau = 1$ with few or no entries in the \emph{Fail} band achieve both high solution quality and broad instance coverage.
 
-Performance profiles are well-suited for benchmarking multiple algorithms, as they summarize relative performance across instances without requiring direct aggregation of objective values~\cite{perf2002}. A performance profile assigns each algorithm a non-decreasing, piecewise-constant function. The y-axis represents the fraction of graphs where the objective value is better than or equal to $\tau$ times the best observed objective value from any algorithm. Reading a performance profile, an algorithm performs well if it achieves lower $\tau$ values for higher fractions of instances.
+\subsection{State-of-the-Art Comparisons (Protocol~A)}
 
-\subsection{State-of-the-Art Comparisons}
+Figures~\ref{fig:perf_quality} and~\ref{fig:perf_gt_recovery} present the out-of-the-box Protocol~A performance profiles for modularity optimization and ground-truth community recovery, respectively. Across both the attributed \textsc{Ground-Truth} graphs and the topology-only \textsc{DIMACS} suite (Figure~\ref{fig:perf_quality}), classical modularity heuristics clearly dominate pure modularity maximization. \textsc{VieClus} achieves the highest modularity on every single instance it completes ($\tau = 1.0$ on 9/10 \textsc{Ground-Truth} graphs and 30/32 \textsc{DIMACS} graphs), consistent with prior findings~\cite{vieclus2018,maxsat2025}, failing only on the largest instances (\texttt{ogbn-products}, \texttt{uk-2002}, and \texttt{uk-2007-05}) due to time or memory limits. \textsc{Leiden} and \textsc{Louvain} follow closely behind: \textsc{Leiden} solves all 10 \textsc{Ground-Truth} instances with $\tau \ge 0.990$ and 31/32 \textsc{DIMACS} instances with $\tau \ge 0.953$. Among continuous and learning-based methods, only \textsc{DGCluster} ($\tau \ge 0.923$ on 8/10 \textsc{Ground-Truth} graphs) and the topology-driven \textsc{GNNS} ($\tau \ge 0.925$ on 10/10 \textsc{Ground-Truth} graphs and 28/32 \textsc{DIMACS} graphs) approach the modularity of classical heuristics, whereas contrastive and deep GNN models lag substantially in raw modularity, particularly on the featureless \textsc{DIMACS} graphs where they rely on synthetic degree-profile and random-node-initialization (\texttt{ldp+rni}) features.
 
-Figure~\ref{fig:perf_quality} shows the main results of the experimental comparison. Across both datasets, \textsc{VieClus} achieves the highest modularity whenever it completes within the imposed resource limits, consistent with prior findings~\cite{vieclus2018,maxsat2025}. As expected for a memetic search-based method, it exceeds the memory limit on the two largest \hbox{DIMACS instances.}
+When evaluating ground-truth community recovery on the \textsc{Ground-Truth} dataset (Figure~\ref{fig:perf_gt_recovery}), the relative standing shifts markedly. Here, attribute-aware learning-based methods are highly competitive with—and frequently surpass—pure modularity maximizers. In terms of NMI (Figure~\ref{fig:perf_gt_recovery}, top), \textsc{MAGI} achieves the strongest overall profile (mean NMI of $0.533$ across 9/10 solved instances, with $\tau \ge 0.859$ on 80\% of instances), while \textsc{CommDGI}, \textsc{DGCluster}, and \textsc{UCoDe} each achieve the best NMI ($\tau = 1.0$) on multiple individual networks alongside \textsc{Leiden}. On edge-restricted Pairwise F1 (Figure~\ref{fig:perf_gt_recovery}, bottom), \textsc{MAGI}, \textsc{LIM}, \textsc{CommDGI}, \textsc{DGCluster}, \textsc{UCoDe}, and the flow-based \textsc{Infomap} all attain $\tau = 1.0$ on top instances. This divergence between Figure~\ref{fig:perf_quality} and Figure~\ref{fig:perf_gt_recovery} underscores a fundamental misalignment between topological modularity and externally defined node labels: for example, on Citeseer, the ground-truth label partition has a modularity of only $0.54$, whereas classical and neural modularity maximizers find partitions with modularity up to $0.89$. Incorporating node attributes allows GNNs to align communities with semantic categories even when citation edges cross category boundaries.
 
-On the \textsc{Ground-Truth} dataset, many methods achieve similarly high F1 scores. Among them, \textsc{MAGI} achieves the strongest and most stable performance. This highlights a general mismatch between modularity optimization and externally defined communities. For example, the Citeseer ground-truth clustering has a modularity of 0.54, whereas all methods produce clusterings with modularity above 0.54. This discrepancy reflects the fact that citation behavior does not necessarily align with categorical labels, as Figure~\ref{fig:comparisons} \hbox{also indicates.}
-
-For the \textsc{DIMACS} graphs, differences between methods are more pronounced, with modularity-focused algorithms clearly outperforming learning-based approaches. Among learning-based methods, performance varies substantially depending on whether the method is designed to operate without node features, with \textsc{GNNS} performing best in this setting.
-
-The streaming methods \textsc{Hollocou} and \textsc{CluStRE} trade solution quality for extreme efficiency. While their F1 scores are lower on the \textsc{Ground-Truth} dataset, \textsc{CluStRE} achieves competitive modularity on DIMACS instances while using orders of magnitude less time and memory. The exact algorithm \textsc{Bayan} terminates only on the eight smallest instances from the \textsc{DIMACS} dataset and is therefore excluded from the performance profiles. For these graphs, \textsc{VieClus} found the optimal clustering for all of them, \textsc{Leiden} for 7/8, \textsc{GNNS} for 5/8, \textsc{COMBO} for 4/8, and \textsc{Louvain} for 3/8. The remaining algorithms did not find any known optimal solutions.
+The streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} trade solution quality for extreme scalability, solving all 10 \textsc{Ground-Truth} and all 32 \textsc{DIMACS} graphs—including \texttt{uk-2007-05} ($3.3$~billion edges)—with \textsc{CluStRE} consistently outperforming \textsc{Hollocou} in both modularity and NMI/F1. On the eight smallest \textsc{DIMACS} instances where exact optimal modularity partitions are known~\cite{bayan2024,maxsat2025}, \textsc{VieClus} recovers the optimal modularity on all 8/8 instances, \textsc{Leiden} and \textsc{GNNS} on 6/8, \textsc{COMBO} on 5/8, and \textsc{Louvain} and \textsc{DGCluster} on 2/8.
 
 \pgfplotsset{
 cycle list/.define={my marks}{
@@ -671,214 +702,291 @@ perf/.style={
     }
 }
 
-\begin{figure*}[!ht]
+\subsection{Quality--Efficiency Trade-offs and Hardware Scaling (Protocol~S)}
 
+\begin{figure*}[!ht]
+    \centering
     \begin{tikzpicture}
         \begin{groupplot}[
                 group style={
                         group size=2 by 1,
-                        horizontal sep=1.5cm
+                        horizontal sep=1.35cm
                     },
-                height=0.25\textwidth,
-                width=0.5\textwidth,
-                perf,
-                legend style={
-                        draw=none,
-                        legend columns=6,
-                        legend cell align=left
-                    }
-            ]
-
-            \nextgroupplot[xmax=14, xmin=1.0,
-                xlabel=$d_{out}$,
-                xlabel style={xshift=-2.4cm},
-                ylabel=NMI,
-                ylabel near ticks]
-
-            \foreach \alg in {vieclus,dmon,commdgi,ucode,dgcluster,magi}{
-                    \expanded{
-                        \noexpand\addplot+ [refstyle={\alg}] table[x=dout, y={\alg}, col sep=comma] {data/dout_data.csv};
-                    }
-                }
-
-            \nextgroupplot[xmode=log, legend to name=sharedlegend2,
-                xlabel=$\sigma_c$,
-                ylabel=NMI,
-                ylabel near ticks]
-
-            \foreach \alg in {vieclus,dmon,commdgi,ucode,dgcluster,magi}{
-                    \expanded{
-                        \noexpand\addplot+ [refstyle={\alg}] table[x=sigma, y={\alg}, col sep=comma] {data/sigma_data.csv};
-                    }
-                }
-
-            \addlegendentry{VieClus}
-            \addlegendentry{DMoN}
-            \addlegendentry{CommDGI}
-            \addlegendentry{UCoDe}
-            \addlegendentry{DGCluster}
-            \addlegendentry{MAGI}
-
-        \end{groupplot}
-    \end{tikzpicture}
-
-    % \vspace{0.5em}
-    \ref{sharedlegend2}
-
-    % Normal caption
-    \vspace{-0.7em}
-    \caption{ NMI scores on graphs generated with the ADC-SBM graph generator. All graphs have $n=\numprint{1000}$ vertices, $k=4$ clusters, $d=20$ average degree, and $\sigma=1$ intra-cluster center variance. The left plot varies $d_{out}$ while keeping $\sigma_c=3$, and the right plot varies $\sigma_c$ while keeping $d_{out}=2$. }
-    % Description for someone who can't see (only clear text)
-    \Description{Test.}
-    \label{fig:adcsbm}
-    \vspace{-1em}
-\end{figure*}
-
-\pgfplotsset{
-cycle list/.define={my marks}{
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=square*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=triangle*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=diamond*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=halfcircle*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}, mark options={rotate=90}, scale=1.25},mark=halfsquare right*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=triangle*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=halfdiamond*\\
-every mark/.append style={solid,fill=\pgfkeysvalueof{/pgfplots/mark list fill}},mark=10-pointed star\\
-}
-}
-
-\begin{figure}[!h]
-
-    \begin{tikzpicture}
-        \begin{axis}[
                 ymin=0.0, ymax=1.0,
-                height=0.3\textwidth,
-                width=0.45\textwidth,
-                xmax=20000,
+                xmin=0.015, xmax=3500000,
+                xtickten={-1,0,1,2,3,4,5},
+                height=0.34\textwidth,
+                width=0.46\textwidth,
                 xmode=log,
-                axis lines=middle,
-                axis x line*=bottom,
-                axis y line*=left,
-                y axis line style={-},
+                axis lines=box,
                 cycle list/Dark2,
                 cycle multiindex* list={
                         my marks\nextlist
                         Dark2\nextlist
-                        linestyles\nextlist
                     },
-                mark size=3pt,
+                mark list fill={.!80!white},
+                every mark/.append style={mark size=2.4pt},
+                tick label style={font=\footnotesize},
+                label style={font=\small},
+                title style={font=\small\bfseries},
                 ylabel near ticks,
-                ylabel={Modularity},
-                xlabel={Microseconds per edge},
+                xlabel={Microseconds per edge ($\mu\text{s} / m$)},
+                grid=major,
+                major grid style={gray!18, thin}
+            ]
+
+            % Left Panel: Ground-Truth Efficiency
+            \nextgroupplot[
+                ylabel={Geometric Mean Modularity ($Q$)},
+                title={\textsc{Ground-Truth} Set ($N=10$)}
+            ]
+            \addplot[refstyle={vieclus}] coordinates {(22837.57,0.7531)};
+            \node[anchor=south west] at (axis cs:24000,0.765) {\tiny \textsc{VieClus}};
+
+            \addplot[refstyle={leiden}] coordinates {(0.7780,0.7621)};
+            \node[anchor=south] at (axis cs:0.65,0.785) {\tiny \textsc{Leiden}};
+
+            \addplot[refstyle={louvain}] coordinates {(2.1158,0.7545)};
+            \node[anchor=north] at (axis cs:2.1,0.730) {\tiny \textsc{Louvain}};
+
+            \addplot[refstyle={combo}] coordinates {(6405.05,0.7662)};
+            \node[anchor=south] at (axis cs:6400,0.798) {\tiny \textsc{COMBO}};
+
+            \addplot[refstyle={cnm}] coordinates {(18.2937,0.6642)};
+            \node[anchor=south] at (axis cs:18.3,0.688) {\tiny \textsc{CNM}};
+
+            \addplot[refstyle={infomap}] coordinates {(8.8570,0.4276)};
+            \node[anchor=north] at (axis cs:8.86,0.400) {\tiny \textsc{Infomap}};
+
+            \addplot[refstyle={walktrap}] coordinates {(124.4355,0.6728)};
+            \node[anchor=north] at (axis cs:125,0.648) {\tiny \textsc{Walktrap}};
+
+            \addplot[refstyle={clustre_fast}] coordinates {(0.2596,0.4902)};
+            \node[anchor=south] at (axis cs:0.26,0.515) {\tiny \textsc{CluStRE}};
+
+            \addplot[refstyle={hollocou}] coordinates {(0.0366,0.2093)};
+            \node[anchor=west] at (axis cs:0.052,0.209) {\tiny \textsc{Hollocou}};
+
+            \addplot[refstyle={gnns}] coordinates {(374.8965,0.7274)};
+            \node[anchor=south east] at (axis cs:420,0.745) {\tiny \textsc{GNNS}};
+
+            \addplot[refstyle={dgcluster}] coordinates {(4338.41,0.7263)};
+            \node[anchor=south] at (axis cs:2600,0.745) {\tiny \textsc{DGCluster}};
+
+            \addplot[refstyle={magi}] coordinates {(12726.66,0.6665)};
+            \node[anchor=east] at (axis cs:9200,0.662) {\tiny \textsc{MAGI}};
+
+            \addplot[refstyle={lim}] coordinates {(17865.29,0.6615)};
+            \node[anchor=west] at (axis cs:23000,0.675) {\tiny \textsc{LIM}};
+
+            \addplot[refstyle={dmon}] coordinates {(10243.63,0.5121)};
+            \node[anchor=east] at (axis cs:7200,0.512) {\tiny \textsc{DMoN}};
+
+            \addplot[refstyle={ucode}] coordinates {(19798.40,0.6102)};
+            \node[anchor=west] at (axis cs:26000,0.610) {\tiny \textsc{UCoDe}};
+
+            \addplot[refstyle={commdgi}] coordinates {(26423.09,0.5619)};
+            \node[anchor=west] at (axis cs:34000,0.550) {\tiny \textsc{CommDGI}};
+
+            % Right Panel: DIMACS Efficiency
+            \nextgroupplot[
+                ylabel={Geometric Mean Modularity ($Q$)},
+                title={\textsc{DIMACS} Set ($N=32$)}
+            ]
+            \addplot[refstyle={vieclus}] coordinates {(120333.66,0.6323)};
+            \node[anchor=south] at (axis cs:120000,0.658) {\tiny \textsc{VieClus}};
+
+            \addplot[refstyle={leiden}] coordinates {(0.8480,0.6385)};
+            \node[anchor=south] at (axis cs:0.75,0.662) {\tiny \textsc{Leiden}};
+
+            \addplot[refstyle={louvain}] coordinates {(1.7438,0.6206)};
+            \node[anchor=south west] at (axis cs:1.8,0.630) {\tiny \textsc{Louvain}};
+
+            \addplot[refstyle={combo}] coordinates {(192.1474,0.5585)};
+            \node[anchor=south] at (axis cs:210,0.582) {\tiny \textsc{COMBO}};
+
+            \addplot[refstyle={cnm}] coordinates {(5.3247,0.5751)};
+            \node[anchor=west] at (axis cs:7.2,0.575) {\tiny \textsc{CNM}};
+
+            \addplot[refstyle={infomap}] coordinates {(8.0143,0.4736)};
+            \node[anchor=north east] at (axis cs:8.5,0.450) {\tiny \textsc{Infomap}};
+
+            \addplot[refstyle={walktrap}] coordinates {(26.0735,0.5049)};
+            \node[anchor=north west] at (axis cs:26,0.485) {\tiny \textsc{Walktrap}};
+
+            \addplot[refstyle={clustre_fast}] coordinates {(0.6433,0.4823)};
+            \node[anchor=south] at (axis cs:0.55,0.508) {\tiny \textsc{CluStRE}};
+
+            \addplot[refstyle={hollocou}] coordinates {(0.0525,0.1817)};
+            \node[anchor=west] at (axis cs:0.072,0.182) {\tiny \textsc{Hollocou}};
+
+            \addplot[refstyle={gnns}] coordinates {(1130.66,0.5863)};
+            \node[anchor=south west] at (axis cs:1150,0.600) {\tiny \textsc{GNNS}};
+
+            \addplot[refstyle={dgcluster}] coordinates {(2505.22,0.4338)};
+            \node[anchor=south] at (axis cs:2800,0.458) {\tiny \textsc{DGCluster}};
+
+            \addplot[refstyle={magi}] coordinates {(2136.06,0.1311)};
+            \node[anchor=north] at (axis cs:2136,0.108) {\tiny \textsc{MAGI}};
+
+            \addplot[refstyle={lim}] coordinates {(22498.91,0.4327)};
+            \node[anchor=west] at (axis cs:30000,0.440) {\tiny \textsc{LIM}};
+
+            \addplot[refstyle={dmon}] coordinates {(12183.25,0.2954)};
+            \node[anchor=east] at (axis cs:9000,0.285) {\tiny \textsc{DMoN}};
+
+            \addplot[refstyle={ucode}] coordinates {(9330.95,0.3518)};
+            \node[anchor=east] at (axis cs:7000,0.365) {\tiny \textsc{UCoDe}};
+
+            \addplot[refstyle={commdgi}] coordinates {(13615.35,0.2875)};
+            \node[anchor=west] at (axis cs:18000,0.285) {\tiny \textsc{CommDGI}};
+
+        \end{groupplot}
+    \end{tikzpicture}
+
+    \caption{Trade-off between clustering quality (geometric mean modularity $Q$) and normalized execution time (geometric mean microseconds per edge, $\mu\text{s}/m$) under Protocol~A across solved instances on the \textsc{Ground-Truth} ($N=10$, left) and \textsc{DIMACS} ($N=32$, right) datasets.}
+    \Description{Scatter plots of geometric mean modularity versus microseconds per edge on Ground-Truth and DIMACS datasets.}
+    \label{fig:efficiency}
+\end{figure*}
+
+Figure~\ref{fig:efficiency} summarizes the trade-off between solution quality and execution time under Protocol~A using geometric means across solved instances, with per-graph runtimes normalized by the number of edges ($\mu\text{s}/m$). Across both datasets, the algorithms span six orders of magnitude in normalized runtime. Streaming methods (\textsc{Hollocou} at $0.04$--$0.05\,\mu\text{s}/m$ and \textsc{CluStRE} at $0.26$--$0.64\,\mu\text{s}/m$) occupy the extreme low-latency regime, whereas multi-level local-moving heuristics (\textsc{Leiden} at $0.78$--$0.85\,\mu\text{s}/m$ and \textsc{Louvain} at $1.74$--$2.12\,\mu\text{s}/m$) dominate the Pareto frontier, achieving near-optimal modularity more than four orders of magnitude faster than the evolutionary solver \textsc{VieClus} (which intentionally exhausts its configurable time budget to refine partitions). Among continuous and learning-based methods, the sparse matrix-free \textsc{GNNS} ($375\,\mu\text{s}/m$ on \textsc{Ground-Truth}) is an order of magnitude faster than deep neural architectures ($4\,300$--$26\,400\,\mu\text{s}/m$), which incur substantial overhead from multi-epoch gradient optimization.
+
+Peak memory consumption exhibits an equally sharp divide between algorithmic paradigms (detailed per-instance measurements are provided in Appendix~\ref{sec:memory}, Table~\ref{tab:memory}). Streaming methods process edges in a single pass with minimal state, requiring only $1.1$~GB on \texttt{ogbn-products} ($61.9$~M edges), while \textsc{Leiden} and \textsc{Louvain} require $12.7$~GB. In contrast, learning-based GNNs store high-dimensional node embeddings and intermediate activation tensors, consuming $14$--$47$~GB on medium-to-large graphs. Furthermore, implementations that materialize dense $O(n^2)$ modularity or similarity matrices in host memory—specifically \textsc{LIM}, \textsc{UCoDe}, and \textsc{CommDGI}—attempt to allocate $214$~GiB on \texttt{ogbn-arxiv} ($n = 169\,343$) and $43.6$~TiB on \texttt{ogbn-products}, resulting in immediate memory exhaustion (\textsc{MLE}).
+
+To quantify how multi-core parallelism and hardware accelerators shift this efficiency frontier, \textbf{Protocol~S} evaluates the parallel and learning-based solvers using all 32 hardware threads on CPU ($p = 32$, \texttt{device=cpu}) and on the NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}); complete per-instance runtimes are reported in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Expanding from 1 to 32 CPU threads yields geometric-mean speedups of $8.0\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $3.7\times$ for \textsc{CommDGI}, and $3.4\times$ for \textsc{DMoN} across medium-scale networks. Offloading training to the RTX~4090 GPU produces dramatic additional accelerations over single-threaded CPU execution, reaching geometric-mean speedups of $158\times$ for \textsc{LIM} (e.g., reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $100\times$ for \textsc{UCoDe}, $95\times$ for \textsc{CommDGI}, $37\times$ for \textsc{DGCluster}, $13\times$ for \textsc{GNNS}, and $12\times$ for \textsc{DMoN}. Crucially, inspection of completed training epochs (Appendix~\ref{sec:memory}, Table~\ref{tab:iterations}) shows that while most neural methods already finish all requested epochs within one hour on smaller graphs under single-threaded CPU execution, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} prematurely truncate training under $p=1$ (e.g., \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}) but finish 100\% of their training epochs in under two minutes on the GPU. However, GPU acceleration introduces a stricter memory bottleneck: because the RTX~4090 is limited to 24~GiB of VRAM compared to 120~GB of system RAM, full-graph GNNs hit out-of-memory limits on smaller graphs on the GPU than on the CPU (for instance, \textsc{CommDGI} requires $29.7$~GB on \texttt{coauthor-physics} and therefore succeeds on CPU but triggers \textsc{MLE} on GPU).
+
+\subsection{Hyperparameter Sensitivity (Protocol~B)}
+
+\begin{table}[!ht]
+    \centering
+    \caption{Modularity ($Q$) achieved under out-of-the-box defaults versus 50-trial Optuna Bayesian hyperparameter tuning (\textbf{Protocol~B}) on Cora, Citeseer, and Pubmed. For fixed-$k$ neural models tuned under the cluster-free regime ($k = \lceil\sqrt{n}\rceil$), the default baseline under the same cluster budget is reported alongside the tuned score and gain ($\Delta Q$).}
+    \label{tab:protocol_b}
+    \footnotesize
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ll rrr rrr rrr@{}}
+        \toprule
+        & & \multicolumn{3}{c}{\textbf{Cora}} & \multicolumn{3}{c}{\textbf{Citeseer}} & \multicolumn{3}{c}{\textbf{Pubmed}} \\
+        \cmidrule(lr){3-5} \cmidrule(lr){6-8} \cmidrule(lr){9-11}
+        Method & Tuned Parameters & Def. & Tuned & $\Delta Q$ & Def. & Tuned & $\Delta Q$ & Def. & Tuned & $\Delta Q$ \\
+        \midrule
+        \textsc{Leiden}         & $\gamma$                           & 0.822 & 0.823 & $+0.001$ & 0.893 & 0.892 & $-0.000$ & 0.784 & 0.783 & $-0.000$ \\
+        \textsc{Louvain}        & $\gamma$, tol.                     & 0.815 & 0.810 & $-0.005$ & 0.890 & 0.890 & $-0.001$ & 0.771 & 0.772 & $+0.001$ \\
+        \textsc{COMBO}          & $\gamma$, max com.                 & 0.824 & 0.824 & $+0.000$ & 0.893 & 0.893 & $-0.000$ & TLE   & 0.740 & ---      \\
+        \textsc{Walktrap}       & walk steps $t$                     & 0.765 & 0.788 & $+0.024$ & 0.826 & 0.854 & $+0.028$ & 0.711 & 0.727 & $+0.016$ \\
+        \textsc{CluStRE}        & mode,passes,$\alpha,\beta,\tau$    & 0.550 & 0.818 & $+0.268$ & 0.612 & 0.889 & $+0.277$ & 0.386 & 0.779 & $+0.393$ \\
+        \textsc{Hollocou}       & $\delta$, $\text{vol}_{\max}$      & 0.406 & 0.488 & $+0.082$ & 0.683 & 0.673 & $-0.010$ & 0.355 & 0.345 & $-0.011$ \\
+        \midrule
+        \textsc{GNNS}           & $\gamma$, rank $r$, steps          & 0.780 & 0.799 & $+0.019$ & 0.855 & 0.870 & $+0.015$ & 0.736 & 0.764 & $+0.028$ \\
+        \textsc{DGCluster}      & $\lambda$, lr, base model          & 0.815 & 0.814 & $-0.001$ & 0.875 & 0.874 & $-0.001$ & 0.738 & 0.744 & $+0.006$ \\
+        \textsc{MAGI} (SAGE)    & $\tau$, lr, wd, scale, arch.       & 0.786 & 0.789 & $+0.003$ & 0.878 & 0.879 & $+0.001$ & 0.641 & 0.690 & $+0.049$ \\
+        \textsc{MAGI} (GCN)     & $\tau$, lr, wd, scale, arch.       & 0.710 & 0.774 & $+0.064$ & 0.817 & 0.866 & $+0.049$ & 0.399 & 0.505 & $+0.106$ \\
+        \textsc{LIM}            & $\gamma, \alpha, \beta, \nu$, lr   & 0.768 & 0.770 & $+0.002$ & 0.800 & 0.818 & $+0.018$ & 0.654 & 0.665 & $+0.011$ \\
+        \textsc{CommDGI}        & $T, \alpha, \beta$, lr, wd, hid.   & 0.758 & 0.772 & $+0.013$ & 0.813 & 0.822 & $+0.009$ & 0.003 & 0.690 & $+0.687$ \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+To assess how strongly algorithm rankings depend on hyperparameter tuning versus out-of-the-box defaults, \textbf{Protocol~B} conducts 50-trial Bayesian optimization using Optuna~\cite{optuna2019} on the three canonical citation networks (Cora, Citeseer, and Pubmed), maximizing modularity $Q$. Table~\ref{tab:protocol_b} compares default and tuned modularity scores across methods with tunable algorithmic or loss parameters.
+
+The results reveal a sharp dichotomy in hyperparameter robustness. Classical modularity-maximizing heuristics (\textsc{Leiden}, \textsc{Louvain}, and \textsc{COMBO}) exhibit virtually zero sensitivity ($\lvert\Delta Q\rvert \le 0.005$), because their default resolution parameter ($\gamma = 1.0$) already aligns directly with standard Newman--Girvan modularity; on Pubmed, tuning \textsc{COMBO}'s resolution and community cap also enables it to finish well within the one-hour limit ($Q = 0.740$). For \textsc{Walktrap}, tuning the random-walk length $t \in [2, 12]$ yields consistent moderate gains ($+0.016$ to $+0.028$). Enabling multi-pass refinement in \textsc{CluStRE} (\texttt{clustre-strong}) lifts its modularity by $+0.268$ to $+0.393$ over single-pass streaming (\texttt{clustre-fast}), bringing it within $0.005$ of \textsc{Leiden} on all three citation networks.
+
+Among learning-based methods, architectures whose loss functions balance multiple competing terms—or that are sensitive to learning rate and temperature scaling—benefit substantially from tuning. \textsc{GNNS} gains $+0.015$ to $+0.028$ by tuning its subspace rank and step count, while full-graph \textsc{MAGI} (GCN) improves by $+0.049$ to $+0.106$ and mini-batch \textsc{MAGI} (GraphSAGE) improves by $+0.049$ on Pubmed. Most strikingly, \textsc{CommDGI}—which optimizes a joint combination of deep graph infomax, $k$-means clustering temperature, and modularity—suffers from mode collapse under default parameters on Pubmed ($Q = 0.003$ at $k = \lceil\sqrt{n}\rceil = 141$, and $Q = 0.484$ at exact $k=3$), but recovers $Q = 0.690$ after tuning its loss weights and cluster temperature. Notably, however, even after 50 trials of per-instance Bayesian optimization, no learning-based algorithm surpasses the untuned out-of-the-box modularity of \textsc{VieClus} or \textsc{Leiden} on any of the three networks.
+
+\subsection{Synthetic Graphs (ADC-SBM)}
+
+\begin{figure*}[!ht]
+    \centering
+    \begin{tikzpicture}
+        \begin{groupplot}[
+                group style={
+                        group size=2 by 1,
+                        horizontal sep=1.4cm
+                    },
+                height=0.28\textwidth,
+                width=0.46\textwidth,
+                ymin=0, ymax=1.05,
+                axis lines=box,
+                tick label style={font=\footnotesize},
+                label style={font=\small},
+                title style={font=\small\bfseries},
+                grid=major,
+                major grid style={gray!18, thin},
                 legend style={
                         draw=none,
-                        legend columns=4,,
+                        legend columns=4,
                         legend cell align=left,
-                        at={(-0.2,-0.7)}, anchor=south west
+                        font=\footnotesize,
+                        /tikz/every even column/.append style={column sep=0.35cm}
                     }
             ]
 
-            \addplot[refstyle={vieclus}] coordinates {(1726.3660110940255,0.7531085752527071)};
-            \node at (1700, 0.82) {\scriptsize \textsc{VieClus}};
+            \nextgroupplot[
+                xmin=1.0, xmax=14.0,
+                xlabel={Expected external degree ($d_{\text{out}}$)},
+                ylabel={NMI},
+                ylabel near ticks,
+                title={Structural Degradation ($\sigma_c = 3$)}
+            ]
+            \foreach \alg in {vieclus,gnns,dgcluster,dmon,commdgi,ucode,magi}{
+                    \expanded{
+                        \noexpand\addplot[refstyle={\alg}, sharp plot, solid, thick, mark repeat=6, mark options={solid, scale=0.85}] table[x=dout, y={\alg}, col sep=comma] {data/adc_sbm_dout.csv};
+                    }
+                }
+            \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark repeat=6, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=dout, y=magi_gcn, col sep=comma] {data/adc_sbm_dout.csv};
 
-            \addplot[refstyle={leiden}] coordinates {(0.6239696880930304,0.7621314735947818)};
-            \node at (0.6, 0.85) {\scriptsize \textsc{Leiden}};
+            \nextgroupplot[
+                xmode=log,
+                xmin=0.01, xmax=10.0,
+                xlabel={Cluster center standard deviation ($\sigma_c$)},
+                ylabel={NMI},
+                ylabel near ticks,
+                title={Feature Degradation ($d_{\text{out}} = 2$)},
+                legend to name=sharedlegend2
+            ]
+            \foreach \alg in {vieclus,gnns,dgcluster,dmon,commdgi,ucode,magi}{
+                    \expanded{
+                        \noexpand\addplot[refstyle={\alg}, sharp plot, solid, thick, mark repeat=6, mark options={solid, scale=0.85}] table[x=sigma, y={\alg}, col sep=comma] {data/adc_sbm_sigma.csv};
+                    }
+                }
+            \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark repeat=6, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=sigma, y=magi_gcn, col sep=comma] {data/adc_sbm_sigma.csv};
 
-            \addplot[refstyle={louvain}] coordinates {(1.4013229432695928,0.7547851126538677)};
-            \node at (1.4, 0.69) {\scriptsize \textsc{Louvain}};
+            \addlegendentry{\textsc{VieClus} / \textsc{Leiden}}
+            \addlegendentry{\textsc{GNNS}}
+            \addlegendentry{\textsc{DGCluster}}
+            \addlegendentry{\textsc{DMoN}}
+            \addlegendentry{\textsc{CommDGI}}
+            \addlegendentry{\textsc{UCoDe}}
+            \addlegendentry{\textsc{MAGI} (SAGE)}
+            \addlegendentry{\textsc{MAGI} (GCN)}
 
-            \addplot[refstyle={combo}] coordinates {(2820.7939174904686,0.766180333291874)};
-            \node at (3820, 0.87) {\scriptsize \textsc{COMBO}};
-
-            \addplot[refstyle={gnns}] coordinates {(559.3278503834495,0.7178744368397761)};
-            \node at (350, 0.8) {\scriptsize \textsc{GNNS}};
-
-            \addplot[refstyle={wt}] coordinates {(12.771122157737215,0.6642441446299415)};
-            \node at (12.7, 0.75) {\scriptsize \textsc{WT}};
-
-            \addplot[refstyle={cnm}] coordinates {(660.5783649792988,0.6758815349295846)};
-            \node at (600, 0.6) {\scriptsize \textsc{CNM}};
-
-            \addplot[refstyle={walktrap}] coordinates {(86.36169664105313,0.6727992787112209)};
-            \node at (86.4, 0.75) {\scriptsize \textsc{Walktrap}};
-
-            \addplot[refstyle={commdgi}] coordinates {(19499.523710563695, 0.6603309780162184)};
-            \node at (8000, 0.45) {\scriptsize \textsc{CommDGI}};
-            \draw (14000, 0.5) -- (17000, 0.6);
-
-            \addplot[refstyle={clustre_fast}] coordinates {(0.08779015323918948,0.49019129511178766)};
-            \node at (0.1, 0.4) {\scriptsize \textsc{CluStRE}};
-
-            \addplot[refstyle={dmon}] coordinates {(648.5178048996712,0.45727461117777635)};
-            \node at (648, 0.38) {\scriptsize \textsc{DMoN}};
-
-            \addplot[refstyle={lim}] coordinates {(8692.783865262756,0.6680899707353964)};
-            \node at (8700, 0.75) {\scriptsize \textsc{LIM}};
-
-            \addplot[refstyle={hollocou}] coordinates {(0.02831508257184716,0.2385322144468167)};
-            \node at (0.1, 0.238) {\scriptsize \textsc{Hollocou}};
-
-            \addplot[refstyle={magi}] coordinates {(3564.7727114111008,0.6850822252894211)};
-            \node at (2000, 0.63) {\scriptsize \textsc{MAGI}};
-
-            \addplot[refstyle={dgcluster}] coordinates {(600.0758423676813,0.713305998339106)};
-            \node at (100, 0.55) {\scriptsize \textsc{DGCluster}};
-            \draw (200, 0.6) -- (400, 0.675);
-
-            \addplot[refstyle={ucode}] coordinates {(5577.320249077159,0.6202928248036939)};
-            \node at (5000, 0.56) {\scriptsize \textsc{UCoDe}};
-
-
-            % \addlegendentry{VieClus}
-            % \addlegendentry{Leiden}
-            % \addlegendentry{Louvain}
-            % \addlegendentry{COMBO}
-            % \addlegendentry{GNNS}
-            % \addlegendentry{WT}
-            % \addlegendentry{CNM}
-            % \addlegendentry{Walktrap}
-            % \addlegendentry{CommDGI}
-            % \addlegendentry{CluStRE}
-            % \addlegendentry{DMoN}
-            % \addlegendentry{LIM}
-            % \addlegendentry{Hollocou}
-            % \addlegendentry{MAGI}
-            % \addlegendentry{DGCluster}
-            % \addlegendentry{UCoDe}
-
-        \end{axis}
+        \end{groupplot}
     \end{tikzpicture}
 
-    % Normal caption
-    \vspace{-0.7em}
-    \caption{ Scatter plot showing the ratio between running time and solution quality, using the geometric mean for both measures on the \textsc{Ground-Truth} graphs. To normalize the running time per graph, we divide it by the number of edges, yielding a time-per-edge measure. }
-    % Description for someone who can't see (only clear text)
-    \Description{Test.}
-    \label{fig:efficiency}
-    \vspace{-1em}
-\end{figure}
+    \vspace{0.2em}
+    \ref{sharedlegend2}
 
-\subsection{Quality--Efficiency Tradeoffs}
+    \caption{Ground-truth community recovery (NMI) on synthetic attributed networks generated with the ADC-SBM benchmark ($n = 1\,000$ vertices, $k = 4$ clusters, average degree $d = 20$, intra-cluster feature standard deviation $\sigma = 1$). Left: structural degradation via increasing expected external degree $d_{\text{out}} \in [1, 14]$ at fixed informative features ($\sigma_c = 3$). Right: feature degradation via decreasing cluster center separation $\sigma_c \in [10^{-2}, 10^{1}]$ at fixed strong community topology ($d_{\text{out}} = 2$). Note that \textsc{Leiden} matches \textsc{VieClus} almost identically across both sweeps.}
+    \Description{Two line plots showing NMI scores of clustering algorithms on ADC-SBM synthetic graphs under structural degradation (varying d_out) and feature degradation (varying sigma_c).}
+    \label{fig:adcsbm}
+\end{figure*}
 
-Figure~\ref{fig:efficiency} summarizes the tradeoff between clustering quality and execution time using geometric means across instances. Streaming methods occupy the extreme low-latency regime, while greedy modularity methods (\textsc{Louvain}, \textsc{Leiden}) achieve a favorable balance between quality and efficiency. The search-based algorithm \textsc{VieClus} achieves the highest quality, but at a substantially higher computational cost. Similarly, learning-based methods generally attain high solution qualities at substantially higher \hbox{computational cost.}
+To isolate how clustering algorithms trade off topological structure against vertex attributes, we evaluate them on synthetic attributed networks generated using our ADC-SBM generator (Section~\ref{sec:evaluation}). Rather than ranking solvers, these experiments reveal how different architectures respond to controlled degradation of structural and attribute signals. We conduct two high-resolution parameter sweeps on graphs with $n = 1\,000$ vertices, $k = 4$ clusters, average degree $d = 20$, and intra-cluster feature spread $\sigma = 1$: (i)~a \emph{structural degradation} sweep that increases the expected external degree $d_{\text{out}}$ from $1$ to $14$ in steps of $0.25$ while holding cluster features well-separated ($\sigma_c = 3$), and (ii)~a \emph{feature degradation} sweep that varies the cluster center standard deviation $\sigma_c$ logarithmically from $10^{-2}$ (uninformative overlapping features) to $10^{1}$ (well-separated features) while holding the graph topology strongly modular ($d_{\text{out}} = 2$).
 
-Peak memory usage varies significantly across methods, and detailed measurements for the \textsc{Ground-Truth} dataset are presented in Appendix~\ref{sec:memory}. This appendix also offers insights into the number of training iterations completed by each learning-based algorithm. Although the largest instances often face memory or time constraints, most algorithms complete all training iterations, showing that GPUs or other accelerators would not have improved the results for those smaller graphs. We also evaluate the parallel algorithms sequentially to analyze how additional computing resources affect their performance; detailed measurements are presented \hbox{in Appendix~\ref{sec:par-seq}.}
+Figure~\ref{fig:adcsbm} summarizes both experiments. Under structural degradation (Figure~\ref{fig:adcsbm}, left), topology-only methods (\textsc{VieClus}, \textsc{Leiden}, and \textsc{GNNS}) maintain near-perfect recovery up to $d_{\text{out}} \approx 8$, after which they undergo a sharp phase transition as the stochastic block model approaches its detectability limit, dropping below $\text{NMI} = 0.11$ by $d_{\text{out}} = 11$. In contrast, attribute-aware GNNs leverage the informative node features ($\sigma_c = 3$) to sustain recovery well into the structurally noisy regime: at $d_{\text{out}} = 11$, \textsc{DMoN} achieves $\text{NMI} = 0.849$, \textsc{MAGI} (GCN) achieves $0.767$, \textsc{CommDGI} achieves $0.724$, and \textsc{DGCluster} achieves $0.720$.
 
-% \subfile{../tables/memory.tex}
-
-\subsection{Synthetic Graphs}
-
-To further evaluate the impact and sensitivity of graph features across clustering algorithms, we include experiments with syntactically generated graphs with vertex features. These experiments illustrate how feature-aware methods respond to controlled degradation of structural and attribute signals, rather than ranking the methods. For reference, we also include \textsc{VieClus}, which performed best among the pure modularity-optimizing methods. We conduct two sets of experiments with the ADC-SBM generator. First, we generate a sequence of graphs with gradually higher $d_{out}$, causing the graph structure to carry less information about the original $k$ clusters. And second, we generate graphs with strong community structure as we gradually increase the cluster center variance $\sigma_c$, leading the graph features to carry less information \hbox{about the clusters.}
-
-Figure~\ref{fig:adcsbm} summarizes the results of the two ADC-SBM experiments. When the feature signal is strong, \textsc{MAGI} and \textsc{DMoN} achieve the highest NMI scores, and beyond $d_{out} \approx 11$, all feature-aware methods outperform \textsc{VieClus}. The results also highlight clear differences in how methods balance structural and feature information. \textsc{MAGI} relies primarily on node features, as evidenced by its strong performance under structural noise and its sensitivity to feature degradation. In contrast, \textsc{DMoN} remains robust in both settings, indicating a more balanced use of topology and attributes. \textsc{CommDGI} exhibits similar trends but performs consistently worse than \textsc{DMoN}. \textsc{DGCluster} shows the opposite bias to \textsc{MAGI}, favoring graph structure over features, while \textsc{UCoDe} displays a similar but less pronounced tendency. We exclude \textsc{LIM} from this figure, as it consistently collapsed to a single cluster, yielding zero NMI across all configurations.
+Comparing the two variants of \textsc{MAGI}—our default two-stage GraphSAGE encoder (\textsc{MAGI}-SAGE) versus the single-stage full-graph GCN encoder (\textsc{MAGI}-GCN)—exposes a striking architectural trade-off in message passing. Under structural degradation (Figure~\ref{fig:adcsbm}, left), \textsc{MAGI}-SAGE maintains $\text{NMI} = 1.000$ across the entire sweep up to $d_{\text{out}} = 14$, because GraphSAGE explicitly concatenates each vertex's ego-features with its sampled neighborhood representation, preserving clean ego-attribute separability even when $70\%$ of incident edges cross cluster boundaries. Conversely, under feature degradation (Figure~\ref{fig:adcsbm}, right), when attributes become pure noise ($\sigma_c \le 0.1$) on a clean graph topology ($d_{\text{out}} = 2$), \textsc{MAGI}-SAGE collapses to $\text{NMI} \approx 0.01$--$0.02$, whereas \textsc{MAGI}-GCN retains $\text{NMI} = 0.489$--$0.789$ because full-graph degree-normalized Laplacian averaging smooths out zero-mean feature noise across well-connected communities. A similar spectrum appears across the other GNNs: \textsc{DGCluster} relies primarily on its pairwise modularity-similarity matrix and retains $\text{NMI} = 1.000$ across all $\sigma_c \in [10^{-2}, 10^{1}]$ alongside \textsc{VieClus} and \textsc{GNNS}, while \textsc{DMoN} ($\text{NMI} = 0.607$ at $\sigma_c = 0.01$ and $0.474$ at $d_{\text{out}} = 14$) and \textsc{CommDGI} ($0.574$ at $\sigma_c = 0.01$) provide a more balanced compromise between topology and attributes. (We omit \textsc{LIM} from Figure~\ref{fig:adcsbm} as it frequently collapses to a single cluster on these synthetic instances.)
 
 \section{Conclusion}\label{sec:conclusion}
-We surveyed 17 modularity-based graph clustering algorithms, covering classical heuristics, parallel methods, and recent learning-based approaches. When modularity maximization is the sole objective, the results are clear: \textsc{VieClus} consistently achieves the highest modularity values when sufficient memory is available. \textsc{Leiden}, an improved variant of \textsc{Louvain}, closely follows in solution quality and offers substantially faster runtimes. This trade-off reflects their optimization strategies: \textsc{VieClus} relies on time-budgeted search, while \textsc{Leiden} uses a greedy refinement scheme.
+We presented a comprehensive empirical benchmark of 17 modularity-based graph clustering algorithms spanning exact mathematical programming, classical greedy and random-walk heuristics, streaming algorithms, parallel shared-memory heuristics, and recent deep learning architectures. When pure modularity maximization is the objective, classical combinatorial methods remain the clear state of the art: the evolutionary solver \textsc{VieClus} achieves the highest modularity on every instance it completes across both attributed and featureless benchmark suites, while \textsc{Leiden} matches \textsc{VieClus} within $1\%$ modularity on the \textsc{Ground-Truth} graphs and executes more than four orders of magnitude faster.
 
-Beyond modularity alone, other algorithms exhibit their own unique strengths. Streaming methods such as \textsc{CluStRE} offer extremely low runtimes and memory footprints, making them well-suited for large-scale or resource-constrained settings. Learning-based approaches, including \textsc{GNNS}, demonstrate that neural methods are approaching the performance of hand-crafted heuristics. However, they still require substantially more memory and do not yet achieve competitive modularity scores. At the same time, there is growing interest in expanding modularity optimization with auxiliary objectives to recover ground-truth communities better. In this setting, feature-aware methods can be advantageous: \textsc{MAGI} achieves the strongest ground-truth recovery in our experiments, while \textsc{DMoN} remains effective when community structure is encoded between topology and node attributes.
+At the same time, our multi-protocol evaluation clarifies where alternative paradigms excel and where fundamental bottlenecks remain:
+\begin{itemize}
+    \item \textbf{Scalability vs.\ quality:} Single-pass streaming methods (\textsc{CluStRE} and \textsc{Hollocou}) process billion-edge graphs such as \texttt{uk-2007-05} ($3.3$~billion edges) within a few gigabytes of memory, and enabling multi-pass refinement in \textsc{CluStRE} closes nearly the entire modularity gap to \textsc{Leiden} on medium-scale networks.
+    \item \textbf{Ground-truth community recovery:} Because real-world semantic labels frequently diverge from purely topological modularity, attribute-aware neural methods (\textsc{MAGI}, \textsc{DGCluster}, \textsc{CommDGI}, and \textsc{UCoDe}) match or outperform classical heuristics in NMI and Pairwise F1 on attributed networks. Moreover, our synthetic ADC-SBM experiments demonstrate that architectural choices—such as ego-feature concatenation in GraphSAGE versus Laplacian smoothing in GCNs—govern whether a neural method is resilient to structural noise or attribute noise.
+    \item \textbf{Hardware acceleration and tuning sensitivity:} While GPU acceleration under Protocol~S speeds up neural training by $12\times$--$158\times$ and enables full epoch convergence on medium-sized graphs, current GNN implementations remain constrained by $O(n^2)$ dense matrix allocations in host memory or the 24~GiB VRAM ceiling on GPUs. Furthermore, Protocol~B demonstrates that whereas classical modularity heuristics work out of the box without tuning, multi-loss neural architectures often require careful hyperparameter optimization to avoid mode collapse, and still do not surpass untuned classical heuristics in raw modularity.
+\end{itemize}
 
-To support future work in this area, we introduce a unified benchmarking framework that enables direct, reproducible comparisons across a wide range of modularity-based clustering algorithms. We hope that this framework lowers the barrier for evaluating new methods against established baselines and encourages more systematic experimental studies of graph clustering algorithms.
+To support ongoing research, we release our open-source benchmarking harness, standardized dataset pipelines, and containerized solver wrappers. By decoupling algorithmic evaluation from ad-hoc preprocessing, cluster-count assumptions, and hardware disparities, we hope this framework establishes a rigorous foundation for developing the next generation of scalable, attribute-aware community detection methods.
 
 \section*{Acknowledgements}
 We acknowledge support by DFG grant SCHU 2567/5-1.
@@ -890,7 +998,7 @@ A.C., K.L., and C.S. conceived the study. K.L. and A.C. developed the benchmark 
 The authors declare no competing interests.
 
 \section*{Data and Code Availability}
-The complete benchmarking harness, solver wrappers, and datasets are open-source and publicly available at \url{https://github.com/TODO/ClusterBenchmark}.
+The complete benchmarking harness, solver wrappers, and datasets are open-source and publicly available at \url{https://github.com/ClusterBenchmark/ClusterBenchmark}, with interactive results hosted at \url{https://clusterbenchmark.github.io/}.
 
 \bibliographystyle{naturemag}
 \bibliography{\jobname}
@@ -900,9 +1008,11 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
 \section{Benchmark Instances}
 \label{sec:instances}
 \begin{table}[H]
-    \caption{Graph from the 10th DIMACS implementation challange. There are no features or ground truth clusters for these graphs.}
+    \centering
+    \caption{Graphs from the 10th DIMACS Implementation Challenge~\cite{dimacschallengegraphpartandcluster} used in our topology-only evaluation suite ($N=32$). These instances do not include vertex features or ground-truth community labels.}
     \label{tab:dimacs_instances}
-    \begin{tabular}{lrr}
+    \small
+    \begin{tabular*}{0.65\textwidth}{@{\extracolsep{\fill}}lrr@{}}
         \toprule
         Instance               & $n$                  & $m$                   \\
         \midrule
@@ -939,84 +1049,89 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
         road-usa               & \numprint{23947347}  & \numprint{28854312}   \\
         uk-2007-05             & \numprint{105896555} & \numprint{3301876564} \\
         \bottomrule
-    \end{tabular}
+    \end{tabular*}
 \end{table}
 
-\section{Memory Usage}
+\section{Memory Usage and Training Convergence}
 \label{sec:memory}
-\setlength{\tabcolsep}{4.5pt}
 
 \begin{table}[H]
-    \caption{Memory consumption of the evaluated algorithms on the \textsc{Ground-Truth} dataset. Values are reported in human-readable units. Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 250~GB memory limit. }
+    \centering
+    \caption{Peak memory consumption of the evaluated algorithms on the \textsc{Ground-Truth} dataset under Protocol~A (recorded via Linux \texttt{cgroup} tracking). Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 120~GB memory limit.}
     \label{tab:memory}
-    \small
-    \begin{tabular}{l|rrrrrrrrrr}
+    \scriptsize
+    \setlength{\tabcolsep}{1.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
         \toprule
-        Method             & Cora      & Citeseer  & Amz-Photo & Amz-Comp  & CoAuth-CS & Pubmed    & CoAuth-Phys & ogbn-Arxiv & Reddit    & ogbn-Prod \\
+        Method             & Cora     & Citeseer & Photo    & Comp     & Co-CS    & Pubmed   & Co-Phys   & Arxiv     & Reddit    & Prod      \\
         \midrule
-        \textsc{VieClus}   & 22.53~MB  & 22.53~MB  & 64.91~MB  & 130.24~MB & 58.7~MB   & 44.94~MB  & 134.75~MB   & 497.74~MB  & 9.6~GB    & TLE       \\
-        \textsc{Leiden}    & 20.48~MB  & 20.48~MB  & 38.91~MB  & 59.39~MB  & 34.82~MB  & 26.62~MB  & 61.44~MB    & 211.36~MB  & 9.01~GB   & 9.83~GB   \\
-        \textsc{Louvain}   & 20.48~MB  & 20.48~MB  & 38.91~MB  & 59.39~MB  & 32.77~MB  & 28.67~MB  & 61.44~MB    & 210.32~MB  & 9.01~GB   & 9.83~GB   \\
-        \textsc{COMBO}     & 255.58~MB & 314.59~MB & 1.09~GB   & 3.17~GB   & 5.42~GB   & TLE       & TLE         & MLE        & MLE       & MLE       \\
-        \textsc{GNNS}      & 1.35~GB   & 1.75~GB   & 5.49~GB   & 8.1~GB    & 8.28~GB   & 8.31~GB   & 8.11~GB     & 6.09~GB    & 26.37~GB  & MLE       \\
-        \textsc{WT}        & 20.48~MB  & 20.48~MB  & 38.91~MB  & 59.39~MB  & 34.82~MB  & 28.67~MB  & 61.44~MB    & 211.36~MB  & TLE       & TLE       \\
-        \textsc{CNM}       & 192.51~MB & 179.96~MB & 253.07~MB & 372.06~MB & 234.14~MB & 210.71~MB & 398.65~MB   & TLE        & TLE       & TLE       \\
-        \textsc{Walktrap}  & 27.32~MB  & 20.48~MB  & 418.48~MB & 1.47~GB   & 935.16~MB & 488.84~MB & 4.36~GB     & 99.06~GB   & MLE       & MLE       \\
-        \textsc{CommDGI}   & 735.03~MB & 857.03~MB & 2.05~GB   & 5.34~GB   & 9.54~GB   & 9.82~GB   & 31.09~GB    & MLE        & MLE       & MLE       \\
-        \textsc{CluStRE}   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB   & 6.14~MB     & 8.19~MB    & 8.19~MB   & 22.53~MB  \\
-        \textsc{DMoN}      & 664.01~MB & 863.31~MB & 778~MB    & 987.44~MB & 3.5~GB    & 809.3~MB  & 7.39~GB     & 735.92~MB  & 67~GB     & 77.26~GB  \\
-        \textsc{LIM}       & 674.08~MB & 741.17~MB & 1.92~GB   & 4.67~GB   & 7.45~GB   & TLE       & TLE         & MLE        & MLE       & MLE       \\
-        \textsc{Hollocou}  & 2.05~MB   & 2.05~MB   & 4.1~MB    & 6.14~MB   & 4.1~MB    & 4.1~MB    & 8.19~MB     & 32.39~MB   & 912.7~MB  & 1.15~GB   \\
-        \textsc{MAGI}      & 807.82~MB & 992.96~MB & 1.55~GB   & 2.56~GB   & 6.15~GB   & 2.22~GB   & 15.66~GB    & TLE        & 50.74~GB  & MLE       \\
-        \textsc{DGCluster} & 548.86~MB & 917.5~MB  & 879.83~MB & 1.39~GB   & 5.84~GB   & 1.07~GB   & 13.2~GB     & 624.64~MB  & 150.63~GB & TLE       \\
-        \textsc{UCoDe}     & 576.89~MB & 771.56~MB & 1.7~GB    & 4.32~GB   & 7.69~GB   & 6.94~GB   & 24.23~GB    & MLE        & MLE       & MLE       \\
+        \textsc{VieClus}   & 30.5~MB  & 30.2~MB  & 74.8~MB  & 162~MB   & 67.9~MB  & 53.9~MB  & 146~MB    & 506~MB    & 11.4~GB   & TLE       \\
+        \textsc{Leiden}    & 21.2~MB  & 20.8~MB  & 43.4~MB  & 85.2~MB  & 36.2~MB  & 29.0~MB  & 71.4~MB   & 265~MB    & 11.7~GB   & 12.7~GB   \\
+        \textsc{Louvain}   & 20.5~MB  & 20.1~MB  & 43.5~MB  & 80.7~MB  & 35.9~MB  & 29.5~MB  & 71.5~MB   & 265~MB    & 11.7~GB   & 12.7~GB   \\
+        \textsc{COMBO}     & 152~MB   & 212~MB   & 1.01~GB  & 3.09~GB  & 5.33~GB  & TLE      & TLE       & MLE       & MLE       & MLE       \\
+        \textsc{CNM}       & 21.0~MB  & 21.4~MB  & 43.4~MB  & 73.7~MB  & 39.7~MB  & 40.6~MB  & 71.3~MB   & 264~MB    & TLE       & TLE       \\
+        \textsc{Infomap}   & 33.7~MB  & 36.3~MB  & 103~MB   & 211~MB   & 138~MB   & 118~MB   & 288~MB    & 1.28~GB   & 25.8~GB   & 38.5~GB   \\
+        \textsc{Walktrap}  & 33.9~MB  & 25.2~MB  & 434~MB   & 1.49~GB  & 969~MB   & 531~MB   & 4.38~GB   & 99.3~GB   & TLE       & MLE       \\
+        \textsc{CluStRE}   & 17.8~MB  & 17.6~MB  & 20.4~MB  & 38.8~MB  & 19.9~MB  & 20.1~MB  & 25.2~MB   & 56.2~MB   & 986~MB    & 1.10~GB   \\
+        \textsc{Hollocou}  & 8.9~MB   & 8.9~MB   & 11.2~MB  & 14.4~MB  & 12.3~MB  & 13.0~MB  & 16.7~MB   & 43.2~MB   & 942~MB    & 1.14~GB   \\
+        \midrule
+        \textsc{GNNS}      & 719~MB   & 784~MB   & 1.49~GB  & 2.59~GB  & 2.75~GB  & 2.91~GB  & 4.94~GB   & 8.74~GB   & 40.3~GB   & 46.5~GB   \\
+        \textsc{DGCluster} & 520~MB   & 540~MB   & 1.06~GB  & 2.22~GB  & 1.08~GB  & 1.13~GB  & 1.93~GB   & 6.10~GB   & MLE       & MLE       \\
+        \textsc{MAGI}      & 790~MB   & 945~MB   & 1.56~GB  & 2.99~GB  & 5.78~GB  & 2.13~GB  & 13.8~GB   & 7.05~GB   & 43.3~GB   & TLE       \\
+        \textsc{LIM}       & 676~MB   & 786~MB   & 2.14~GB  & 5.02~GB  & 6.57~GB  & 6.80~GB  & 21.0~GB   & MLE       & MLE       & MLE       \\
+        \textsc{DMoN}      & 436~MB   & 524~MB   & 1.46~GB  & 3.16~GB  & 2.54~GB  & 1.20~GB  & 5.82~GB   & 14.0~GB   & MLE       & MLE       \\
+        \textsc{UCoDe}     & 614~MB   & 718~MB   & 1.75~GB  & 4.83~GB  & 6.79~GB  & 6.93~GB  & 22.1~GB   & MLE       & MLE       & MLE       \\
+        \textsc{CommDGI}   & 735~MB   & 783~MB   & 1.91~GB  & 5.55~GB  & 8.91~GB  & 9.73~GB  & 29.7~GB   & MLE       & MLE       & MLE       \\
         \bottomrule
-    \end{tabular}
+    \end{tabular*}
 \end{table}
 
-\setlength{\tabcolsep}{4.5pt}
-
 \begin{table}[H]
-    \caption{Number of finished training iterations of the evaluated algorithms on the \textsc{Ground-Truth} dataset. Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 250~GB memory limit. }
+    \centering
+    \caption{Number of completed training epochs/iterations out of the requested budget on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Note that \textsc{GNNS} employs early stopping upon convergence.}
     \label{tab:iterations}
-    \small
-    \begin{tabular}{l|rrrrrrrrrr}
+    \scriptsize
+    \setlength{\tabcolsep}{1.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
         \toprule
-        Method             & Cora                            & Citeseer                        & Amz-Photo                       & Amz-Comp                        & CoAuth-CS                       & Pubmed                          & CoAuth-Phys                     & ogbn-Arxiv                      & Reddit             & ogbn-Prod          \\
+        Method             & Cora      & Citeseer  & Photo     & Comp      & Co-CS     & Pubmed    & Co-Phys   & Arxiv    & Reddit  & Prod    \\
         \midrule
-        \textsc{CommDGI}   & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{628}/\numprint{1000}  & \numprint{708}/\numprint{1000}  & 224/\numprint{1000}             & MLE                             & MLE                & MLE                \\
-        \textsc{DMoN}      & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & 24/\numprint{1000} & 17/\numprint{1000} \\
-        \textsc{LIM}       & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{874}/\numprint{1000}  & 552/\numprint{1000}             & TLE                             & TLE                             & MLE                             & MLE                & MLE                \\
-        \textsc{MAGI}      & 100/100                         & 100/100                         & 100/100                         & 100/100                         & 100/100                         & 100/100                         & 31/100                          & TLE                             & 18/100             & MLE                \\
-        \textsc{DGCluster} & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 300/300                         & 34/300             & TLE                \\
-        \textsc{UCoDe}     & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & \numprint{1000}/\numprint{1000} & 450/\numprint{1000}             & MLE                             & MLE                & MLE                \\
+        \textsc{GNNS}      & 50/400    & 50/400    & 50/400    & 50/400    & 50/400    & 50/400    & 50/400    & 400/400  & 120/400 & 300/300 \\
+        \textsc{DGCluster} & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 270/300  & MLE     & MLE     \\
+        \textsc{MAGI}      & 400/400   & 400/400   & 400/400   & 142/400   & 50/400    & 140/400   & 12/400    & 5/400    & 7/400   & TLE     \\
+        \textsc{LIM}       & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 111/300   & MLE      & MLE     & MLE     \\
+        \textsc{DMoN}      & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 819/1000  & 583/1000 & MLE     & MLE     \\
+        \textsc{UCoDe}     & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 960/1000  & 1000/1000 & 280/1000  & MLE      & MLE     & MLE     \\
+        \textsc{CommDGI}   & 1001/1001 & 1001/1001 & 1001/1001 & 986/1001  & 564/1001  & 560/1001  & 166/1001  & MLE      & MLE     & MLE     \\
         \bottomrule
-    \end{tabular}
+    \end{tabular*}
 \end{table}
 
-\section{Parallel-Sequential Comparison}
+\section{Hardware Scaling Comparison (Protocol~S)}
 \label{sec:par-seq}
-% \setlength{\tabcolsep}{7pt}
 
 \begin{table}[H]
-    \caption{Parallel and sequential running times for six instances from the \textsc{Ground-Truth} dataset. Only the parallel methods are included in the table. The $t_1$ column gives the sequential running time in seconds, while the $t_{16}$ column displays the running time with 16 threads. }
+    \centering
+    \caption{Execution time in seconds across hardware configurations on six medium-scale \textsc{Ground-Truth} instances comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads; $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU). Note that \textsc{VieClus} is a CPU-only MPI solver with a 1-hour time budget.}
     \label{tab:par-seq}
-    \small
-    \begin{tabular}{l|rr|rr|rr|rr|rr|rr}
+    \scriptsize
+    \setlength{\tabcolsep}{1.8pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr rrr@{}}
         \toprule
-                           & \multicolumn{2}{c|}{Cora} & \multicolumn{2}{c|}{Citeseer} & \multicolumn{2}{c|}{Amz-Photo} & \multicolumn{2}{c|}{Amz-Comp} & \multicolumn{2}{c|}{CoAuth-CS} & \multicolumn{2}{c}{CoAuth-Phys}                                                                                                                                                                                    \\ \cline{2-13}
-        Method             & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$}      & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$}      & \multicolumn{1}{c|}{$t_{16}$}   & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c|}{$t_{16}$} & \multicolumn{1}{c}{$t_1$} & \multicolumn{1}{c}{$t_{16}$} \\
+        & \multicolumn{3}{c}{\textbf{Cora}} & \multicolumn{3}{c}{\textbf{Citeseer}} & \multicolumn{3}{c}{\textbf{Amz-Photo}} & \multicolumn{3}{c}{\textbf{Amz-Comp}} & \multicolumn{3}{c}{\textbf{CoAuth-CS}} & \multicolumn{3}{c}{\textbf{CoAuth-Phys}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16} \cmidrule(lr){17-19}
+        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
         \midrule
-        \textsc{VieClus}   & 276.55                    & 83.31                         & 8.29                           & 5.19                          & 93.29                          & 16.25                           & 2\,804.96                 & 2\,476.70                     & 2\,811.52                 & 2\,897.85                     & 3\,511.06                 & 3\,562.30                    \\
-        \textsc{GNNS}      & 36.40                     & 9.41                          & 48.44                          & 11.90                         & 231.92                         & 43.46                           & 592.24                    & 115.08                        & 668.79                    & 162.44                        & 1\,906.75                 & 363.04                       \\
-        \textsc{CommDGI}   & 936.72                    & 140.64                        & 2\,046.85                      & 288.34                        & 3\,606.69                      & 1\,284.26                       & 3\,616.27                 & 3\,416.34                     & 3\,613.43                 & 3\,602.34                     & 3\,664.35                 & 3\,610.59                    \\
-        \textsc{DMoN}      & 55.60                     & 42.19                         & 100.31                         & 50.01                         & 312.63                         & 184.55                          & 658.25                    & 352.90                        & 868.59                    & 212.61                        & 2\,060.92                 & 498.45                       \\
-        \textsc{LIM}       & 811.90                    & 97.63                         & 1\,218.18                      & 185.00                        & 3\,605.01                      & 618.07                          & 3\,614.08                 & 1\,909.42                     & 3\,633.77                 & 2\,130.90                     & TLE                       & TLE                          \\
-        \textsc{MAGI}      & 119.29                    & 56.88                         & 215.38                         & 66.44                         & 1\,445.31                      & 535.17                          & 3\,605.81                 & 1\,572.78                     & 3\,635.58                 & 3\,414.73                     & 3\,691.43                 & 3\,614.21                    \\
-        \textsc{DGCluster} & 44.78                     & 17.40                         & 91.01                          & 23.75                         & 301.28                         & 98.98                           & 594.48                    & 193.56                        & 833.56                    & 140.19                        & 1\,961.84                 & 307.94                       \\
-        \textsc{UCoDe}     & 223.57                    & 32.04                         & 460.72                         & 62.13                         & 1\,305.44                      & 298.82                          & 3\,603.07                 & 1\,136.63                     & 3\,607.82                 & 2\,287.33                     & 3\,625.18                 & 3\,607.02                    \\
+        \textsc{VieClus}   & 3456 & 3457 & ---  & 3456 & 3457 & ---  & 3456 & 3458 & ---   & 3457 & 3458 & ---    & 3456 & 3457 & ---    & 3457 & 3458 & ---   \\
+        \textsc{GNNS}      & 5.3  & 4.6  & 0.29 & 6.7  & 5.9  & 0.36 & 19.9 & 20.7 & 1.10  & 45.1 & 51.0 & 2.68   & 48.4 & 65.5 & 2.97   & 99.0 & 174.7 & 8.10 \\
+        \textsc{DGCluster} & 25.6 & 6.7  & 2.47 & 43.4 & 8.2  & 2.14 & 287  & 68.2 & 5.98  & 604  & 132  & 9.69   & 494  & 74.8 & 7.51   & 1266 & 187   & 17.3 \\
+        \textsc{MAGI}      & 162  & 85.8 & 58.2 & 301  & 107  & 61.4 & 3015 & 1442 & 538   & 3606 & 3615 & 1554   & 3616 & 3623 & 2314   & 3646 & 3657  & 3654 \\
+        \textsc{LIM}       & 66.4 & 7.0  & 0.97 & 140  & 17.5 & 1.08 & 695  & 104  & 3.69  & 1877 & 239  & 9.12   & 2960 & 303  & 11.7   & 3615 & 912   & 40.5 \\
+        \textsc{DMoN}      & 93.8 & 36.7 & 18.8 & 197  & 43.5 & 19.4 & 480  & 150  & 49.8  & 971  & 310  & 91.1   & 1862 & 253  & 45.9   & 3604 & 653   & 124  \\
+        \textsc{UCoDe}     & 91.4 & 12.3 & 1.81 & 184  & 20.4 & 1.88 & 559  & 58.2 & 3.81  & 1740 & 196  & 11.6   & 3605 & 401  & 23.6   & 3616 & 1480  & 78.0 \\
+        \textsc{CommDGI}   & 107  & 33.6 & 3.25 & 258  & 69.9 & 3.29 & 1217 & 280  & 7.48  & 3603 & 727  & 19.9   & 3605 & 1123 & 36.3   & 3625 & 3525  & MLE  \\
         \bottomrule
-    \end{tabular}
+    \end{tabular*}
 \end{table}
 
 
@@ -2037,6 +2152,15 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
   pages   = {2364--8228},
   year    = {2005},
   doi     = {10.1088/1742-5468/2005/09/P09008}
+}
+
+@inproceedings{optuna2019,
+  title     = {Optuna: A Next-generation Hyperparameter Optimization Framework},
+  author    = {Akiba, Takuya and Sano, Shotaro and Yanase, Toshihiko and Ohta, Takeru and Koyama, Masanori},
+  booktitle = {Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining},
+  pages     = {2623--2631},
+  year      = {2019},
+  doi       = {10.1145/3292500.3330701}
 }
 \end{filecontents*}
 
