@@ -801,7 +801,7 @@ Figure~\ref{fig:efficiency} summarizes the trade-off between solution quality an
 
 Peak memory consumption exhibits an equally sharp divide between algorithmic paradigms (detailed per-instance measurements are provided in Appendix~\ref{sec:memory}, Table~\ref{tab:memory}). Streaming methods process edges in a single pass with minimal state, requiring only $1.1$~GB on \texttt{ogbn-products} ($61.9$~M edges), while \textsc{Leiden} and \textsc{Louvain} require $12.7$~GB. In contrast, learning-based GNNs store high-dimensional node embeddings and intermediate activation tensors, consuming $14$--$47$~GB on medium-to-large graphs. Furthermore, implementations that materialize dense $O(n^2)$ modularity or similarity matrices in host memory—specifically \textsc{LIM}, \textsc{UCoDe}, and \textsc{CommDGI}—attempt to allocate $214$~GiB on \texttt{ogbn-arxiv} ($n = 169\,343$) and $43.6$~TiB on \texttt{ogbn-products}, resulting in immediate memory exhaustion (\textsc{MLE}).
 
-To quantify how multi-core parallelism and hardware accelerators shift this efficiency frontier, \textbf{Protocol~S} evaluates the parallel and learning-based solvers using all 32 hardware threads on CPU ($p = 32$, \texttt{device=cpu}) and on the NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}); complete per-instance runtimes are reported in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Expanding from 1 to 32 CPU threads yields geometric-mean speedups of $8.0\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $3.7\times$ for \textsc{CommDGI}, and $3.4\times$ for \textsc{DMoN} across medium-scale networks. Offloading training to the RTX~4090 GPU produces dramatic additional accelerations over single-threaded CPU execution, reaching geometric-mean speedups of $158\times$ for \textsc{LIM} (e.g., reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $100\times$ for \textsc{UCoDe}, $95\times$ for \textsc{CommDGI}, $37\times$ for \textsc{DGCluster}, $13\times$ for \textsc{GNNS}, and $12\times$ for \textsc{DMoN}. Crucially, inspection of completed training epochs (Appendix~\ref{sec:memory}, Table~\ref{tab:iterations}) shows that while most neural methods already finish all requested epochs within one hour on smaller graphs under single-threaded CPU execution, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} prematurely truncate training under $p=1$ (e.g., \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}) but finish 100\% of their training epochs in under two minutes on the GPU. However, GPU acceleration introduces a stricter memory bottleneck: because the RTX~4090 is limited to 24~GiB of VRAM compared to 120~GB of system RAM, full-graph GNNs hit out-of-memory limits on smaller graphs on the GPU than on the CPU (for instance, \textsc{CommDGI} requires $29.7$~GB on \texttt{coauthor-physics} and therefore succeeds on CPU but triggers \textsc{MLE} on GPU).
+To quantify how multi-core parallelism and hardware accelerators shift this efficiency frontier, \textbf{Protocol~S} evaluates the parallel and learning-based solvers using all 32 hardware threads on CPU ($p = 32$, \texttt{device=cpu}) and on the NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}); complete per-instance runtimes are reported in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Expanding from 1 to 32 CPU threads yields geometric-mean speedups of $8.0\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $3.7\times$ for \textsc{CommDGI}, and $3.4\times$ for \textsc{DMoN} across medium-scale networks. Offloading training to the RTX~4090 GPU produces dramatic additional accelerations over single-threaded CPU execution, reaching geometric-mean speedups of $158\times$ for \textsc{LIM} (e.g., reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $100\times$ for \textsc{UCoDe}, $95\times$ for \textsc{CommDGI}, $37\times$ for \textsc{DGCluster}, $13\times$ for \textsc{GNNS}, and $12\times$ for \textsc{DMoN}. Crucially, inspection of completed training epochs under single-threaded CPU execution (Appendix~\ref{sec:memory}, Table~\ref{tab:iterations}) and under GPU acceleration (Appendix~\ref{sec:par-seq}, Table~\ref{tab:iterations_gpu}) shows that while most neural methods already finish all requested epochs within one hour on smaller graphs under $p=1$, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} prematurely truncate training on CPU (e.g., \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}) but finish 100\% of their training epochs in under two minutes on the GPU. However, GPU acceleration introduces a stricter memory bottleneck: because the RTX~4090 is limited to 24~GiB of VRAM compared to 120~GB of system RAM, full-graph GNNs hit out-of-memory limits on smaller graphs on the GPU than on the CPU (for instance, \textsc{CommDGI} requires $29.7$~GB on \texttt{coauthor-physics} and therefore succeeds on CPU but triggers \textsc{MLE} on GPU).
 
 \subsection{Hyperparameter Sensitivity (Protocol~B)}
 
@@ -880,6 +880,7 @@ Among learning-based methods, architectures whose loss functions balance multipl
                     }
                 }
             \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=dout, y=magi_gcn, col sep=comma] {data/adc_sbm_dout_binned.csv};
+            \addplot[refstyle={vieclus}, sharp plot, solid, thick, mark options={solid, scale=0.85}, forget plot] table[x=dout, y=vieclus, col sep=comma] {data/adc_sbm_dout_binned.csv};
 
             \nextgroupplot[
                 xmode=log,
@@ -896,6 +897,7 @@ Among learning-based methods, architectures whose loss functions balance multipl
                     }
                 }
             \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=sigma, y=magi_gcn, col sep=comma] {data/adc_sbm_sigma_binned.csv};
+            \addplot[refstyle={vieclus}, sharp plot, solid, thick, mark options={solid, scale=0.85}, forget plot] table[x=sigma, y=vieclus, col sep=comma] {data/adc_sbm_sigma_binned.csv};
 
             \addlegendentry{\textsc{VieClus} / \textsc{Leiden}}
             \addlegendentry{\textsc{GNNS}}
@@ -989,54 +991,54 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
 
 \begin{table}[H]
     \centering
-    \caption{Peak memory consumption of the evaluated algorithms on the \textsc{Ground-Truth} dataset under Protocol~A (recorded via Linux \texttt{cgroup} tracking). Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 120~GB memory limit.}
+    \caption{Peak memory consumption in gigabytes (GB) of the evaluated algorithms on the \textsc{Ground-Truth} dataset under Protocol~A (recorded via Linux \texttt{cgroup} tracking). Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 120~GB memory limit.}
     \label{tab:memory}
     \vspace{0.5em}
-    \scriptsize
-    \setlength{\tabcolsep}{1.5pt}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
         \toprule
-        Method             & Cora     & Citeseer & Photo    & Comp     & Co-CS    & Pubmed   & Co-Phys   & Arxiv     & Reddit    & Prod      \\
+        Method             & Cora & Citeseer & Photo & Comp & Co-CS & Pubmed & Co-Phys & Arxiv & Reddit & Prod \\
         \midrule
-        \textsc{VieClus}   & 30.5~MB  & 30.2~MB  & 74.8~MB  & 162~MB   & 67.9~MB  & 53.9~MB  & 146~MB    & 506~MB    & 11.4~GB   & TLE       \\
-        \textsc{Leiden}    & 21.2~MB  & 20.8~MB  & 43.4~MB  & 85.2~MB  & 36.2~MB  & 29.0~MB  & 71.4~MB   & 265~MB    & 11.7~GB   & 12.7~GB   \\
-        \textsc{Louvain}   & 20.5~MB  & 20.1~MB  & 43.5~MB  & 80.7~MB  & 35.9~MB  & 29.5~MB  & 71.5~MB   & 265~MB    & 11.7~GB   & 12.7~GB   \\
-        \textsc{COMBO}     & 152~MB   & 212~MB   & 1.01~GB  & 3.09~GB  & 5.33~GB  & TLE      & TLE       & MLE       & MLE       & MLE       \\
-        \textsc{CNM}       & 21.0~MB  & 21.4~MB  & 43.4~MB  & 73.7~MB  & 39.7~MB  & 40.6~MB  & 71.3~MB   & 264~MB    & TLE       & TLE       \\
-        \textsc{Infomap}   & 33.7~MB  & 36.3~MB  & 103~MB   & 211~MB   & 138~MB   & 118~MB   & 288~MB    & 1.28~GB   & 25.8~GB   & 38.5~GB   \\
-        \textsc{Walktrap}  & 33.9~MB  & 25.2~MB  & 434~MB   & 1.49~GB  & 969~MB   & 531~MB   & 4.38~GB   & 99.3~GB   & TLE       & MLE       \\
-        \textsc{CluStRE}   & 17.8~MB  & 17.6~MB  & 20.4~MB  & 38.8~MB  & 19.9~MB  & 20.1~MB  & 25.2~MB   & 56.2~MB   & 986~MB    & 1.10~GB   \\
-        \textsc{Hollocou}  & 8.9~MB   & 8.9~MB   & 11.2~MB  & 14.4~MB  & 12.3~MB  & 13.0~MB  & 16.7~MB   & 43.2~MB   & 942~MB    & 1.14~GB   \\
+        \textsc{VieClus}   & 0.03 & 0.03     & 0.07  & 0.16 & 0.07  & 0.05   & 0.15    & 0.51  & 11.4   & TLE  \\
+        \textsc{Leiden}    & 0.02 & 0.02     & 0.04  & 0.09 & 0.04  & 0.03   & 0.07    & 0.27  & 11.7   & 12.7 \\
+        \textsc{Louvain}   & 0.02 & 0.02     & 0.04  & 0.08 & 0.04  & 0.03   & 0.07    & 0.27  & 11.7   & 12.7 \\
+        \textsc{COMBO}     & 0.15 & 0.21     & 1.01  & 3.09 & 5.33  & TLE    & TLE     & MLE   & MLE    & MLE  \\
+        \textsc{CNM}       & 0.02 & 0.02     & 0.04  & 0.07 & 0.04  & 0.04   & 0.07    & 0.26  & TLE    & TLE  \\
+        \textsc{Infomap}   & 0.03 & 0.04     & 0.10  & 0.21 & 0.14  & 0.12   & 0.29    & 1.28  & 25.8   & 38.5 \\
+        \textsc{Walktrap}  & 0.03 & 0.03     & 0.43  & 1.49 & 0.97  & 0.53   & 4.38    & 99.3  & TLE    & MLE  \\
+        \textsc{CluStRE}   & 0.02 & 0.02     & 0.02  & 0.04 & 0.02  & 0.02   & 0.03    & 0.06  & 0.99   & 1.10 \\
+        \textsc{Hollocou}  & 0.01 & 0.01     & 0.01  & 0.01 & 0.01  & 0.01   & 0.02    & 0.04  & 0.94   & 1.14 \\
         \midrule
-        \textsc{GNNS}      & 719~MB   & 784~MB   & 1.49~GB  & 2.59~GB  & 2.75~GB  & 2.91~GB  & 4.94~GB   & 8.74~GB   & 40.3~GB   & 46.5~GB   \\
-        \textsc{DGCluster} & 520~MB   & 540~MB   & 1.06~GB  & 2.22~GB  & 1.08~GB  & 1.13~GB  & 1.93~GB   & 6.10~GB   & MLE       & MLE       \\
-        \textsc{MAGI}      & 790~MB   & 945~MB   & 1.56~GB  & 2.99~GB  & 5.78~GB  & 2.13~GB  & 13.8~GB   & 7.05~GB   & 43.3~GB   & TLE       \\
-        \textsc{LIM}       & 676~MB   & 786~MB   & 2.14~GB  & 5.02~GB  & 6.57~GB  & 6.80~GB  & 21.0~GB   & MLE       & MLE       & MLE       \\
-        \textsc{DMoN}      & 436~MB   & 524~MB   & 1.46~GB  & 3.16~GB  & 2.54~GB  & 1.20~GB  & 5.82~GB   & 14.0~GB   & MLE       & MLE       \\
-        \textsc{UCoDe}     & 614~MB   & 718~MB   & 1.75~GB  & 4.83~GB  & 6.79~GB  & 6.93~GB  & 22.1~GB   & MLE       & MLE       & MLE       \\
-        \textsc{CommDGI}   & 735~MB   & 783~MB   & 1.91~GB  & 5.55~GB  & 8.91~GB  & 9.73~GB  & 29.7~GB   & MLE       & MLE       & MLE       \\
+        \textsc{GNNS}      & 0.72 & 0.78     & 1.49  & 2.59 & 2.75  & 2.91   & 4.94    & 8.74  & 40.3   & 46.5 \\
+        \textsc{DGCluster} & 0.52 & 0.54     & 1.06  & 2.22 & 1.08  & 1.13   & 1.93    & 6.10  & MLE    & MLE  \\
+        \textsc{MAGI}      & 0.79 & 0.95     & 1.56  & 2.99 & 5.78  & 2.13   & 13.8    & 7.05  & 43.3   & TLE  \\
+        \textsc{LIM}       & 0.68 & 0.79     & 2.14  & 5.02 & 6.57  & 6.80   & 21.0    & MLE   & MLE    & MLE  \\
+        \textsc{DMoN}      & 0.44 & 0.52     & 1.46  & 3.16 & 2.54  & 1.20   & 5.82    & 14.0  & MLE    & MLE  \\
+        \textsc{UCoDe}     & 0.61 & 0.72     & 1.75  & 4.83 & 6.79  & 6.93   & 22.1    & MLE   & MLE    & MLE  \\
+        \textsc{CommDGI}   & 0.74 & 0.78     & 1.91  & 5.55 & 8.91  & 9.73   & 29.7    & MLE   & MLE    & MLE  \\
         \bottomrule
     \end{tabular*}
 \end{table}
 
 \begin{table}[H]
     \centering
-    \caption{Number of completed training epochs/iterations out of the requested budget on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Note that \textsc{GNNS} employs early stopping upon convergence.}
+    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Target budgets are 400 iterations for \textsc{GNNS} (300 on \texttt{ogbn-products}) and \textsc{MAGI}, 300 epochs for \textsc{DGCluster} and \textsc{LIM}, 1\,000 epochs for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 epochs for \textsc{CommDGI}. Note that \textsc{GNNS} employs early stopping upon convergence.}
     \label{tab:iterations}
     \vspace{0.5em}
-    \scriptsize
-    \setlength{\tabcolsep}{1.5pt}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
         \toprule
-        Method             & Cora      & Citeseer  & Photo     & Comp      & Co-CS     & Pubmed    & Co-Phys   & Arxiv    & Reddit  & Prod    \\
+        Method             & Cora & Citeseer & Photo & Comp & Co-CS & Pubmed & Co-Phys & Arxiv & Reddit & Prod \\
         \midrule
-        \textsc{GNNS}      & 50/400    & 50/400    & 50/400    & 50/400    & 50/400    & 50/400    & 50/400    & 400/400  & 120/400 & 300/300 \\
-        \textsc{DGCluster} & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 270/300  & MLE     & MLE     \\
-        \textsc{MAGI}      & 400/400   & 400/400   & 400/400   & 142/400   & 50/400    & 140/400   & 12/400    & 5/400    & 7/400   & TLE     \\
-        \textsc{LIM}       & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 300/300   & 111/300   & MLE      & MLE     & MLE     \\
-        \textsc{DMoN}      & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 819/1000  & 583/1000 & MLE     & MLE     \\
-        \textsc{UCoDe}     & 1000/1000 & 1000/1000 & 1000/1000 & 1000/1000 & 960/1000  & 1000/1000 & 280/1000  & MLE      & MLE     & MLE     \\
-        \textsc{CommDGI}   & 1001/1001 & 1001/1001 & 1001/1001 & 986/1001  & 564/1001  & 560/1001  & 166/1001  & MLE      & MLE     & MLE     \\
+        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 120    & 300 \\
+        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 270   & MLE    & MLE \\
+        \textsc{MAGI}      & 400  & 400      & 400   & 142  & 50    & 140    & 12      & 5     & 7      & TLE \\
+        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 111     & MLE   & MLE    & MLE \\
+        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 819     & 583   & MLE    & MLE \\
+        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 960   & 1000   & 280     & MLE   & MLE    & MLE \\
+        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 986  & 564   & 560    & 166     & MLE   & MLE    & MLE \\
         \bottomrule
     \end{tabular*}
 \end{table}
@@ -1046,25 +1048,64 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
 
 \begin{table}[H]
     \centering
-    \caption{Execution time in seconds across hardware configurations on six medium-scale \textsc{Ground-Truth} instances comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads; $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU). Note that \textsc{VieClus} is a CPU-only MPI solver with a 1-hour time budget.}
+    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~S with GPU acceleration (32~CPU threads + NVIDIA RTX~4090 GPU, 1-hour limit). Target budgets are 400 iterations for \textsc{GNNS} and \textsc{MAGI}, 300 epochs for \textsc{DGCluster} and \textsc{LIM}, 1\,000 epochs for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 epochs for \textsc{CommDGI}. Note that multi-core CPU scaling ($p=32$) already achieves 100\% epoch completion for \textsc{DGCluster}, \textsc{LIM}, \textsc{DMoN}, and \textsc{UCoDe} on all solved instances, and enables \textsc{CommDGI} to complete 1\,001 epochs on \texttt{coauthor-physics} (which exceeds GPU VRAM). For \textsc{MAGI}, 32 CPU threads complete 344 (Comp), 214 (Co-CS), 400 (Pubmed), 60 (Co-Phys), 17 (Arxiv), and 19 (Reddit) epochs.}
+    \label{tab:iterations_gpu}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method             & Cora & Citeseer & Photo & Comp & Co-CS & Pubmed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{GNNS}      & 50   & 50       & 50    & 100  & 150   & 150    & 350     & 5000  & 5000   & MLE \\
+        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 300   & MLE    & MLE \\
+        \textsc{MAGI}      & 400  & 400      & 400   & 400  & 400   & 400    & 175     & 34    & 26     & TLE \\
+        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 300     & MLE   & MLE    & MLE \\
+        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & 1000  & MLE    & MLE \\
+        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & MLE   & MLE    & MLE \\
+        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 1001 & 1001  & 1001   & MLE     & MLE   & MLE    & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Execution time in seconds across hardware configurations on the \textsc{Ground-Truth} dataset comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads; $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU). Top panel: small-to-medium graphs; bottom panel: medium-to-large graphs. \textsc{VieClus} is omitted as it is an anytime evolutionary algorithm with a fixed 1-hour time budget rather than a converging iterative solver.}
     \label{tab:par-seq}
     \vspace{0.5em}
-    \scriptsize
-    \setlength{\tabcolsep}{1.8pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr rrr@{}}
+    \small
+    \setlength{\tabcolsep}{2.0pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr@{}}
         \toprule
-        & \multicolumn{3}{c}{\textbf{Cora}} & \multicolumn{3}{c}{\textbf{Citeseer}} & \multicolumn{3}{c}{\textbf{Amz-Photo}} & \multicolumn{3}{c}{\textbf{Amz-Comp}} & \multicolumn{3}{c}{\textbf{CoAuth-CS}} & \multicolumn{3}{c}{\textbf{CoAuth-Phys}} \\
-        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16} \cmidrule(lr){17-19}
-        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
+        & \multicolumn{3}{c}{\textbf{Cora}} & \multicolumn{3}{c}{\textbf{Citeseer}} & \multicolumn{3}{c}{\textbf{Photo}} & \multicolumn{3}{c}{\textbf{Comp}} & \multicolumn{3}{c}{\textbf{Co-CS}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
+        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
         \midrule
-        \textsc{VieClus}   & 3456 & 3457 & ---  & 3456 & 3457 & ---  & 3456 & 3458 & ---   & 3457 & 3458 & ---    & 3456 & 3457 & ---    & 3457 & 3458 & ---   \\
-        \textsc{GNNS}      & 5.3  & 4.6  & 0.29 & 6.7  & 5.9  & 0.36 & 19.9 & 20.7 & 1.10  & 45.1 & 51.0 & 2.68   & 48.4 & 65.5 & 2.97   & 99.0 & 174.7 & 8.10 \\
-        \textsc{DGCluster} & 25.6 & 6.7  & 2.47 & 43.4 & 8.2  & 2.14 & 287  & 68.2 & 5.98  & 604  & 132  & 9.69   & 494  & 74.8 & 7.51   & 1266 & 187   & 17.3 \\
-        \textsc{MAGI}      & 162  & 85.8 & 58.2 & 301  & 107  & 61.4 & 3015 & 1442 & 538   & 3606 & 3615 & 1554   & 3616 & 3623 & 2314   & 3646 & 3657  & 3654 \\
-        \textsc{LIM}       & 66.4 & 7.0  & 0.97 & 140  & 17.5 & 1.08 & 695  & 104  & 3.69  & 1877 & 239  & 9.12   & 2960 & 303  & 11.7   & 3615 & 912   & 40.5 \\
-        \textsc{DMoN}      & 93.8 & 36.7 & 18.8 & 197  & 43.5 & 19.4 & 480  & 150  & 49.8  & 971  & 310  & 91.1   & 1862 & 253  & 45.9   & 3604 & 653   & 124  \\
-        \textsc{UCoDe}     & 91.4 & 12.3 & 1.81 & 184  & 20.4 & 1.88 & 559  & 58.2 & 3.81  & 1740 & 196  & 11.6   & 3605 & 401  & 23.6   & 3616 & 1480  & 78.0 \\
-        \textsc{CommDGI}   & 107  & 33.6 & 3.25 & 258  & 69.9 & 3.29 & 1217 & 280  & 7.48  & 3603 & 727  & 19.9   & 3605 & 1123 & 36.3   & 3625 & 3525  & MLE  \\
+        \textsc{GNNS}      & 5.27 & 4.64 & 0.29 & 6.69 & 5.85 & 0.36 & 19.9 & 20.7 & 1.10 & 45.1 & 51.0 & 2.68 & 48.4 & 65.5 & 2.97 \\
+        \textsc{DGCluster} & 25.6 & 6.71 & 2.47 & 43.4 & 8.15 & 2.14 & 287  & 68.2 & 5.98 & 604  & 132  & 9.69 & 494  & 74.8 & 7.51 \\
+        \textsc{MAGI}      & 162  & 85.8 & 58.2 & 301  & 107  & 61.4 & 3015 & 1442 & 538  & 3606 & 3615 & 1554 & 3616 & 3623 & 2314 \\
+        \textsc{LIM}       & 66.4 & 7.02 & 0.97 & 140  & 17.5 & 1.08 & 695  & 104  & 3.69 & 1877 & 239  & 9.12 & 2960 & 303  & 11.7 \\
+        \textsc{DMoN}      & 93.8 & 36.7 & 18.8 & 197  & 43.5 & 19.4 & 480  & 150  & 49.8 & 971  & 310  & 91.1 & 1862 & 253  & 45.9 \\
+        \textsc{UCoDe}     & 91.4 & 12.3 & 1.81 & 184  & 20.4 & 1.88 & 559  & 58.2 & 3.81 & 1740 & 196  & 11.6 & 3605 & 401  & 23.6 \\
+        \textsc{CommDGI}   & 107  & 33.6 & 3.25 & 258  & 69.9 & 3.29 & 1217 & 280  & 7.48 & 3603 & 727  & 19.9 & 3605 & 1123 & 36.3 \\
+        \bottomrule
+    \end{tabular*}
+
+    \vspace{0.8em}
+
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr@{}}
+        \toprule
+        & \multicolumn{3}{c}{\textbf{Pubmed}} & \multicolumn{3}{c}{\textbf{Co-Phys}} & \multicolumn{3}{c}{\textbf{Arxiv}} & \multicolumn{3}{c}{\textbf{Reddit}} & \multicolumn{3}{c}{\textbf{Prod}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
+        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
+        \midrule
+        \textsc{GNNS}      & 50.9 & 75.9 & 3.22 & 99.0 & 175  & 8.10 & 1130 & 2877 & 155  & 4129 & 3625 & 1487 & 3966 & MLE  & MLE \\
+        \textsc{DGCluster} & 212  & 41.0 & 6.63 & 1266 & 187  & 17.3 & 3613 & 846  & 76.9 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{MAGI}      & 3603 & 3358 & 1479 & 3646 & 3657 & 3654 & 3827 & 4205 & 4203 & 3825 & 4575 & 4614 & TLE  & TLE  & TLE \\
+        \textsc{LIM}       & 2839 & 286  & 11.2 & 3615 & 912  & 40.5 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{DMoN}      & 427  & 132  & 32.1 & 3604 & 653  & 124  & 3605 & 3030 & 571  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{UCoDe}     & 3551 & 430  & 24.5 & 3616 & 1480 & 78.0 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{CommDGI}   & 3606 & 1164 & 38.0 & 3625 & 3525 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
         \bottomrule
     \end{tabular*}
 \end{table}
