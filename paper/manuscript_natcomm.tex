@@ -21,6 +21,10 @@
 \usepackage{numprint}
 \usepackage{placeins}
 \usepackage{float}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.85}
 \usepackage{microtype}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 
@@ -249,12 +253,11 @@ Compared to classical heuristics, learning-based methods trade exact modularity 
 Despite extensive work in both paradigms, existing surveys do not provide a unified experimental comparison of classical and learning-based modularity optimization methods. Prior surveys typically focus on either classical heuristics~\cite{survey2023} or learning-based methods~\cite{Liu2020,Jin2023,liang2024,Messias2025}.
 Li et al.~\cite{Li2024} compare classical and deep learning methods, but limit comparison to Python-based solvers, thus lacking a comprehensive comparison of the state-of-the-art. In addition, algorithmic papers in both paradigms rarely evaluate against methods outside their own class (see Figure~\ref{fig:comparisons}).
 
-\begin{table}[t]
-    \caption{Overview of surveyed community detection methods and software characteristics. The upper block lists the 17 methods integrated into our unified benchmarking framework; the lower block lists surveyed methods whose implementations are unavailable or not evaluated. \textit{Code} reflects original software maturity prior to our integration ($\star\star$: production/package release with standard I/O; $\star$: research prototype adapted into our harness; $\times$: unreleased/unavailable). \textit{Parallel} indicates multi-threading or GPU support; \textit{Fixed $k$} denotes whether the number of clusters must be specified a priori; \textit{Features} indicates utilization of node attributes; and \textit{Py} indicates original availability in standard Python package repositories. Bold denotes exact solvers.}
+\begin{table}[tbp]
+    \caption{Overview of surveyed community detection methods and software characteristics. The upper block lists the 17 methods integrated into our unified benchmarking framework; the lower block lists surveyed methods whose implementations are unavailable or not evaluated. \textit{Code} reflects original software maturity prior to our integration ($\star\star$: production/package release with standard I/O; $\star$: research prototype adapted into our harness; $\times$: unreleased/unavailable). \textit{Parallel} indicates multi-threading or GPU support; \textit{Fixed $k$} denotes whether the number of clusters must be specified a priori; \textit{Features} indicates utilization of node attributes; and \textit{Py} indicates availability in standard Python package repositories. Bold denotes exact solvers.}
     \label{tab:comp}
     \vspace{0.5em}
     \centering
-    \small
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc}
         \toprule
         Method & Year & Code & Source & Parallel & Fixed $k$ & Features & Py \\
@@ -434,12 +437,11 @@ Where possible, we use the default configurations for all algorithms. To reflect
 \paragraph*{\textbf{Default configurations (Protocol~A).}}
 Among classical and topology-only methods (\textsc{CNM} exposes no tunable parameters), \textsc{Louvain}, \textsc{COMBO}, \textsc{Leiden} ($\beta = 0.01$, $2$ iterations), and \textsc{Bayan} (using the Gurobi LP/ILP solver~\cite{gurobi} with optimality gap $10^{-3}$) all use a default resolution of $1$. \textsc{Walktrap} uses a random-walk length of $4$, \textsc{Infomap} uses $1$ outer trial, \textsc{Hollocou} sets the maximum volume threshold to $v_{\max} = 10\,000$, \textsc{CluStRE} runs in its one-pass light streaming mode optimizing modularity, \textsc{VieClus} runs with a $1$-hour time limit, and \textsc{GNNS} uses the \textsc{GNNS100} configuration ($100$ random initializations, keep fraction $1/3$). The default architectures and training hyperparameters for the six neural methods are summarized in Table~\ref{tab:gnn_defaults}.
 
-\begin{table}[h]
+\begin{table}[tbp]
     \centering
     \caption{Default architectures and training hyperparameters for the benchmarked neural clustering methods under Protocol~A.}
     \label{tab:gnn_defaults}
     \vspace{0.5em}
-    \small
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrrl}
         \toprule
         Method & Hidden Layers & Epochs & LR & Method-Specific Hyperparameters \\
@@ -805,34 +807,33 @@ To quantify how multi-core parallelism and hardware accelerators shift this effi
 
 \begin{table}[!ht]
     \centering
-    \caption{Modularity ($Q$) achieved under out-of-the-box defaults versus 50-trial Optuna Bayesian hyperparameter tuning (\textbf{Protocol~B}) on Cora, Citeseer, and Pubmed. For fixed-$k$ neural models tuned under the cluster-free regime ($k = \lceil\sqrt{n}\rceil$), the default baseline under the same cluster budget is reported alongside the tuned score and gain ($\Delta Q$).}
+    \caption{Modularity ($Q$) achieved under out-of-the-box defaults versus 50-trial Optuna Bayesian hyperparameter tuning (\textbf{Protocol~B}) on Cora, Citeseer, and Pubmed. For fixed-$k$ neural models tuned under the cluster-free regime ($k = \lceil\sqrt{n}\rceil$), the default baseline under the same cluster budget is reported alongside the tuning gain ($\Delta Q$).}
     \label{tab:protocol_b}
-    \footnotesize
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ll rrr rrr rrr@{}}
+    \vspace{0.5em}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ll rr rr rr@{}}
         \toprule
-        & & \multicolumn{3}{c}{\textbf{Cora}} & \multicolumn{3}{c}{\textbf{Citeseer}} & \multicolumn{3}{c}{\textbf{Pubmed}} \\
-        \cmidrule(lr){3-5} \cmidrule(lr){6-8} \cmidrule(lr){9-11}
-        Method & Tuned Parameters & Def. & Tuned & $\Delta Q$ & Def. & Tuned & $\Delta Q$ & Def. & Tuned & $\Delta Q$ \\
+        & & \multicolumn{2}{c}{\textbf{Cora}} & \multicolumn{2}{c}{\textbf{Citeseer}} & \multicolumn{2}{c}{\textbf{Pubmed}} \\
+        \cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
+        Method & Tuned Parameters & Def. & $\Delta Q$ & Def. & $\Delta Q$ & Def. & $\Delta Q$ \\
         \midrule
-        \textsc{Leiden}         & $\gamma$                           & 0.822 & 0.823 & $+0.001$ & 0.893 & 0.892 & $-0.000$ & 0.784 & 0.783 & $-0.000$ \\
-        \textsc{Louvain}        & $\gamma$, tol.                     & 0.815 & 0.810 & $-0.005$ & 0.890 & 0.890 & $-0.001$ & 0.771 & 0.772 & $+0.001$ \\
-        \textsc{COMBO}          & $\gamma$, max com.                 & 0.824 & 0.824 & $+0.000$ & 0.893 & 0.893 & $-0.000$ & TLE   & 0.740 & ---      \\
-        \textsc{Walktrap}       & walk steps $t$                     & 0.765 & 0.788 & $+0.024$ & 0.826 & 0.854 & $+0.028$ & 0.711 & 0.727 & $+0.016$ \\
-        \textsc{CluStRE}        & mode,passes,$\alpha,\beta,\tau$    & 0.550 & 0.818 & $+0.268$ & 0.612 & 0.889 & $+0.277$ & 0.386 & 0.779 & $+0.393$ \\
-        \textsc{Hollocou}       & $\delta$, $\text{vol}_{\max}$      & 0.406 & 0.488 & $+0.082$ & 0.683 & 0.673 & $-0.010$ & 0.355 & 0.345 & $-0.011$ \\
+        \textsc{Leiden}         & $\gamma$                           & 0.822 & $+0.001$ & 0.893 & $-0.000$ & 0.784 & $-0.000$ \\
+        \textsc{Louvain}        & $\gamma$, tol.                     & 0.815 & $-0.005$ & 0.890 & $-0.001$ & 0.771 & $+0.001$ \\
+        \textsc{COMBO}          & $\gamma$, max com.                 & 0.824 & $+0.000$ & 0.893 & $-0.000$ & TLE   & $+0.740$ \\
+        \textsc{Walktrap}       & walk steps $t$                     & 0.765 & $+0.024$ & 0.826 & $+0.028$ & 0.711 & $+0.016$ \\
+        \textsc{CluStRE}        & mode, passes, $\alpha,\beta,\tau$  & 0.550 & $+0.268$ & 0.612 & $+0.277$ & 0.386 & $+0.393$ \\
+        \textsc{Hollocou}       & $\delta$, $\text{vol}_{\max}$      & 0.406 & $+0.082$ & 0.683 & $-0.010$ & 0.355 & $-0.011$ \\
         \midrule
-        \textsc{GNNS}           & $\gamma$, rank $r$, steps          & 0.780 & 0.799 & $+0.019$ & 0.855 & 0.870 & $+0.015$ & 0.736 & 0.764 & $+0.028$ \\
-        \textsc{DGCluster}      & $\lambda$, lr, base model          & 0.815 & 0.814 & $-0.001$ & 0.875 & 0.874 & $-0.001$ & 0.738 & 0.744 & $+0.006$ \\
-        \textsc{MAGI} (SAGE)    & $\tau$, lr, wd, scale, arch.       & 0.786 & 0.789 & $+0.003$ & 0.878 & 0.879 & $+0.001$ & 0.641 & 0.690 & $+0.049$ \\
-        \textsc{MAGI} (GCN)     & $\tau$, lr, wd, scale, arch.       & 0.710 & 0.774 & $+0.064$ & 0.817 & 0.866 & $+0.049$ & 0.399 & 0.505 & $+0.106$ \\
-        \textsc{LIM}            & $\gamma, \alpha, \beta, \nu$, lr   & 0.768 & 0.770 & $+0.002$ & 0.800 & 0.818 & $+0.018$ & 0.654 & 0.665 & $+0.011$ \\
-        \textsc{CommDGI}        & $T, \alpha, \beta$, lr, wd, hid.   & 0.758 & 0.772 & $+0.013$ & 0.813 & 0.822 & $+0.009$ & 0.003 & 0.690 & $+0.687$ \\
+        \textsc{GNNS}           & $\gamma$, rank $r$, steps          & 0.780 & $+0.019$ & 0.855 & $+0.015$ & 0.736 & $+0.028$ \\
+        \textsc{DGCluster}      & $\lambda$, lr, base model          & 0.815 & $-0.001$ & 0.875 & $-0.001$ & 0.738 & $+0.006$ \\
+        \textsc{MAGI} (SAGE)    & $\tau$, lr, wd, scale, arch.       & 0.786 & $+0.003$ & 0.878 & $+0.001$ & 0.641 & $+0.049$ \\
+        \textsc{MAGI} (GCN)     & $\tau$, lr, wd, scale, arch.       & 0.710 & $+0.064$ & 0.817 & $+0.049$ & 0.399 & $+0.106$ \\
+        \textsc{LIM}            & $\gamma, \alpha, \beta, \nu$, lr   & 0.768 & $+0.002$ & 0.800 & $+0.018$ & 0.654 & $+0.011$ \\
+        \textsc{CommDGI}        & $T, \alpha, \beta$, lr, wd, hid.   & 0.758 & $+0.013$ & 0.813 & $+0.009$ & 0.003 & $+0.687$ \\
         \bottomrule
     \end{tabular*}
 \end{table}
 
-To assess how strongly algorithm rankings depend on hyperparameter tuning versus out-of-the-box defaults, \textbf{Protocol~B} conducts 50-trial Bayesian optimization using Optuna~\cite{optuna2019} on the three canonical citation networks (Cora, Citeseer, and Pubmed), maximizing modularity $Q$. Table~\ref{tab:protocol_b} compares default and tuned modularity scores across methods with tunable algorithmic or loss parameters.
+To assess how strongly algorithm rankings depend on hyperparameter tuning versus out-of-the-box defaults, \textbf{Protocol~B} conducts 50-trial Bayesian optimization using Optuna~\cite{optuna2019} on the three canonical citation networks (Cora, Citeseer, and Pubmed), maximizing modularity $Q$. Table~\ref{tab:protocol_b} compares default modularity scores alongside tuning gains ($\Delta Q$) across methods with tunable algorithmic or loss parameters.
 
 The results reveal a sharp dichotomy in hyperparameter robustness. Classical modularity-maximizing heuristics (\textsc{Leiden}, \textsc{Louvain}, and \textsc{COMBO}) exhibit virtually zero sensitivity ($\lvert\Delta Q\rvert \le 0.005$), because their default resolution parameter ($\gamma = 1.0$) already aligns directly with standard Newman--Girvan modularity; on Pubmed, tuning \textsc{COMBO}'s resolution and community cap also enables it to finish well within the one-hour limit ($Q = 0.740$). For \textsc{Walktrap}, tuning the random-walk length $t \in [2, 12]$ yields consistent moderate gains ($+0.016$ to $+0.028$). Enabling multi-pass refinement in \textsc{CluStRE} (\texttt{clustre-strong}) lifts its modularity by $+0.268$ to $+0.393$ over single-pass streaming (\texttt{clustre-fast}), bringing it within $0.005$ of \textsc{Leiden} on all three citation networks.
 
@@ -957,43 +958,28 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
     \centering
     \caption{Graphs from the 10th DIMACS Implementation Challenge~\cite{dimacschallengegraphpartandcluster} used in our topology-only evaluation suite ($N=32$). These instances do not include vertex features or ground-truth community labels.}
     \label{tab:dimacs_instances}
+    \vspace{0.5em}
     \small
-    \begin{tabular*}{0.65\textwidth}{@{\extracolsep{\fill}}lrr@{}}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrr c lrr@{}}
         \toprule
-        Instance               & $n$                  & $m$                   \\
+        Instance & $n$ & $m$ & & Instance & $n$ & $m$ \\
         \midrule
-        karate                 & \numprint{34}        & \numprint{78}         \\
-        chesapeake             & \numprint{39}        & \numprint{170}        \\
-        dolphins               & \numprint{62}        & \numprint{159}        \\
-        lesmis                 & \numprint{77}        & \numprint{254}        \\
-        polbooks               & \numprint{105}       & \numprint{441}        \\
-        adjnoun                & \numprint{112}       & \numprint{425}        \\
-        football               & \numprint{115}       & \numprint{613}        \\
-        jazz                   & \numprint{198}       & \numprint{2742}       \\
-        celegansneural         & \numprint{297}       & \numprint{2148}       \\
-        celegans-metabolic     & \numprint{453}       & \numprint{2025}       \\
-        email                  & \numprint{1133}      & \numprint{5451}       \\
-        polblogs               & \numprint{1490}      & \numprint{16715}      \\
-        netscience             & \numprint{1589}      & \numprint{2742}       \\
-        power                  & \numprint{4941}      & \numprint{6594}       \\
-        hep-th                 & \numprint{8361}      & \numprint{15751}      \\
-        PGPgiantcompo          & \numprint{10680}     & \numprint{24316}      \\
-        astro-ph               & \numprint{16706}     & \numprint{121251}     \\
-        cond-mat               & \numprint{16726}     & \numprint{47594}      \\
-        as-22july06            & \numprint{22963}     & \numprint{48436}      \\
-        cond-mat-2003          & \numprint{31163}     & \numprint{120029}     \\
-        cond-mat-2005          & \numprint{40421}     & \numprint{175691}     \\
-        preferentialAttachment & \numprint{100000}    & \numprint{499985}     \\
-        smallworld             & \numprint{100000}    & \numprint{499998}     \\
-        G-n-pin-pout           & \numprint{100000}    & \numprint{501198}     \\
-        caidaRouterLevel       & \numprint{192244}    & \numprint{609066}     \\
-        cnr-2000               & \numprint{325557}    & \numprint{2738969}    \\
-        eu-2005                & \numprint{862664}    & \numprint{16138468}   \\
-        in-2004                & \numprint{1382908}   & \numprint{13591473}   \\
-        road-central           & \numprint{14081816}  & \numprint{16933413}   \\
-        uk-2002                & \numprint{18520486}  & \numprint{261787258}  \\
-        road-usa               & \numprint{23947347}  & \numprint{28854312}   \\
-        uk-2007-05             & \numprint{105896555} & \numprint{3301876564} \\
+        karate                 & \numprint{34}        & \numprint{78}         & & astro-ph               & \numprint{16706}     & \numprint{121251}     \\
+        chesapeake             & \numprint{39}        & \numprint{170}        & & cond-mat               & \numprint{16726}     & \numprint{47594}      \\
+        dolphins               & \numprint{62}        & \numprint{159}        & & as-22july06            & \numprint{22963}     & \numprint{48436}      \\
+        lesmis                 & \numprint{77}        & \numprint{254}        & & cond-mat-2003          & \numprint{31163}     & \numprint{120029}     \\
+        polbooks               & \numprint{105}       & \numprint{441}        & & cond-mat-2005          & \numprint{40421}     & \numprint{175691}     \\
+        adjnoun                & \numprint{112}       & \numprint{425}        & & preferentialAttachment & \numprint{100000}    & \numprint{499985}     \\
+        football               & \numprint{115}       & \numprint{613}        & & smallworld             & \numprint{100000}    & \numprint{499998}     \\
+        jazz                   & \numprint{198}       & \numprint{2742}       & & G-n-pin-pout           & \numprint{100000}    & \numprint{501198}     \\
+        celegansneural         & \numprint{297}       & \numprint{2148}       & & caidaRouterLevel       & \numprint{192244}    & \numprint{609066}     \\
+        celegans-metabolic     & \numprint{453}       & \numprint{2025}       & & cnr-2000               & \numprint{325557}    & \numprint{2738969}    \\
+        email                  & \numprint{1133}      & \numprint{5451}       & & eu-2005                & \numprint{862664}    & \numprint{16138468}   \\
+        polblogs               & \numprint{1490}      & \numprint{16715}      & & in-2004                & \numprint{1382908}   & \numprint{13591473}   \\
+        netscience             & \numprint{1589}      & \numprint{2742}       & & road-central           & \numprint{14081816}  & \numprint{16933413}   \\
+        power                  & \numprint{4941}      & \numprint{6594}       & & uk-2002                & \numprint{18520486}  & \numprint{261787258}  \\
+        hep-th                 & \numprint{8361}      & \numprint{15751}      & & road-usa               & \numprint{23947347}  & \numprint{28854312}   \\
+        PGPgiantcompo          & \numprint{10680}     & \numprint{24316}      & & uk-2007-05             & \numprint{105896555} & \numprint{3301876564} \\
         \bottomrule
     \end{tabular*}
 \end{table}
@@ -1005,6 +991,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
     \centering
     \caption{Peak memory consumption of the evaluated algorithms on the \textsc{Ground-Truth} dataset under Protocol~A (recorded via Linux \texttt{cgroup} tracking). Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 120~GB memory limit.}
     \label{tab:memory}
+    \vspace{0.5em}
     \scriptsize
     \setlength{\tabcolsep}{1.5pt}
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
@@ -1036,6 +1023,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
     \centering
     \caption{Number of completed training epochs/iterations out of the requested budget on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Note that \textsc{GNNS} employs early stopping upon convergence.}
     \label{tab:iterations}
+    \vspace{0.5em}
     \scriptsize
     \setlength{\tabcolsep}{1.5pt}
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
@@ -1060,6 +1048,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
     \centering
     \caption{Execution time in seconds across hardware configurations on six medium-scale \textsc{Ground-Truth} instances comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads; $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU). Note that \textsc{VieClus} is a CPU-only MPI solver with a 1-hour time budget.}
     \label{tab:par-seq}
+    \vspace{0.5em}
     \scriptsize
     \setlength{\tabcolsep}{1.8pt}
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr rrr@{}}
