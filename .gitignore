@@ -52,5 +52,7 @@ paper/*.blg
 paper/*.bbl
 paper/*.aux
 paper/*.cut
+paper/*.fdb_latexmk
+paper/*.fls
 paper/*.synctex.gz
 paper/manuscript_natcomm.bib

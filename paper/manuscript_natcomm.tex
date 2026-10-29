@@ -710,142 +710,88 @@ perf/.style={
         \begin{groupplot}[
                 group style={
                         group size=2 by 1,
-                        horizontal sep=1.35cm
+                        horizontal sep=0.45cm
                     },
-                ymin=0.0, ymax=1.0,
-                xmin=0.015, xmax=3500000,
-                xtickten={-1,0,1,2,3,4,5},
-                height=0.34\textwidth,
-                width=0.46\textwidth,
-                xmode=log,
-                axis lines=box,
-                cycle list/Dark2,
-                cycle multiindex* list={
-                        my marks\nextlist
-                        Dark2\nextlist
-                    },
-                mark list fill={.!80!white},
-                every mark/.append style={mark size=2.4pt},
-                tick label style={font=\footnotesize},
-                label style={font=\small},
-                title style={font=\small\bfseries},
-                ylabel near ticks,
-                xlabel={Microseconds per edge ($\mu\text{s} / m$)},
-                grid=major,
-                major grid style={gray!18, thin}
+                height=0.58\textwidth,
+                width=0.47\textwidth,
+                stripperf
             ]
 
-            % Left Panel: Ground-Truth Efficiency
+            % Panel 1: Runtime & Hardware Speedup (1T -> 32T -> GPU)
             \nextgroupplot[
-                ylabel={Geometric Mean Modularity ($Q$)},
-                title={\textsc{Ground-Truth} Set ($N=10$)}
+                xtick={0.0699, 0.3495, 0.6291, 0.7800, 0.9865, 1.10},
+                xticklabels={$1\text{ ms}$, $0.1\text{ s}$, $10\text{ s}$, $2\text{ m}$, $1\text{ h}$, \tiny Fail},
+                extra x ticks={0.9865},
+                extra x tick labels={},
+                extra x tick style={grid=major, major grid style={black!45, dashed, thin}},
+                xlabel={Wall-clock execution time ($T$)},
+                title={Runtime \& Speedup (\textsc{Ground-Truth})}
             ]
-            \addplot[refstyle={vieclus}] coordinates {(22837.57,0.7531)};
-            \node[anchor=south west] at (axis cs:24000,0.765) {\tiny \textsc{VieClus}};
+            \fill[gray!8] (axis cs:1.03,0.4) rectangle (axis cs:1.17,16.6);
+            \draw[black!50, thin] (axis cs:1.03,0.4) -- (axis cs:1.03,16.6);
+            \draw[black!60, semithick] (axis cs:-0.03,7.5) -- (axis cs:1.17,7.5);
 
-            \addplot[refstyle={leiden}] coordinates {(0.7780,0.7621)};
-            \node[anchor=south] at (axis cs:0.65,0.785) {\tiny \textsc{Leiden}};
+            % Faint per-instance 1T markers
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot+[only marks, mark size=1.5pt, opacity=0.38] table[x=u_\alg, y=y_\alg, col sep=comma] {data/prot_s_fig4_runtime.csv};
+                }
+            \foreach \alg in {vieclus,leiden,louvain,combo,cnm,infomap,walktrap,clustre_fast,hollocou,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot[only marks, mark=x, mark size=1.8pt, draw=black!40] table[x=uf_\alg, y=yf_\alg, col sep=comma] {data/prot_s_fig4_runtime.csv};
+                }
 
-            \addplot[refstyle={louvain}] coordinates {(2.1158,0.7545)};
-            \node[anchor=north] at (axis cs:2.1,0.730) {\tiny \textsc{Louvain}};
+            % Speedup trajectory arrows (1T -> 32T -> GPU) for parallel/ML methods
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.7464,7) -- (axis cs:0.5940,7);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.8382,6) -- (axis cs:0.6170,6);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9485,5) -- (axis cs:0.9065,5);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9000,4) -- (axis cs:0.5945,4);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.8903,3) -- (axis cs:0.7381,3);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9062,2) -- (axis cs:0.6257,2);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9132,1) -- (axis cs:0.6371,1);
 
-            \addplot[refstyle={combo}] coordinates {(6405.05,0.7662)};
-            \node[anchor=south] at (axis cs:6400,0.798) {\tiny \textsc{COMBO}};
+            % Geometric mean markers: 1T (circle), 32T (triangle), GPU (diamond)
+            \addplot[only marks, mark=*, mark size=2.5pt, draw=black!85, fill=white] table[x=u_1t, y=y, col sep=comma] {data/prot_s_fig4_traj.csv};
+            \addplot[only marks, mark=triangle*, mark size=2.9pt, draw=black!85, fill=cyan!75!blue] table[x=u_32t, y=y, col sep=comma] {data/prot_s_fig4_traj.csv};
+            \addplot[only marks, mark=diamond*, mark size=3.0pt, draw=black!85, fill=orange!90!red] table[x=u_gpu, y=y, col sep=comma] {data/prot_s_fig4_traj.csv};
 
-            \addplot[refstyle={cnm}] coordinates {(18.2937,0.6642)};
-            \node[anchor=south] at (axis cs:18.3,0.688) {\tiny \textsc{CNM}};
-
-            \addplot[refstyle={infomap}] coordinates {(8.8570,0.4276)};
-            \node[anchor=north] at (axis cs:8.86,0.400) {\tiny \textsc{Infomap}};
-
-            \addplot[refstyle={walktrap}] coordinates {(124.4355,0.6728)};
-            \node[anchor=north] at (axis cs:125,0.648) {\tiny \textsc{Walktrap}};
-
-            \addplot[refstyle={clustre_fast}] coordinates {(0.2596,0.4902)};
-            \node[anchor=south] at (axis cs:0.26,0.515) {\tiny \textsc{CluStRE}};
-
-            \addplot[refstyle={hollocou}] coordinates {(0.0366,0.2093)};
-            \node[anchor=west] at (axis cs:0.052,0.209) {\tiny \textsc{Hollocou}};
-
-            \addplot[refstyle={gnns}] coordinates {(374.8965,0.7274)};
-            \node[anchor=south east] at (axis cs:420,0.745) {\tiny \textsc{GNNS}};
-
-            \addplot[refstyle={dgcluster}] coordinates {(4338.41,0.7263)};
-            \node[anchor=south] at (axis cs:2600,0.745) {\tiny \textsc{DGCluster}};
-
-            \addplot[refstyle={magi}] coordinates {(12726.66,0.6665)};
-            \node[anchor=east] at (axis cs:9200,0.662) {\tiny \textsc{MAGI}};
-
-            \addplot[refstyle={lim}] coordinates {(17865.29,0.6615)};
-            \node[anchor=west] at (axis cs:23000,0.675) {\tiny \textsc{LIM}};
-
-            \addplot[refstyle={dmon}] coordinates {(10243.63,0.5121)};
-            \node[anchor=east] at (axis cs:7200,0.512) {\tiny \textsc{DMoN}};
-
-            \addplot[refstyle={ucode}] coordinates {(19798.40,0.6102)};
-            \node[anchor=west] at (axis cs:26000,0.610) {\tiny \textsc{UCoDe}};
-
-            \addplot[refstyle={commdgi}] coordinates {(26423.09,0.5619)};
-            \node[anchor=west] at (axis cs:34000,0.550) {\tiny \textsc{CommDGI}};
-
-            % Right Panel: DIMACS Efficiency
+            % Panel 2: Modularity Uplift (dQ) & Memory Ceiling on Compute-Bound Instances
             \nextgroupplot[
-                ylabel={Geometric Mean Modularity ($Q$)},
-                title={\textsc{DIMACS} Set ($N=32$)}
+                yticklabels=\empty,
+                xtick={0.0360, 0.1800, 0.4600, 0.6734, 0.8911, 1.10},
+                xticklabels={$-0.02$, $0$, $+0.002$, $+0.10$, $+0.20$, \tiny MLE},
+                extra x ticks={0.1800, 0.4600},
+                extra x tick labels={},
+                extra x tick style={grid=major, major grid style={black!45, dashed, thin}},
+                xlabel={Modularity gain $\Delta Q = Q_{\text{accel}} - Q_{1\text{T}}$},
+                title={Compute Quality Uplift ($\Delta Q$)}
             ]
-            \addplot[refstyle={vieclus}] coordinates {(120333.66,0.6323)};
-            \node[anchor=south] at (axis cs:120000,0.658) {\tiny \textsc{VieClus}};
+            \fill[gray!8] (axis cs:1.03,0.4) rectangle (axis cs:1.17,16.6);
+            \draw[black!50, thin] (axis cs:1.03,0.4) -- (axis cs:1.03,16.6);
+            \fill[gray!6] (axis cs:-0.03,7.5) rectangle (axis cs:1.03,15.5);
+            \node[font=\scriptsize\itshape, text=black!55, align=center] at (axis cs:0.50,11.5) {Single-threaded heuristics\\(1 CPU thread only)};
+            \draw[black!60, semithick] (axis cs:-0.03,7.5) -- (axis cs:1.17,7.5);
+            \draw[black!40, thin] (axis cs:-0.03,15.5) -- (axis cs:1.17,15.5);
 
-            \addplot[refstyle={leiden}] coordinates {(0.8480,0.6385)};
-            \node[anchor=south] at (axis cs:0.75,0.662) {\tiny \textsc{Leiden}};
-
-            \addplot[refstyle={louvain}] coordinates {(1.7438,0.6206)};
-            \node[anchor=south west] at (axis cs:1.8,0.630) {\tiny \textsc{Louvain}};
-
-            \addplot[refstyle={combo}] coordinates {(192.1474,0.5585)};
-            \node[anchor=south] at (axis cs:210,0.582) {\tiny \textsc{COMBO}};
-
-            \addplot[refstyle={cnm}] coordinates {(5.3247,0.5751)};
-            \node[anchor=west] at (axis cs:7.2,0.575) {\tiny \textsc{CNM}};
-
-            \addplot[refstyle={infomap}] coordinates {(8.0143,0.4736)};
-            \node[anchor=north east] at (axis cs:8.5,0.450) {\tiny \textsc{Infomap}};
-
-            \addplot[refstyle={walktrap}] coordinates {(26.0735,0.5049)};
-            \node[anchor=north west] at (axis cs:26,0.485) {\tiny \textsc{Walktrap}};
-
-            \addplot[refstyle={clustre_fast}] coordinates {(0.6433,0.4823)};
-            \node[anchor=south] at (axis cs:0.55,0.508) {\tiny \textsc{CluStRE}};
-
-            \addplot[refstyle={hollocou}] coordinates {(0.0525,0.1817)};
-            \node[anchor=west] at (axis cs:0.072,0.182) {\tiny \textsc{Hollocou}};
-
-            \addplot[refstyle={gnns}] coordinates {(1130.66,0.5863)};
-            \node[anchor=south west] at (axis cs:1150,0.600) {\tiny \textsc{GNNS}};
-
-            \addplot[refstyle={dgcluster}] coordinates {(2505.22,0.4338)};
-            \node[anchor=south] at (axis cs:2800,0.458) {\tiny \textsc{DGCluster}};
-
-            \addplot[refstyle={magi}] coordinates {(2136.06,0.1311)};
-            \node[anchor=north] at (axis cs:2136,0.108) {\tiny \textsc{MAGI}};
-
-            \addplot[refstyle={lim}] coordinates {(22498.91,0.4327)};
-            \node[anchor=west] at (axis cs:30000,0.440) {\tiny \textsc{LIM}};
-
-            \addplot[refstyle={dmon}] coordinates {(12183.25,0.2954)};
-            \node[anchor=east] at (axis cs:9000,0.285) {\tiny \textsc{DMoN}};
-
-            \addplot[refstyle={ucode}] coordinates {(9330.95,0.3518)};
-            \node[anchor=east] at (axis cs:7000,0.365) {\tiny \textsc{UCoDe}};
-
-            \addplot[refstyle={commdgi}] coordinates {(13615.35,0.2875)};
-            \node[anchor=west] at (axis cs:18000,0.285) {\tiny \textsc{CommDGI}};
+            \foreach \alg in {vieclus,gnns,dgcluster,magi,lim,dmon,ucode,commdgi}{
+                    \addplot[only marks, mark=triangle*, mark size=2.5pt, draw=black!75, fill=cyan!75!blue] table[x=u32_\alg, y=y32_\alg, col sep=comma] {data/prot_s_fig4_uplift.csv};
+                    \addplot[only marks, mark=diamond*, mark size=2.6pt, draw=black!75, fill=orange!90!red] table[x=ugpu_\alg, y=ygpu_\alg, col sep=comma] {data/prot_s_fig4_uplift.csv};
+                    \addplot[only marks, mark=triangle*, mark size=2.3pt, draw=cyan!60!black, fill=cyan!35] table[x=uf32_\alg, y=yf32_\alg, col sep=comma] {data/prot_s_fig4_uplift.csv};
+                    \addplot[only marks, mark=diamond*, mark size=2.4pt, draw=orange!70!black, fill=orange!45] table[x=ufgpu_\alg, y=yfgpu_\alg, col sep=comma] {data/prot_s_fig4_uplift.csv};
+                }
 
         \end{groupplot}
     \end{tikzpicture}
 
-    \caption{Trade-off between clustering quality (geometric mean modularity $Q$) and normalized execution time (geometric mean microseconds per edge, $\mu\text{s}/m$) under Protocol~A across solved instances on the \textsc{Ground-Truth} ($N=10$, left) and \textsc{DIMACS} ($N=32$, right) datasets.}
-    \Description{Scatter plots of geometric mean modularity versus microseconds per edge on Ground-Truth and DIMACS datasets.}
+    \vspace{0.3em}
+    {\scriptsize
+    \textbf{Hardware:} \quad
+    \tikz[baseline=-0.5ex]\draw[black!85, fill=white, thick] (0,0) circle (2.2pt);~1T CPU (Protocol~A) \quad
+    \tikz[baseline=-0.5ex]\draw[black!85, fill=cyan!75!blue] (0,2.5pt) -- (2.5pt,-2.0pt) -- (-2.5pt,-2.0pt) -- cycle;~32T CPU (Protocol~S) \quad
+    \tikz[baseline=-0.5ex]\draw[black!85, fill=orange!90!red] (0,-2.8pt) -- (2.5pt,0) -- (0,2.8pt) -- (-2.5pt,0) -- cycle;~32T + RTX~4090 GPU (Protocol~S) \quad
+    \tikz[baseline=-0.5ex]\node[inner sep=0pt, font=\scriptsize, text=black!65] {$\times$};~1T Fail
+    }
+
+    \caption{Runtime efficiency and hardware scaling across all 16 non-exact algorithms (classical heuristics above the solid line; continuous and learning-based methods below). \textbf{Left:} Wall-clock execution time distributions on the \textsc{Ground-Truth} dataset ($N=10$). Faint markers show individual solved instances under 1T~CPU (Protocol~A), while bold arrows trace geometric-mean runtime reductions from 1T~CPU ($\circ$) to 32T~CPU ($\blacktriangle$) and RTX~4090 GPU ($\blacklozenge$) across commonly solved instances. \textbf{Right:} Modularity uplift $\Delta Q = Q_{\text{accel}} - Q_{1\text{T}}$ on compute-bound instances (where 1T~CPU truncated training epochs at the 1-hour limit, or for \textsc{VieClus} anytime evolutionary refinement). Vertical dashed lines separate $\Delta Q = 0$, the fine-tuning regime ($\Delta Q \in [0, +0.002]$), and the epoch-rescue regime ($\Delta Q \in [+0.002, +0.25]$). Markers in the right-hand \emph{MLE} band denote instances that solved on 1T~CPU (120~GB RAM) but exhausted memory under 32-process MPI (\textsc{VieClus}) or the 24~GiB GPU VRAM ceiling.}
+    \Description{Two-panel horizontal lane plot showing wall-clock runtime and speedup trajectories on the left, and modularity gains from 32-thread CPU and GPU scaling on compute-bound instances on the right.}
     \label{fig:efficiency}
 \end{figure*}
 
@@ -902,7 +848,7 @@ Among learning-based methods, architectures whose loss functions balance multipl
                         group size=2 by 1,
                         horizontal sep=1.4cm
                     },
-                height=0.28\textwidth,
+                height=0.33\textwidth,
                 width=0.46\textwidth,
                 ymin=0, ymax=1.05,
                 axis lines=box,
@@ -929,10 +875,10 @@ Among learning-based methods, architectures whose loss functions balance multipl
             ]
             \foreach \alg in {vieclus,gnns,dgcluster,dmon,commdgi,ucode,magi}{
                     \expanded{
-                        \noexpand\addplot[refstyle={\alg}, sharp plot, solid, thick, mark repeat=6, mark options={solid, scale=0.85}] table[x=dout, y={\alg}, col sep=comma] {data/adc_sbm_dout.csv};
+                        \noexpand\addplot[refstyle={\alg}, sharp plot, solid, thick, mark options={solid, scale=0.85}] table[x=dout, y={\alg}, col sep=comma] {data/adc_sbm_dout_binned.csv};
                     }
                 }
-            \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark repeat=6, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=dout, y=magi_gcn, col sep=comma] {data/adc_sbm_dout.csv};
+            \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=dout, y=magi_gcn, col sep=comma] {data/adc_sbm_dout_binned.csv};
 
             \nextgroupplot[
                 xmode=log,
@@ -945,10 +891,10 @@ Among learning-based methods, architectures whose loss functions balance multipl
             ]
             \foreach \alg in {vieclus,gnns,dgcluster,dmon,commdgi,ucode,magi}{
                     \expanded{
-                        \noexpand\addplot[refstyle={\alg}, sharp plot, solid, thick, mark repeat=6, mark options={solid, scale=0.85}] table[x=sigma, y={\alg}, col sep=comma] {data/adc_sbm_sigma.csv};
+                        \noexpand\addplot[refstyle={\alg}, sharp plot, solid, thick, mark options={solid, scale=0.85}] table[x=sigma, y={\alg}, col sep=comma] {data/adc_sbm_sigma_binned.csv};
                     }
                 }
-            \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark repeat=6, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=sigma, y=magi_gcn, col sep=comma] {data/adc_sbm_sigma.csv};
+            \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=sigma, y=magi_gcn, col sep=comma] {data/adc_sbm_sigma_binned.csv};
 
             \addlegendentry{\textsc{VieClus} / \textsc{Leiden}}
             \addlegendentry{\textsc{GNNS}}
@@ -965,12 +911,12 @@ Among learning-based methods, architectures whose loss functions balance multipl
     \vspace{0.2em}
     \ref{sharedlegend2}
 
-    \caption{Ground-truth community recovery (NMI) on synthetic attributed networks generated with the ADC-SBM benchmark ($n = 1\,000$ vertices, $k = 4$ clusters, average degree $d = 20$, intra-cluster feature standard deviation $\sigma = 1$). Left: structural degradation via increasing expected external degree $d_{\text{out}} \in [1, 14]$ at fixed informative features ($\sigma_c = 3$). Right: feature degradation via decreasing cluster center separation $\sigma_c \in [10^{-2}, 10^{1}]$ at fixed strong community topology ($d_{\text{out}} = 2$). Note that \textsc{Leiden} matches \textsc{VieClus} almost identically across both sweeps.}
-    \Description{Two line plots showing NMI scores of clustering algorithms on ADC-SBM synthetic graphs under structural degradation (varying d_out) and feature degradation (varying sigma_c).}
+    \caption{Ground-truth community recovery (NMI) on synthetic attributed networks generated with the ADC-SBM benchmark ($n = 1\,000$ vertices, $k = 4$ clusters, average degree $d = 20$, intra-cluster feature standard deviation $\sigma = 1$). Left: structural degradation via increasing expected external degree $d_{\text{out}} \in [1, 14]$ at fixed informative features ($\sigma_c = 3$). Right: feature degradation via decreasing cluster center separation $\sigma_c \in [10^{-2}, 10^{1}]$ at fixed strong community topology ($d_{\text{out}} = 2$). To reduce single-graph realization variance across the fine parameter grids ($\Delta d_{\text{out}} = 0.25$, $53$ instances; $20$ logarithmic steps per decade in $\sigma_c$, $61$ instances), markers show means within non-overlapping bins of width $\Delta d_{\text{out}} = 1.0$ ($4$ graph instances per bin, left) and $0.25\text{ dex}$ ($5$ graph instances per bin, right). \textsc{Leiden} matches \textsc{VieClus} almost identically across both sweeps.}
+    \Description{Two line plots showing binned NMI scores of clustering algorithms on ADC-SBM synthetic graphs under structural degradation (varying d_out) and feature degradation (varying sigma_c).}
     \label{fig:adcsbm}
 \end{figure*}
 
-To isolate how clustering algorithms trade off topological structure against vertex attributes, we evaluate them on synthetic attributed networks generated using our ADC-SBM generator (Section~\ref{sec:evaluation}). Rather than ranking solvers, these experiments reveal how different architectures respond to controlled degradation of structural and attribute signals. We conduct two high-resolution parameter sweeps on graphs with $n = 1\,000$ vertices, $k = 4$ clusters, average degree $d = 20$, and intra-cluster feature spread $\sigma = 1$: (i)~a \emph{structural degradation} sweep that increases the expected external degree $d_{\text{out}}$ from $1$ to $14$ in steps of $0.25$ while holding cluster features well-separated ($\sigma_c = 3$), and (ii)~a \emph{feature degradation} sweep that varies the cluster center standard deviation $\sigma_c$ logarithmically from $10^{-2}$ (uninformative overlapping features) to $10^{1}$ (well-separated features) while holding the graph topology strongly modular ($d_{\text{out}} = 2$).
+To isolate how clustering algorithms trade off topological structure against vertex attributes, we evaluate them on synthetic attributed networks generated using our ADC-SBM generator (Section~\ref{sec:evaluation}). Rather than ranking solvers, these experiments reveal how different architectures respond to controlled degradation of structural and attribute signals. We conduct two high-resolution parameter sweeps on graphs with $n = 1\,000$ vertices, $k = 4$ clusters, average degree $d = 20$, and intra-cluster feature spread $\sigma = 1$: (i)~a \emph{structural degradation} sweep that increases the expected external degree $d_{\text{out}}$ from $1$ to $14$ in steps of $0.25$ ($53$ instances) while holding cluster features well-separated ($\sigma_c = 3$), and (ii)~a \emph{feature degradation} sweep that varies the cluster center standard deviation $\sigma_c$ logarithmically from $10^{-2}$ (uninformative overlapping features) to $10^{1}$ (well-separated features) at $20$ steps per decade ($61$ instances) while holding the graph topology strongly modular ($d_{\text{out}} = 2$). Because each grid point represents an independent random graph realization, Figure~\ref{fig:adcsbm} aggregates adjacent parameter steps into non-overlapping bins of width $\Delta d_{\text{out}} = 1.0$ ($4$ instances per marker) and $0.25\text{ dex}$ in $\sigma_c$ ($5$ instances per marker).
 
 Figure~\ref{fig:adcsbm} summarizes both experiments. Under structural degradation (Figure~\ref{fig:adcsbm}, left), topology-only methods (\textsc{VieClus}, \textsc{Leiden}, and \textsc{GNNS}) maintain near-perfect recovery up to $d_{\text{out}} \approx 8$, after which they undergo a sharp phase transition as the stochastic block model approaches its detectability limit, dropping below $\text{NMI} = 0.11$ by $d_{\text{out}} = 11$. In contrast, attribute-aware GNNs leverage the informative node features ($\sigma_c = 3$) to sustain recovery well into the structurally noisy regime: at $d_{\text{out}} = 11$, \textsc{DMoN} achieves $\text{NMI} = 0.849$, \textsc{MAGI} (GCN) achieves $0.767$, \textsc{CommDGI} achieves $0.724$, and \textsc{DGCluster} achieves $0.720$.
 
@@ -1138,7 +1084,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
 % =========================================================================
 % Embedded BibTeX Database (Self-Contained for Nature Communications)
 % =========================================================================
-\begin{filecontents*}{\jobname.bib}
+\begin{filecontents*}[overwrite]{\jobname.bib}
 @article{Newman2003,
   title     = {Properties of highly clustered networks},
   author    = {Newman, M. E. J.},

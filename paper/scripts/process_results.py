@@ -589,6 +589,295 @@ def write_adc_sbm_csvs(adc_dir: Path, dout_csv: Path, sigma_csv: Path):
                 row[c] = f"{sigma_rows[val].get(c, 0.0):.6f}"
             writer.writerow(row)
 
+    # Also write non-overlapping binned CSVs for Figure 5:
+    # - dout: 13 non-overlapping bins of width 1.0 across [1, 14] (4 points per bin; 5 in the final [13, 14] bin)
+    # - sigma: 12 non-overlapping bins of width 0.25 dex across [10^-2, 10^1] (5 points per bin; 6 in the final bin)
+    import math
+    from statistics import mean
+    dout_keys = sorted(dout_rows.keys())
+    dout_binned_csv = dout_csv.with_name("adc_sbm_dout_binned.csv")
+    with open(dout_binned_csv, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["dout"] + col_names)
+        writer.writeheader()
+        for b in range(13):
+            pts = dout_keys[b * 4 : (b + 1) * 4 if b < 12 else len(dout_keys)]
+            x_center = mean(pts)
+            row = {"dout": f"{x_center:.4f}"}
+            for c in col_names:
+                row[c] = f"{mean([dout_rows[p].get(c, 0.0) for p in pts]):.6f}"
+            writer.writerow(row)
+
+    sigma_keys = sorted(sigma_rows.keys())
+    sigma_binned_csv = sigma_csv.with_name("adc_sbm_sigma_binned.csv")
+    with open(sigma_binned_csv, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["sigma"] + col_names)
+        writer.writeheader()
+        for b in range(12):
+            pts = sigma_keys[b * 5 : (b + 1) * 5 if b < 11 else len(sigma_keys)]
+            x_center = 10.0 ** mean([math.log10(p) for p in pts])
+            row = {"sigma": f"{x_center:.6f}"}
+            for c in col_names:
+                row[c] = f"{mean([sigma_rows[p].get(c, 0.0) for p in pts]):.6f}"
+            writer.writerow(row)
+
+
+def write_fig4_scaling_csvs(rw_records, dimacs_records, dim_scale_dir: Path, prot_s_csv: Path, data_dir: Path):
+    """Export Option 2 Figure 4 CSVs: runtime strip, speedup trajectories, and modularity uplift (dQ)."""
+    import math
+
+    dim_scale = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    for p in sorted(dim_scale_dir.glob("*.jsonl")):
+        with open(p, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    r = json.loads(line)
+                    mode = f"{r.get('device', 'cpu')}_{r.get('threads', 1)}"
+                    dim_scale[r["solver"]][mode][r["instance"]].append(r)
+
+    gt_scale = defaultdict(dict)
+    if prot_s_csv.exists():
+        with open(prot_s_csv, "r", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                gt_scale[r["solver"]][r["instance"]] = r
+
+    log_min = -3.5
+    log_max = math.log10(4500.0)
+
+    def time_to_u(t_sec: float) -> float:
+        lt = math.log10(max(10**log_min, min(4500.0, t_sec)))
+        return (lt - log_min) / (log_max - log_min)
+
+    def dq_to_u(dq: float) -> float:
+        dq = max(-0.025, min(0.25, dq))
+        if dq < 0.0:
+            return 0.18 * (dq + 0.025) / 0.025
+        elif dq <= 0.002:
+            return 0.18 + 0.28 * (dq / 0.002)
+        else:
+            return 0.46 + 0.54 * ((dq - 0.002) / (0.25 - 0.002))
+
+    n_inst = len(GT_INSTANCES)
+    n_solvers = len(PLOTTED_SOLVERS)
+    alg_rt_pts = {}
+    alg_rt_fails = {}
+    summary_rows = []
+
+    for idx, (raw, plot_name, label, paradigm) in enumerate(PLOTTED_SOLVERS):
+        y_center = n_solvers - idx
+        solved_t = []
+        n_failed = 0
+        for inst in GT_INSTANCES:
+            s = summarize_solver_instance(rw_records[raw].get(inst, []))
+            if s.get("status") == "OK" and s.get("solve_seconds"):
+                solved_t.append((s["solve_seconds"], inst))
+            else:
+                n_failed += 1
+        solved_t.sort(key=lambda x: x[0])
+        k = len(solved_t)
+        pts = []
+        for j, (t_val, inst) in enumerate(solved_t):
+            if k <= 1:
+                dy = 0.0
+            else:
+                step = 3
+                while step > 1 and (k % step == 0):
+                    step += 1
+                slot = ((j * step) % k) / (k - 1)
+                dy = -0.22 + 0.44 * slot
+            pts.append((f"{time_to_u(t_val):.6f}", f"{y_center + dy:.4f}"))
+        while len(pts) < n_inst:
+            pts.append(("", ""))
+        alg_rt_pts[plot_name] = pts
+
+        fail_pts = []
+        for j in range(n_failed):
+            if n_failed == 1:
+                dy, du = 0.0, 1.10
+            else:
+                slot = j / (n_failed - 1)
+                dy = -0.22 + 0.44 * slot
+                du = 1.06 + 0.08 * ((j % 3) / 2.0)
+            fail_pts.append((f"{du:.6f}", f"{y_center + dy:.4f}"))
+        while len(fail_pts) < n_inst:
+            fail_pts.append(("", ""))
+        alg_rt_fails[plot_name] = fail_pts
+
+        if raw in gt_scale:
+            t1_c, t32_c, tgpu_c = [], [], []
+            for inst in GT_INSTANCES:
+                r = gt_scale[raw].get(inst, {})
+                if (
+                    r.get("status_1t") == "OK"
+                    and r.get("status_32t") == "OK"
+                    and (raw == "vieclus" or r.get("status_gpu") == "OK")
+                ):
+                    t1_c.append(float(r["time_1t"]))
+                    t32_c.append(float(r["time_32t"]))
+                    if raw != "vieclus":
+                        tgpu_c.append(float(r["time_gpu"]))
+            gm1 = math.exp(sum(math.log(x) for x in t1_c) / len(t1_c))
+            gm32 = math.exp(sum(math.log(x) for x in t32_c) / len(t32_c))
+            gmgpu = math.exp(sum(math.log(x) for x in tgpu_c) / len(tgpu_c)) if tgpu_c else None
+            summary_rows.append({
+                "plot_name": plot_name,
+                "y": y_center,
+                "u_1t": f"{time_to_u(gm1):.6f}",
+                "u_32t": f"{time_to_u(gm32):.6f}",
+                "u_gpu": f"{time_to_u(gmgpu):.6f}" if gmgpu else "",
+            })
+        else:
+            gm1 = math.exp(sum(math.log(x[0]) for x in solved_t) / len(solved_t))
+            summary_rows.append({
+                "plot_name": plot_name,
+                "y": y_center,
+                "u_1t": f"{time_to_u(gm1):.6f}",
+                "u_32t": "",
+                "u_gpu": "",
+            })
+
+    rt_fields = ["idx"]
+    for _, plot_name, _, _ in PLOTTED_SOLVERS:
+        rt_fields.extend([f"u_{plot_name}", f"y_{plot_name}", f"uf_{plot_name}", f"yf_{plot_name}"])
+    with open(data_dir / "prot_s_fig4_runtime.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=rt_fields)
+        w.writeheader()
+        for i in range(n_inst):
+            row = {"idx": i}
+            for _, plot_name, _, _ in PLOTTED_SOLVERS:
+                row[f"u_{plot_name}"], row[f"y_{plot_name}"] = alg_rt_pts[plot_name][i]
+                row[f"uf_{plot_name}"], row[f"yf_{plot_name}"] = alg_rt_fails[plot_name][i]
+            w.writerow(row)
+
+    with open(data_dir / "prot_s_fig4_traj.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["plot_name", "y", "u_1t", "u_32t", "u_gpu"])
+        w.writeheader()
+        w.writerows(summary_rows)
+
+    up_32_pts = {}
+    up_gpu_pts = {}
+    up_fail_32 = {}
+    up_fail_gpu = {}
+    max_rows = 20
+
+    for idx, (raw, plot_name, label, paradigm) in enumerate(PLOTTED_SOLVERS):
+        y_center = n_solvers - idx
+        p32, pgpu, f32, fgpu = [], [], [], []
+        if raw in dim_scale:
+            for inst in DIMACS_INSTANCES:
+                s1 = summarize_solver_instance(dimacs_records[raw].get(inst, []))
+                s32 = summarize_solver_instance(dim_scale[raw]["cpu_32"].get(inst, []))
+                sgpu = summarize_solver_instance(dim_scale[raw]["cuda_32"].get(inst, []))
+                if s1.get("status") == "OK":
+                    q1 = s1["modularity"]
+                    is_cb = (
+                        (s1.get("iter_done") and s1.get("iter_req") and s1["iter_done"] < s1["iter_req"])
+                        or (s1.get("solve_seconds") or 0) >= 1800.0
+                    )
+                    if raw == "vieclus":
+                        if s32.get("status") == "OK" and abs(s32["modularity"] - q1) > 1e-5:
+                            p32.append(s32["modularity"] - q1)
+                        elif s32.get("status") in ("MLE", "TLE"):
+                            f32.append(1)
+                    else:
+                        if is_cb:
+                            if s32.get("status") == "OK":
+                                p32.append(s32["modularity"] - q1)
+                            elif s32.get("status") in ("MLE", "TLE"):
+                                f32.append(1)
+                            if sgpu.get("status") == "OK":
+                                pgpu.append(sgpu["modularity"] - q1)
+                            elif sgpu.get("status") in ("MLE", "TLE"):
+                                fgpu.append(1)
+                        else:
+                            if sgpu.get("status") in ("MLE", "TLE"):
+                                fgpu.append(1)
+            if raw in ("vieclus", "dgcluster", "lim", "gnns"):
+                for inst in GT_INSTANCES:
+                    r = gt_scale[raw].get(inst, {})
+                    if r.get("status_1t") == "OK":
+                        q1 = float(r["mod_1t"])
+                        it1 = r.get("iter_1t", "")
+                        parts = it1.split("/") if "/" in it1 else []
+                        is_trunc = (
+                            len(parts) == 2 and parts[1] != "None" and int(parts[0]) < int(parts[1])
+                        ) or float(r["time_1t"]) >= 3400.0
+                        if raw == "vieclus":
+                            if r.get("status_32t") == "OK" and abs(float(r["mod_32t"]) - q1) > 5e-5:
+                                p32.append(float(r["mod_32t"]) - q1)
+                            elif r.get("status_32t") in ("MLE", "TLE"):
+                                f32.append(1)
+                        elif is_trunc:
+                            if r.get("status_32t") == "OK":
+                                p32.append(float(r["mod_32t"]) - q1)
+                            elif r.get("status_32t") in ("MLE", "TLE"):
+                                f32.append(1)
+                            if r.get("status_gpu") == "OK":
+                                pgpu.append(float(r["mod_gpu"]) - q1)
+                            elif r.get("status_gpu") in ("MLE", "TLE"):
+                                fgpu.append(1)
+
+        p32.sort()
+        pgpu.sort()
+        pts32_fmt = []
+        for j, val in enumerate(p32):
+            if raw == "vieclus":
+                dy = -0.22 + 0.44 * ((j * 3 % len(p32)) / max(1, len(p32) - 1))
+            else:
+                dy = 0.08 + 0.16 * (j % 2)
+            pts32_fmt.append((f"{dq_to_u(val):.6f}", f"{y_center + dy:.4f}"))
+        while len(pts32_fmt) < max_rows:
+            pts32_fmt.append(("", ""))
+
+        ptsgpu_fmt = []
+        for j, val in enumerate(pgpu):
+            dy = -0.08 - 0.16 * (j % 2)
+            ptsgpu_fmt.append((f"{dq_to_u(val):.6f}", f"{y_center + dy:.4f}"))
+        while len(ptsgpu_fmt) < max_rows:
+            ptsgpu_fmt.append(("", ""))
+
+        f32_fmt = []
+        for j in range(len(f32)):
+            du = 1.07 + 0.05 * j
+            f32_fmt.append((f"{du:.6f}", f"{y_center + 0.12:.4f}"))
+        while len(f32_fmt) < max_rows:
+            f32_fmt.append(("", ""))
+
+        fgpu_fmt = []
+        for j in range(len(fgpu)):
+            du = 1.06 + 0.04 * j
+            fgpu_fmt.append((f"{du:.6f}", f"{y_center - 0.12:.4f}"))
+        while len(fgpu_fmt) < max_rows:
+            fgpu_fmt.append(("", ""))
+
+        up_32_pts[plot_name] = pts32_fmt
+        up_gpu_pts[plot_name] = ptsgpu_fmt
+        up_fail_32[plot_name] = f32_fmt
+        up_fail_gpu[plot_name] = fgpu_fmt
+
+    up_fields = ["idx"]
+    for _, plot_name, _, _ in PLOTTED_SOLVERS:
+        up_fields.extend([
+            f"u32_{plot_name}",
+            f"y32_{plot_name}",
+            f"ugpu_{plot_name}",
+            f"ygpu_{plot_name}",
+            f"uf32_{plot_name}",
+            f"yf32_{plot_name}",
+            f"ufgpu_{plot_name}",
+            f"yfgpu_{plot_name}",
+        ])
+    with open(data_dir / "prot_s_fig4_uplift.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=up_fields)
+        w.writeheader()
+        for i in range(max_rows):
+            row = {"idx": i}
+            for _, plot_name, _, _ in PLOTTED_SOLVERS:
+                row[f"u32_{plot_name}"], row[f"y32_{plot_name}"] = up_32_pts[plot_name][i]
+                row[f"ugpu_{plot_name}"], row[f"ygpu_{plot_name}"] = up_gpu_pts[plot_name][i]
+                row[f"uf32_{plot_name}"], row[f"yf32_{plot_name}"] = up_fail_32[plot_name][i]
+                row[f"ufgpu_{plot_name}"], row[f"yfgpu_{plot_name}"] = up_fail_gpu[plot_name][i]
+            w.writerow(row)
+
 
 def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -604,8 +893,16 @@ def main():
     write_strip_wide_csv(rw_records, GT_INSTANCES, "f1", DATA_DIR / "prot_a_gt_f1_strip.csv", split=0.90)
 
     write_efficiency_csv(rw_records, dimacs_records, DATA_DIR / "prot_a_efficiency.csv")
-    write_protocol_s_csv(rw_records, ROOT_DIR / "out_scale", DATA_DIR / "prot_s_scaling.csv")
-    write_protocol_b_csv(rw_records, ROOT_DIR / "out_scale", ROOT_DIR / "params", DATA_DIR / "prot_b_tuning.csv")
+    if (ROOT_DIR / "out_scale").exists():
+        write_protocol_s_csv(rw_records, ROOT_DIR / "out_scale", DATA_DIR / "prot_s_scaling.csv")
+        write_protocol_b_csv(rw_records, ROOT_DIR / "out_scale", ROOT_DIR / "params", DATA_DIR / "prot_b_tuning.csv")
+    write_fig4_scaling_csvs(
+        rw_records,
+        dimacs_records,
+        ROOT_DIR / "out_scale_dimacs",
+        DATA_DIR / "prot_s_scaling.csv",
+        DATA_DIR,
+    )
     write_adc_sbm_csvs(
         ROOT_DIR / "results_adc_sbm",
         DATA_DIR / "adc_sbm_dout.csv",
