@@ -10,8 +10,8 @@ PAPER_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = PAPER_DIR.parent
 DATA_DIR = PAPER_DIR / "data"
 
-# The 16 non-exact benchmarked solvers in display order (top to bottom in horizontal strip plots)
-# Grouped by Classical (top 9) vs Learning-based (bottom 7), ordered by modularity strength within each group:
+# The 17 benchmarked solvers in display order (top to bottom in horizontal strip plots)
+# Grouped by Classical (top 10) vs Learning-based (bottom 7), ordered by modularity strength within each group:
 PLOTTED_SOLVERS = [
     ("vieclus", "vieclus", "VieClus", "classical"),
     ("leiden", "leiden", "Leiden", "classical"),
@@ -22,6 +22,7 @@ PLOTTED_SOLVERS = [
     ("walktrap", "walktrap", "Walktrap", "classical"),
     ("clustre-fast", "clustre_fast", "CluStRE", "classical"),
     ("hollocou", "hollocou", "Hollocou", "classical"),
+    ("bayan", "bayan", "Bayan", "classical"),
     ("gnns", "gnns", "GNNS", "learned"),
     ("dgcluster", "dgcluster", "DGCluster", "learned"),
     ("magi-sage", "magi", "MAGI", "learned"),
@@ -32,7 +33,6 @@ PLOTTED_SOLVERS = [
 ]
 
 ALL_SOLVERS = [(r, p) for r, p, _, _ in PLOTTED_SOLVERS] + [
-    ("bayan", "bayan"),
     ("magi", "magi_gcn"),
 ]
 
@@ -107,7 +107,10 @@ def summarize_solver_instance(runs):
         if r.get("status") == "ok" and (r.get("quality") or {}).get("modularity") is not None
     ]
     if ok_runs:
-        best_mod = max((r["quality"].get("modularity") or -1.0) for r in ok_runs)
+        best_mod = max(
+            (r["quality"].get("modularity") if r["quality"].get("modularity") is not None else -1.0)
+            for r in ok_runs
+        )
         nmi_vals = [r["quality"].get("nmi") for r in ok_runs if r["quality"].get("nmi") is not None]
         f1_vals = [r["quality"].get("f1") for r in ok_runs if r["quality"].get("f1") is not None]
         best_nmi = max(nmi_vals) if nmi_vals else None
@@ -193,7 +196,7 @@ def summarize_solver_instance(runs):
         "tle" in statuses
         or any((r.get("process") or {}).get("outer_timeout") for r in runs)
         or any((r.get("process") or {}).get("watchdog_killed_run") is not None for r in runs)
-        or max_wall >= 3600.0
+        or (max_wall >= 3600.0 and not any((r.get("solver_report") or {}).get("error") for r in runs))
     ):
         fail_status = "TLE"
     else:
@@ -726,11 +729,11 @@ def write_fig4_scaling_csvs(rw_records, dimacs_records, dim_scale_dir: Path, pro
                 "u_gpu": f"{time_to_u(gmgpu):.6f}" if gmgpu else "",
             })
         else:
-            gm1 = math.exp(sum(math.log(x[0]) for x in solved_t) / len(solved_t))
+            gm1 = math.exp(sum(math.log(x[0]) for x in solved_t) / len(solved_t)) if solved_t else None
             summary_rows.append({
                 "plot_name": plot_name,
                 "y": y_center,
-                "u_1t": f"{time_to_u(gm1):.6f}",
+                "u_1t": f"{time_to_u(gm1):.6f}" if gm1 is not None else "",
                 "u_32t": "",
                 "u_gpu": "",
             })

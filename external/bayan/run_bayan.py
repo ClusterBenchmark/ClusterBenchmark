@@ -25,8 +25,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"
 
 import networkx as nx  # noqa: E402
 import bayanpy  # noqa: E402
+from bayanpy import BayanImplied  # noqa: E402
 
 import graphio  # noqa: E402
+
+
+def _is_integer_solution_fixed(Graph, var_vals):
+    """Fix bayanpy bug where left_graph node count < Graph node count."""
+    return all(abs(v) < 1e-7 or abs(v - 1.0) < 1e-7 for v in var_vals.values())
+
+
+BayanImplied.is_integer_solution = _is_integer_solution_fixed
 
 
 class RunTimeout(Exception):
@@ -45,7 +54,7 @@ def main():
     p.add_argument("--time", type=float, default=0.0, help="per-run limit -> Gurobi time budget")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--resolution", type=float, default=1.0)
-    p.add_argument("--threshold", type=float, default=0.001, help="optimality-gap tolerance")
+    p.add_argument("--threshold", type=float, default=1e-6, help="optimality-gap tolerance")
     args = p.parse_args()
 
     t0 = time.perf_counter()
@@ -58,10 +67,10 @@ def main():
 
     # Bayan's branch-and-cut takes a wall-clock budget for the solve; use the
     # per-run limit. The model-building phase before it is not time-bounded, so a
-    # SIGALRM (slightly above the budget) backstops a runaway build on a graph too
-    # large for the exact program, marking it tle instead of waiting for the
-    # harness's much longer outer timeout.
-    time_allowed = int(args.time) if args.time > 0 else 3600
+    # SIGALRM (above the solve budget) backstops a runaway build on a graph too
+    # large for the exact program, while leaving enough headroom for bayanpy's
+    # branch-and-cut loop to exit cleanly and return its best incumbent solution.
+    time_allowed = max(1, int(args.time * 0.85)) if args.time > 0 else 3600
     signal.signal(signal.SIGALRM, _alarm)
 
     for i in range(args.runs):

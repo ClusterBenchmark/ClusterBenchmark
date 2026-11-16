@@ -30,7 +30,7 @@
     },
     "threshold": {
       "flag": "--threshold",
-      "default": 0.001,
+      "default": 1e-06,
       "type": "float",
       "tunable": false,
       "doc": "Optimality-gap tolerance: Bayan stops once the branch-and-cut proves it is within this of optimal. A quality/time tolerance, not a tuned hyperparameter; set-only."
