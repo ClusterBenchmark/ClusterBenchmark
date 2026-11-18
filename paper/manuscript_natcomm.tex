@@ -10,6 +10,7 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{multirow}
+\usepackage[table]{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, fit}
 
@@ -420,7 +421,7 @@ Figures~\ref{fig:perf_quality} and~\ref{fig:perf_gt_recovery} show the out-of-th
 
 When we evaluate ground-truth community recovery on the \textsc{Ground-Truth} dataset (Figure~\ref{fig:perf_gt_recovery} and Appendix~\ref{sec:detailed-results}, Tables~\ref{tab:nmi_gt} and~\ref{tab:f1_gt}), the picture changes substantially. Here, attribute-aware learning-based methods compete closely with, and often beat, pure modularity maximizers. In NMI (Figure~\ref{fig:perf_gt_recovery}, left), \textsc{MAGI} has the strongest overall profile (mean NMI of $0.533$ across 9/10 solved instances, with $\tau \ge 0.859$ on 80\% of instances), while \textsc{CommDGI}, \textsc{DGCluster}, and \textsc{UCoDe} each reach the highest NMI ($\tau = 1.0$) on several networks alongside \textsc{Leiden}. On edge-restricted Pairwise F1 (Figure~\ref{fig:perf_gt_recovery}, right), \textsc{MAGI}, \textsc{LIM}, \textsc{CommDGI}, \textsc{DGCluster}, \textsc{UCoDe}, and the flow-based \textsc{Infomap} all reach $\tau = 1.0$ on multiple instances. Notably, this advantage is not simply because fixed-$k$ neural models receive the true number of classes $|C|$. The cluster-free neural methods \textsc{DGCluster} and \textsc{LIM}, which infer $k$ automatically without knowing $|C|$, also outperform classical topology-only heuristics in NMI and Pairwise F1 on several citation and co-purchasing networks. Instead, the difference between Figure~\ref{fig:perf_quality} and Figure~\ref{fig:perf_gt_recovery} reflects a mismatch between topological modularity and semantic class labels. For example, on Citeseer, the ground-truth class partition has a modularity of only $0.54$, whereas classical and neural modularity maximizers find partitions with modularity up to $0.89$. Using node attributes helps GNNs group nodes by semantic topic even when citation links cross topic boundaries.
 
-The streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} trade solution quality for high scalability. Both solve all 10 \textsc{Ground-Truth} and all 32 \textsc{DIMACS} graphs, including \texttt{uk-2007-05} ($3.3$~billion edges), with \textsc{CluStRE} consistently outperforming \textsc{Hollocou} in both modularity and NMI/F1. At the opposite end of the spectrum, the exact branch-and-cut solver \textsc{Bayan} certifies globally optimal modularity on the five smallest \textsc{DIMACS} networks ($n \le 105$, $\tau = 1.000$). However, its $\mathcal{O}(n^3)$ triangular constraint formulation exceeds the one-hour time limit (\textsc{TLE}) on medium graphs and hits the 120~GB memory limit (\textsc{MLE}) when creating dense $\mathcal{O}(n^2)$ structures on graphs with $n \ge 169\,343$. Across the eight smallest \textsc{DIMACS} instances with known globally optimal modularity scores from exact ILP and MaxSAT solvers~\cite{bayan2024,maxsat2025}, \textsc{VieClus} finds the optimal modularity on all 8/8 instances, \textsc{Leiden} and \textsc{GNNS} on 6/8, \textsc{COMBO} and \textsc{Bayan} on 5/8, and \textsc{Louvain} and \textsc{DGCluster} on 2/8.
+The streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} trade solution quality for high scalability. Both solve all 10 \textsc{Ground-Truth} and all 32 \textsc{DIMACS} graphs, including \texttt{uk-2007-05} ($3.3$~billion edges), with \textsc{CluStRE} consistently outperforming \textsc{Hollocou} in both modularity and NMI/F1. At the opposite end of the spectrum, the exact branch-and-cut solver \textsc{Bayan} achieves the globally optimal modularity on six of the eight smallest \textsc{DIMACS} networks (\texttt{karate}, \texttt{chesapeake}, \texttt{dolphins}, \texttt{lesmis}, \texttt{polbooks}, and \texttt{football}, $\tau = 1.000$). On \texttt{adjnoun}, it reaches its one-hour solve budget with a feasible partition of $0.312$ (at a $23.9\%$ optimality gap, just below the $0.313$ optimum), and on \texttt{jazz} and larger graphs its $\mathcal{O}(n^3)$ triangular constraint formulation exceeds the one-hour time limit (\textsc{TLE}) or the 120~GB memory limit (\textsc{MLE}). Across the eight smallest \textsc{DIMACS} instances with known globally optimal modularity scores from exact ILP and MaxSAT solvers~\cite{bayan2024,maxsat2025}, \textsc{VieClus} finds the optimal modularity on all 8/8 instances, \textsc{GNNS} on 7/8, \textsc{Leiden} and \textsc{Bayan} on 6/8, \textsc{COMBO} on 5/8, \textsc{Louvain} on 4/8, and \textsc{DGCluster} and \textsc{Infomap} on 2/8.
 
 \pgfplotsset{
 cycle list/.define={my marks}{
@@ -1130,14 +1131,17 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
 
 \begin{table}[H]
     \centering
-    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Small-scale networks ($n \le 1\,133$). Bold indicates the highest modularity per instance. An asterisk ($^*$) denotes instances with certified globally optimal modularity solutions proven in the literature~\cite{bayan2024,maxsat2025}. Entries marked \textsc{ERR} indicate solver runtime failures (for \textsc{LIM}, when its coarse \textsc{Louvain} initialization at $\gamma = 0.3$ collapses to a single community, and for \textsc{Bayan}, when the ILP model exceeds the Gurobi solver license limit).}
+    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Small-scale networks ($n \le 1\,133$). Bold indicates the highest modularity per instance. Columns with a gray background indicate instances where \textsc{Bayan} terminated with the globally optimal modularity in our benchmark run. An asterisk ($^*$) marks additional instances whose global optimum is known from the literature~\cite{bayan2024,maxsat2025}, but where \textsc{Bayan} did not prove optimality within our 1-hour limit (\texttt{adjnoun} returned its best feasible solution of $0.312$ at a $23.9\%$ optimality gap, and \texttt{jazz} timed out). Entries marked \textsc{ERR} indicate solver runtime failures (for \textsc{LIM}, when its coarse \textsc{Louvain} initialization at $\gamma = 0.3$ collapses to a single community, and for \textsc{Bayan}, when the ILP model exceeds the Gurobi solver license limit).}
     \label{tab:mod_dimacs_small}
     \vspace{0.5em}
     \small
-    \setlength{\tabcolsep}{1.2pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrrr@{}}
+    \setlength{\tabcolsep}{2.9pt}
+    \setlength{\aboverulesep}{0pt}
+    \setlength{\belowrulesep}{0pt}
+    \setlength{\extrarowheight}{1.5pt}
+    \begin{tabular}{l >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r r >{\columncolor{gray!12}}r r r r r}
         \toprule
-        Method & karate$^*$ & chesap.$^*$ & dolph.$^*$ & lesmis$^*$ & polbks.$^*$ & adjnoun$^*$ & footb.$^*$ & jazz$^*$ & celeg-n & celeg-m & email \\
+        Method & karate & chesap. & dolph. & lesmis & polbks. & adjnoun$^*$ & footb. & jazz$^*$ & celeg-n & celeg-m & email \\
         \midrule
         \textsc{VieClus} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & \textbf{0.313} & \textbf{0.605} & \textbf{0.445} & \textbf{0.406} & \textbf{0.453} & \textbf{0.583} \\
         \textsc{Leiden} & \textbf{0.420} & \textbf{0.266} & 0.528 & \textbf{0.560} & \textbf{0.527} & 0.311 & \textbf{0.605} & \textbf{0.445} & \textbf{0.406} & 0.450 & 0.580 \\
@@ -1148,7 +1152,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
         \textsc{Walktrap} & 0.353 & 0.226 & 0.489 & 0.521 & 0.507 & 0.216 & 0.603 & 0.438 & 0.353 & 0.349 & 0.531 \\
         \textsc{CluStRE} & 0.251 & 0.198 & 0.355 & 0.516 & 0.482 & 0.250 & 0.420 & 0.382 & 0.296 & 0.296 & 0.434 \\
         \textsc{Hollocou} & 0.020 & 0.000 & 0.279 & 0.006 & 0.007 & 0.000 & 0.000 & 0.001 & 0.000 & 0.003 & 0.003 \\
-        \textsc{Bayan} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & ERR & ERR & ERR & ERR & ERR & TLE \\
+        \textsc{Bayan} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & 0.312 & \textbf{0.605} & TLE & ERR & ERR & TLE \\
         \midrule
         \textsc{GNNS} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & 0.308 & \textbf{0.605} & \textbf{0.445} & \textbf{0.406} & 0.439 & 0.572 \\
         \textsc{DGCluster} & \textbf{0.420} & \textbf{0.266} & 0.528 & 0.558 & 0.513 & 0.303 & 0.604 & 0.444 & 0.396 & 0.438 & 0.558 \\
@@ -1158,7 +1162,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
         \textsc{UCoDe} & 0.402 & 0.262 & 0.525 & 0.553 & 0.519 & 0.286 & 0.584 & 0.439 & 0.365 & 0.363 & 0.372 \\
         \textsc{CommDGI} & \textbf{0.420} & 0.250 & 0.506 & 0.540 & 0.521 & 0.261 & 0.595 & 0.406 & 0.359 & 0.356 & 0.294 \\
         \bottomrule
-    \end{tabular*}
+    \end{tabular}
 \end{table}
 
 \begin{table}[H]
