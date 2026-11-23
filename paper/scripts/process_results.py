@@ -100,21 +100,47 @@ def load_protocol_a_dir(result_dir: Path):
 
 
 def summarize_solver_instance(runs):
-    """Given the 5 runs for a (solver, instance) pair, return the summary dict."""
+    """Given the 5 runs for a (solver, instance) pair, return the summary dict.
+
+    Selects the single partition achieving the highest unsupervised modularity Q
+    and evaluates all quality metrics (Q, NMI, ARI, F1) on that same partition,
+    while also recording 5-trial mean and sample SD for variance transparency.
+    """
+    import statistics
+
     ok_runs = [
         r
         for r in runs
         if r.get("status") == "ok" and (r.get("quality") or {}).get("modularity") is not None
     ]
     if ok_runs:
-        best_mod = max(
-            (r["quality"].get("modularity") if r["quality"].get("modularity") is not None else -1.0)
-            for r in ok_runs
+        best_run = max(
+            ok_runs,
+            key=lambda r: (
+                r["quality"].get("modularity")
+                if r["quality"].get("modularity") is not None
+                else -1.0
+            ),
         )
-        nmi_vals = [r["quality"].get("nmi") for r in ok_runs if r["quality"].get("nmi") is not None]
-        f1_vals = [r["quality"].get("f1") for r in ok_runs if r["quality"].get("f1") is not None]
-        best_nmi = max(nmi_vals) if nmi_vals else None
-        best_f1 = max(f1_vals) if f1_vals else None
+        bq = best_run["quality"]
+        best_mod = bq.get("modularity")
+        best_nmi = bq.get("nmi")
+        best_ari = bq.get("ari")
+        best_f1 = bq.get("f1")
+
+        def mean_sd(vals):
+            if not vals:
+                return None, None
+            m = statistics.mean(vals)
+            sd = statistics.stdev(vals) if len(vals) >= 2 else 0.0
+            return m, sd
+
+        mod_vals = [r["quality"]["modularity"] for r in ok_runs if r["quality"].get("modularity") is not None]
+        nmi_vals = [r["quality"]["nmi"] for r in ok_runs if r["quality"].get("nmi") is not None]
+        ari_vals = [r["quality"]["ari"] for r in ok_runs if r["quality"].get("ari") is not None]
+        mod_mean, mod_sd = mean_sd(mod_vals)
+        nmi_mean, nmi_sd = mean_sd(nmi_vals)
+        ari_mean, ari_sd = mean_sd(ari_vals)
 
         solve_times = [
             (r.get("solver_report") or {}).get("solve_seconds")
@@ -149,7 +175,14 @@ def summarize_solver_instance(runs):
             "m": q0.get("m") // 2 if q0.get("m") else None,
             "modularity": best_mod,
             "nmi": best_nmi,
+            "ari": best_ari,
             "f1": best_f1,
+            "mod_mean": mod_mean,
+            "mod_sd": mod_sd,
+            "nmi_mean": nmi_mean,
+            "nmi_sd": nmi_sd,
+            "ari_mean": ari_mean,
+            "ari_sd": ari_sd,
             "solve_seconds": mean_time,
             "peak_mb": max_peak_mb,
             "iter_done": max_iter_done,
@@ -218,7 +251,7 @@ def summarize_solver_instance(runs):
 
 
 def write_summary_csv(records, instances, out_csv: Path):
-    """Write a tidy summary CSV of best scores, runtime, memory, and status per (solver, instance)."""
+    """Write a tidy summary CSV of best-by-Q scores, 5-seed mean/SD, runtime, memory, and status per (solver, instance)."""
     fieldnames = [
         "solver",
         "plot_name",
@@ -227,7 +260,14 @@ def write_summary_csv(records, instances, out_csv: Path):
         "n_ok",
         "modularity",
         "nmi",
+        "ari",
         "f1",
+        "mod_mean",
+        "mod_sd",
+        "nmi_mean",
+        "nmi_sd",
+        "ari_mean",
+        "ari_sd",
         "solve_seconds",
         "peak_mb",
         "iter_done",
@@ -246,7 +286,14 @@ def write_summary_csv(records, instances, out_csv: Path):
                 "n_ok": s.get("n_ok"),
                 "modularity": f"{s['modularity']:.6f}" if s.get("modularity") is not None else "",
                 "nmi": f"{s['nmi']:.6f}" if s.get("nmi") is not None else "",
+                "ari": f"{s['ari']:.6f}" if s.get("ari") is not None else "",
                 "f1": f"{s['f1']:.6f}" if s.get("f1") is not None else "",
+                "mod_mean": f"{s['mod_mean']:.6f}" if s.get("mod_mean") is not None else "",
+                "mod_sd": f"{s['mod_sd']:.6f}" if s.get("mod_sd") is not None else "",
+                "nmi_mean": f"{s['nmi_mean']:.6f}" if s.get("nmi_mean") is not None else "",
+                "nmi_sd": f"{s['nmi_sd']:.6f}" if s.get("nmi_sd") is not None else "",
+                "ari_mean": f"{s['ari_mean']:.6f}" if s.get("ari_mean") is not None else "",
+                "ari_sd": f"{s['ari_sd']:.6f}" if s.get("ari_sd") is not None else "",
                 "solve_seconds": f"{s['solve_seconds']:.4f}" if s.get("solve_seconds") is not None else "",
                 "peak_mb": f"{s['peak_mb']:.2f}" if s.get("peak_mb") is not None else "",
                 "iter_done": s.get("iter_done") if s.get("iter_done") is not None else "",
@@ -371,13 +418,15 @@ def write_efficiency_csv(rw_records, dimacs_records, out_csv: Path):
 
     rows = []
     for raw_name, plot_name, label, paradigm in PLOTTED_SOLVERS:
-        gt_mods, gt_nmis, gt_f1s, gt_us, gt_mems = [], [], [], [], []
+        gt_mods, gt_nmis, gt_aris, gt_f1s, gt_us, gt_mems = [], [], [], [], [], []
         for inst in GT_INSTANCES:
             s = summarize_solver_instance(rw_records.get(raw_name, {}).get(inst, []))
             if s.get("status") == "OK" and (s.get("modularity") or 0) > 0 and s.get("solve_seconds") and s.get("m"):
                 gt_mods.append(s["modularity"])
                 if (s.get("nmi") or 0) > 0:
                     gt_nmis.append(s["nmi"])
+                if (s.get("ari") or 0) > 0:
+                    gt_aris.append(s["ari"])
                 if (s.get("f1") or 0) > 0:
                     gt_f1s.append(s["f1"])
                 gt_us.append((s["solve_seconds"] * 1e6) / s["m"])
@@ -402,6 +451,7 @@ def write_efficiency_csv(rw_records, dimacs_records, out_csv: Path):
             "gt_us_per_edge": f"{gmean(gt_us):.4f}" if gt_us else "",
             "gt_modularity": f"{gmean(gt_mods):.4f}" if gt_mods else "",
             "gt_nmi": f"{gmean(gt_nmis):.4f}" if gt_nmis else "",
+            "gt_ari": f"{gmean(gt_aris):.4f}" if gt_aris else "",
             "gt_f1": f"{gmean(gt_f1s):.4f}" if gt_f1s else "",
             "gt_peak_mb": f"{gmean(gt_mems):.2f}" if gt_mems else "",
             "dimacs_solved": len(dim_mods),
@@ -651,13 +701,15 @@ def write_fig4_scaling_csvs(rw_records, dimacs_records, dim_scale_dir: Path, pro
         return (lt - log_min) / (log_max - log_min)
 
     def dq_to_u(dq: float) -> float:
+        # Left = better (larger positive uplift), right = worse (negative uplift -> MLE)
         dq = max(-0.025, min(0.25, dq))
         if dq < 0.0:
-            return 0.18 * (dq + 0.025) / 0.025
+            u_raw = 0.18 * (dq + 0.025) / 0.025
         elif dq <= 0.002:
-            return 0.18 + 0.28 * (dq / 0.002)
+            u_raw = 0.18 + 0.28 * (dq / 0.002)
         else:
-            return 0.46 + 0.54 * ((dq - 0.002) / (0.25 - 0.002))
+            u_raw = 0.46 + 0.54 * ((dq - 0.002) / (0.25 - 0.002))
+        return 1.0 - u_raw
 
     n_inst = len(GT_INSTANCES)
     n_solvers = len(PLOTTED_SOLVERS)
@@ -893,6 +945,7 @@ def main():
     write_strip_wide_csv(rw_records, GT_INSTANCES, "modularity", DATA_DIR / "prot_a_gt_modularity_strip.csv", split=0.90)
     write_strip_wide_csv(dimacs_records, DIMACS_INSTANCES, "modularity", DATA_DIR / "prot_a_dimacs_modularity_strip.csv", split=0.90)
     write_strip_wide_csv(rw_records, GT_INSTANCES, "nmi", DATA_DIR / "prot_a_gt_nmi_strip.csv", split=0.85)
+    write_strip_wide_csv(rw_records, GT_INSTANCES, "ari", DATA_DIR / "prot_a_gt_ari_strip.csv", split=0.80)
     write_strip_wide_csv(rw_records, GT_INSTANCES, "f1", DATA_DIR / "prot_a_gt_f1_strip.csv", split=0.90)
 
     write_efficiency_csv(rw_records, dimacs_records, DATA_DIR / "prot_a_efficiency.csv")
