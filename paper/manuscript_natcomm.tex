@@ -495,13 +495,13 @@ perf/.style={
                 }
 
             % Speedup trajectory arrows (1T -> 32T -> GPU) for parallel/ML methods
-            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.7464,7) -- (axis cs:0.5940,7);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.7710,7) -- (axis cs:0.5591,7);
             \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.8382,6) -- (axis cs:0.6170,6);
-            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9485,5) -- (axis cs:0.9065,5);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9485,5) -- (axis cs:0.9059,5);
             \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9000,4) -- (axis cs:0.5945,4);
-            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.8903,3) -- (axis cs:0.7381,3);
-            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9062,2) -- (axis cs:0.6257,2);
-            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9132,1) -- (axis cs:0.6371,1);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.8903,3) -- (axis cs:0.7416,3);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9062,2) -- (axis cs:0.6151,2);
+            \draw[-{Stealth[length=4pt,width=3.5pt]}, thick, draw=black!75] (axis cs:0.9132,1) -- (axis cs:0.6359,1);
 
             % Geometric mean markers: 1T (circle), 32T (triangle), GPU (diamond)
             \addplot[only marks, mark=*, mark size=2.5pt, draw=black!85, fill=white] table[x=u_1t, y=y, col sep=comma] {data/prot_s_fig4_traj.csv};
@@ -554,7 +554,7 @@ Figure~\ref{fig:efficiency} (left) shows the wall-clock runtime distributions on
 
 Peak memory usage shows an equally clear divide between paradigms (see Appendix~\ref{sec:memory}, Table~\ref{tab:memory}). Streaming methods process edges in a single pass with minimal state and need only $1.1$~GiB on \texttt{ogbn-products} ($61.9$~M edges), while \textsc{Leiden} and \textsc{Louvain} use $12.1$~GiB. In contrast, GNNs store high-dimensional node embeddings and intermediate activations, requiring $13$--$44$~GiB on medium and large graphs. Even worse, methods that build dense $\mathcal{O}(n^2)$ modularity or similarity matrices in RAM, specifically \textsc{LIM}, \textsc{UCoDe}, \textsc{CommDGI}, and the Python setup phase of \textsc{Bayan}, try to allocate $214$~GiB on \texttt{ogbn-arxiv} ($n = 169\,343$) and over $41$~TiB on \texttt{ogbn-products}. These runs immediately fail with memory limit exceeded (\textsc{MLE}).
 
-To measure how parallel hardware affects runtime and quality, \textbf{Protocol~S} runs the parallel and learning-based solvers with 32 CPU threads ($p = 32$, \texttt{device=cpu}) and with an NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}). Full per-instance runtimes are listed in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Scaling from 1 to 32 CPU threads (Figure~\ref{fig:efficiency}, left, cyan triangles) gives geometric-mean speedups of $7.6\times$ for \textsc{LIM}, $7.2\times$ for \textsc{UCoDe}, $5.0\times$ for \textsc{DGCluster}, $3.7\times$ for \textsc{CommDGI}, $3.4\times$ for \textsc{DMoN}, and $1.3\times$ for \textsc{MAGI} across commonly solved networks. Moving training to the RTX~4090 GPU (orange diamonds) yields much larger speedups over single-threaded CPU runs, reaching geometric-mean speedups of $153\times$ for \textsc{LIM} (reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $102\times$ for \textsc{UCoDe}, $95\times$ for \textsc{CommDGI}, $38\times$ for \textsc{DGCluster}, $12\times$ for \textsc{GNNS} and \textsc{DMoN}, and $2.0\times$ for \textsc{MAGI} (whose random-walk sampling and $k$-means post-processing remain CPU-bound).
+To measure how parallel hardware affects runtime and quality, \textbf{Protocol~S} runs the parallel and learning-based solvers under identical cluster budgets $k$ to Protocol~A with 32 CPU threads ($p = 32$, \texttt{device=cpu}) and with an NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}). Full per-instance runtimes are listed in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Scaling from 1 to 32 CPU threads (Figure~\ref{fig:efficiency}, left, cyan triangles) gives geometric-mean wall-clock speedups of $9.8\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $4.1\times$ for \textsc{CommDGI}, $3.5\times$ for \textsc{DMoN}, $3.4\times$ for \textsc{GNNS}, and $1.3\times$ for \textsc{MAGI} across commonly solved networks. Moving training to the RTX~4090 GPU (orange diamonds) yields much larger speedups over single-threaded CPU runs, reaching geometric-mean wall-clock speedups of $153\times$ for \textsc{LIM} (reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $121\times$ for \textsc{UCoDe}, $96\times$ for \textsc{CommDGI}, $38\times$ for \textsc{DGCluster}, $33\times$ for \textsc{GNNS} (solving all 10 \textsc{Ground-Truth} graphs including \texttt{ogbn-products}), $12\times$ for \textsc{DMoN}, and $2.0\times$ for \textsc{MAGI} (whose random-walk sampling and $k$-means post-processing remain CPU-bound). Because several 1T~CPU runs hit the 1-hour wall-clock cap before completing their epoch budgets, normalizing by completed epochs/iterations reveals even stronger per-epoch GPU speedups: $177\times$ for \textsc{LIM}, $146\times$ for \textsc{UCoDe}, $117\times$ for \textsc{CommDGI}, $50\times$ for \textsc{GNNS}, $39\times$ for \textsc{DGCluster}, $13\times$ for \textsc{DMoN}, and $6.1\times$ for \textsc{MAGI} ($2.6\times$ on 32T~CPU).
 
 Figure~\ref{fig:efficiency} (right) shows the modularity gain $\Delta Q = Q_{\text{accel}} - Q_{1\text{T}}$ on compute-bound instances across both datasets. For \textsc{VieClus}, running its evolutionary search across 32 MPI processes improves modularity slightly ($\Delta Q \in [0, +0.002]$) on medium graphs, but duplicating graph data across 32 MPI ranks exceeds the 120~GiB RAM limit on the largest instances (\emph{MLE} band). For the neural methods, comparing completed training epochs on 1T~CPU (Appendix~\ref{sec:memory}, Table~\ref{tab:iterations}) and GPU (Appendix~\ref{sec:par-seq}, Table~\ref{tab:iterations_gpu}) explains why hardware acceleration improves quality. While small graphs finish all training epochs within an hour on 1T~CPU, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} stop early at the 1-hour limit (for example, \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}). Finishing all training epochs on 32T~CPU or GPU rescues these runs and boosts modularity by $\Delta Q \in [+0.002, +0.22]$ (Figure~\ref{fig:efficiency}, right, epoch-rescue regime), whereas occasional small negative shifts ($\Delta Q \in [-0.02, 0)$) reflect stochastic initialization and floating-point reduction variance across backends. At the same time, GPU execution introduces a tighter memory limit. Because the RTX~4090 has 24~GiB of VRAM compared to 120~GiB of system RAM, full-graph GNNs run out of memory on smaller graphs on the GPU than on the CPU (orange diamonds in the \emph{MLE} band). For example, \textsc{CommDGI} needs $28.3$~GiB on \texttt{coauthor-physics}, so it finishes on 32T~CPU but hits \textsc{MLE} on the GPU.
 
@@ -693,7 +693,7 @@ At the same time, our results show why learning-based methods have gained popula
     \item \textbf{Message-passing resilience to structural versus attribute noise:} Our synthetic ADC-SBM sweeps show that GNN architecture determines failure modes under noise. Concatenating ego-features with neighborhood representations (as in \textsc{MAGI}-SAGE) protects against noisy edges when attributes are clean, but fails when attributes are noisy. Full-graph Laplacian smoothing (\textsc{MAGI}-GCN) or hybrid structural similarity (\textsc{DGCluster}) better handles noisy attributes on clean graph structures.
 \end{itemize}
 
-Despite these strengths, current GNN clustering methods face severe practical bottlenecks in scalability and hyperparameter sensitivity. While GPU acceleration under Protocol~S speeds up neural training by $2\times$ to $153\times$ and prevents early epoch truncation on medium graphs, most neural implementations construct dense $\mathcal{O}(n^2)$ matrices in host RAM or exceed the 24~GiB GPU VRAM limit on graphs with more than $10^5$ vertices. In addition, Protocol~B shows that multi-loss neural architectures can suffer from mode collapse under default parameters and require costly hyperparameter tuning on each dataset.
+Despite these strengths, current GNN clustering methods face severe practical bottlenecks in scalability and hyperparameter sensitivity. While GPU acceleration under Protocol~S speeds up neural training by $2\times$ to $153\times$ in wall-clock time (up to $177\times$ per epoch) and prevents early epoch truncation on medium graphs, most neural implementations construct dense $\mathcal{O}(n^2)$ matrices in host RAM or exceed the 24~GiB GPU VRAM limit on graphs with more than $10^5$ vertices. In addition, Protocol~B shows that multi-loss neural architectures can suffer from mode collapse under default parameters and require costly hyperparameter tuning on each dataset.
 
 For practitioners choosing a clustering algorithm, these findings suggest three simple guidelines. First, on unattributed networks or large graphs with more than $10^5$ nodes, use \textsc{Leiden} for fast, high-modularity partitions, \textsc{VieClus} when maximum modularity is worth a longer runtime budget, or \textsc{CluStRE} when memory is tightly limited. Second, on small-to-medium attributed networks where semantic communities depend on node features, use \textsc{DGCluster} (when the number of clusters $k$ is unknown) or \textsc{MAGI} (when $k$ is known and a GPU is available). Third, when applying GNN clustering to a new domain without ground-truth labels for validation, avoid multi-term loss functions that require sensitive weight tuning, and prefer single-loss or modularity-guided models such as \textsc{DGCluster} or \textsc{UCoDe}.
 
@@ -969,7 +969,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
 
 \begin{table}[H]
     \centering
-    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~S with GPU acceleration (32~CPU threads + NVIDIA RTX~4090 GPU, 1-hour limit, $k = \lceil\sqrt{n}\rceil$). Target epoch budgets are 400 for \textsc{MAGI}, 300 for \textsc{DGCluster} and \textsc{LIM}, 1\,000 for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 for \textsc{CommDGI}. For \textsc{GNNS}, total recurrent steps ($50$ per batch of random initializations across $100$ initializations) increase with $n \cdot k$ up to $100 \times 50 = 5\,000$. Multi-core CPU scaling ($p=32$) already achieves 100\% epoch completion for \textsc{DGCluster}, \textsc{LIM}, \textsc{DMoN}, and \textsc{UCoDe} on all solved instances, and enables \textsc{CommDGI} to complete 1\,001 epochs on \texttt{coauthor-physics} (which exceeds GPU VRAM). For \textsc{MAGI}, 32 CPU threads complete 344 (Comp), 214 (Co-CS), 400 (Pubmed), 60 (Co-Phys), 17 (Arxiv), and 19 (Reddit) epochs.}
+    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~S with GPU acceleration (32~CPU threads + NVIDIA RTX~4090 GPU, 1-hour limit, matched cluster budgets $k$ identical to Protocol~A). Target epoch budgets are 400 for \textsc{MAGI}, 300 for \textsc{DGCluster} and \textsc{LIM}, 1\,000 for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 for \textsc{CommDGI}. For \textsc{GNNS}, total recurrent steps ($50$ per batch of random initializations across $100$ initializations) increase with $n \cdot k$ up to $100 \times 50 = 5\,000$. Multi-core CPU scaling ($p=32$) already achieves 100\% epoch completion for \textsc{DGCluster}, \textsc{LIM}, \textsc{DMoN}, and \textsc{UCoDe} on all solved instances, enables \textsc{CommDGI} to complete 1\,001 epochs on \texttt{coauthor-physics} (which exceeds GPU VRAM), and reaches 2\,050 steps for \textsc{GNNS} on \texttt{ogbn-products} (vs.\ 5\,000 on GPU). For \textsc{MAGI}, 32 CPU threads complete 314 (Comp), 185 (Co-CS), 380 (Pubmed), 51 (Co-Phys), 15 (Arxiv), and 17 (Reddit) epochs.}
     \label{tab:iterations_gpu}
     \vspace{0.5em}
     \small
@@ -978,9 +978,9 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
         \toprule
         Method             & Cora & Citeseer & Photo & Comp & Co-CS & Pubmed & Co-Phys & Arxiv & Reddit & Prod \\
         \midrule
-        \textsc{GNNS}      & 50   & 50       & 50    & 100  & 150   & 150    & 350     & 5000  & 5000   & MLE \\
+        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 500    & 5000 \\
         \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 300   & MLE    & MLE \\
-        \textsc{MAGI}      & 400  & 400      & 400   & 400  & 400   & 400    & 175     & 34    & 26     & TLE \\
+        \textsc{MAGI}      & 400  & 400      & 400   & 400  & 400   & 400    & 165     & 32    & 25     & TLE \\
         \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 300     & MLE   & MLE    & MLE \\
         \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & 1000  & MLE    & MLE \\
         \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & MLE   & MLE    & MLE \\
@@ -991,7 +991,7 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
 
 \begin{table}[H]
     \centering
-    \caption{Execution time in seconds across hardware configurations on the \textsc{Ground-Truth} dataset comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads, $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU). Top panel: small-to-medium graphs. Bottom panel: medium-to-large graphs. \textsc{VieClus} is omitted as it is an anytime evolutionary algorithm with a fixed 1-hour time budget rather than a converging iterative solver.}
+    \caption{Execution time in seconds across hardware configurations on the \textsc{Ground-Truth} dataset comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads, $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU) under identical cluster budgets $k$. Top panel: small-to-medium graphs. Bottom panel: medium-to-large graphs. \textsc{VieClus} is omitted as it is an anytime evolutionary algorithm with a fixed 1-hour time budget rather than a converging iterative solver.}
     \label{tab:par-seq}
     \vspace{0.5em}
     \small
@@ -1002,13 +1002,13 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
         \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
         Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
         \midrule
-        \textsc{GNNS}      & 5.27 & 4.64 & 0.29 & 6.69 & 5.85 & 0.36 & 19.9 & 20.7 & 1.10 & 45.1 & 51.0 & 2.68 & 48.4 & 65.5 & 2.97 \\
+        \textsc{GNNS}      & 5.27 & 1.73 & 0.25 & 6.69 & 1.90 & 0.19 & 19.9 & 4.19 & 0.49 & 45.1 & 11.5 & 1.26 & 48.4 & 12.0 & 0.73 \\
         \textsc{DGCluster} & 25.6 & 6.71 & 2.47 & 43.4 & 8.15 & 2.14 & 287  & 68.2 & 5.98 & 604  & 132  & 9.69 & 494  & 74.8 & 7.51 \\
-        \textsc{MAGI}      & 162  & 85.8 & 58.2 & 301  & 107  & 61.4 & 3015 & 1442 & 538  & 3606 & 3615 & 1554 & 3616 & 3623 & 2314 \\
+        \textsc{MAGI}      & 162  & 90.5 & 60.8 & 301  & 121  & 64.8 & 3015 & 1587 & 561  & 3606 & 3605 & 1630 & 3616 & 3607 & 2438 \\
         \textsc{LIM}       & 66.4 & 7.02 & 0.97 & 140  & 17.5 & 1.08 & 695  & 104  & 3.69 & 1877 & 239  & 9.12 & 2960 & 303  & 11.7 \\
-        \textsc{DMoN}      & 93.8 & 36.7 & 18.8 & 197  & 43.5 & 19.4 & 480  & 150  & 49.8 & 971  & 310  & 91.1 & 1862 & 253  & 45.9 \\
-        \textsc{UCoDe}     & 91.4 & 12.3 & 1.81 & 184  & 20.4 & 1.88 & 559  & 58.2 & 3.81 & 1740 & 196  & 11.6 & 3605 & 401  & 23.6 \\
-        \textsc{CommDGI}   & 107  & 33.6 & 3.25 & 258  & 69.9 & 3.29 & 1217 & 280  & 7.48 & 3603 & 727  & 19.9 & 3605 & 1123 & 36.3 \\
+        \textsc{DMoN}      & 93.8 & 35.1 & 22.3 & 197  & 66.1 & 21.4 & 480  & 158  & 56.4 & 971  & 292  & 95.2 & 1862 & 240  & 49.5 \\
+        \textsc{UCoDe}     & 91.4 & 10.7 & 1.93 & 184  & 18.7 & 1.98 & 559  & 45.1 & 3.72 & 1740 & 142  & 9.46 & 3605 & 275  & 17.1 \\
+        \textsc{CommDGI}   & 107  & 24.6 & 3.56 & 258  & 60.3 & 3.67 & 1217 & 274  & 7.54 & 3603 & 685  & 19.4 & 3605 & 1034 & 31.7 \\
         \bottomrule
     \end{tabular*}
 
@@ -1020,13 +1020,13 @@ The complete benchmarking harness, solver wrappers, and datasets are open-source
         \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
         Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
         \midrule
-        \textsc{GNNS}      & 50.9 & 75.9 & 3.22 & 99.0 & 175  & 8.10 & 1130 & 2877 & 155  & 4129 & 3625 & 1487 & 3966 & MLE  & MLE \\
+        \textsc{GNNS}      & 50.9 & 12.6 & 0.65 & 99.0 & 21.4 & 1.40 & 1130 & 232  & 13.8 & 4129 & 1421 & 220  & 3966 & 3836 & 1667 \\
         \textsc{DGCluster} & 212  & 41.0 & 6.63 & 1266 & 187  & 17.3 & 3613 & 846  & 76.9 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{MAGI}      & 3603 & 3358 & 1479 & 3646 & 3657 & 3654 & 3827 & 4205 & 4203 & 3825 & 4575 & 4614 & TLE  & TLE  & TLE \\
+        \textsc{MAGI}      & 3603 & 3604 & 1542 & 3646 & 3613 & 3607 & 3827 & 3678 & 3676 & 3825 & 3712 & 3707 & TLE  & TLE  & TLE \\
         \textsc{LIM}       & 2839 & 286  & 11.2 & 3615 & 912  & 40.5 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{DMoN}      & 427  & 132  & 32.1 & 3604 & 653  & 124  & 3605 & 3030 & 571  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{UCoDe}     & 3551 & 430  & 24.5 & 3616 & 1480 & 78.0 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{CommDGI}   & 3606 & 1164 & 38.0 & 3625 & 3525 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{DMoN}      & 427  & 130  & 30.9 & 3604 & 596  & 130  & 3605 & 1936 & 541  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{UCoDe}     & 3551 & 261  & 16.7 & 3616 & 937  & 52.1 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{CommDGI}   & 3606 & 1221 & 32.2 & 3625 & 3591 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
         \bottomrule
     \end{tabular*}
 \end{table}
