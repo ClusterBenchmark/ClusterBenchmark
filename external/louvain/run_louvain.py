@@ -1,170 +1,113 @@
-import sys
-import igraph as ig
-import gc
-import time
-import multiprocessing
-import queue
+"""Louvain clustering via python-igraph, driven by the shared harness.
+
+Differences from the pre-migration version (kept as run_louvain_legacy.py):
+
+  * The graph is loaded from the binary CSR format through scripts/graphio.py
+    instead of being parsed in Python. The old parser built a Python list of
+    (u, v) tuples, costing roughly 130 bytes per edge before igraph made its
+    own copy, which dominated both runtime and peak memory on large instances.
+
+  * The per-run timeout uses SIGALRM in this process rather than forking a
+    worker through multiprocessing. Forking made memory accounting ambiguous,
+    since parent and child share copy-on-write pages.
+
+  * Each run writes a JSON report next to its clustering, so the harness never
+    has to parse positional fields out of stdout.
+"""
+
 import argparse
+import json
+import random
+import signal
+import sys
+import time
+from pathlib import Path
 
-def read_metis_graph(filename):
-    """
-    Reads an undirected graph in METIS format.
-    Returns an igraph.Graph object.
-    """
-    with open(filename, "r") as f:
-        # Skip comment lines
-        first_line = ""
-        for line in f:
-            if line.strip() and not line.startswith('%'):
-                first_line = line.strip()
-                break
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"))
 
-        parts = first_line.split()
-        n_vertices = int(parts[0])
-        n_edges = int(parts[1])
-        t = 0
-        if (len(parts) > 2):
-            t = int(parts[2])
-
-        vertex_weights = (t == 10 or t == 11)
-        edge_weights = (t == 1 or t == 11)
-
-        edges = []
-        edge_attr = []
-
-        for u, line in enumerate(f):
-            if not line.strip() or line.startswith('%'):
-                continue
-
-            N = list(map(int, line.split()))
-            if vertex_weights:
-                N = N[1:]
-
-            if edge_weights:
-                N = zip(N[::2], N[1::2])
-                for v, w in N:
-                    if v - 1 > u:  # only add each edge once
-                        edges.append((u, v - 1))
-                        edge_attr.append(w)
-            else:
-                for v in N:
-                    if v - 1 > u:  # only add each edge once
-                        edges.append((u, v - 1))
-
-        g = ig.Graph(n=n_vertices, edges=edges)
-
-    if edge_weights:
-        g.es["weight"] = edge_attr
-
-    del edges
-    del edge_attr
-
-    gc.collect()
-
-    return g
+import igraph as ig  # noqa: E402
+import graphio  # noqa: E402
 
 
-def run_louvain(g):
-    """
-    Run the Louvain community detection algorithm on the graph.
-    Returns a list of cluster IDs, one per vertex.
-    """
-    clusters = g.community_multilevel()
-    membership = clusters.membership
-
-    if "weight" in g.edge_attributes():
-        modularity = g.modularity(clusters.membership, weights=g.es["weight"])
-    else:
-        modularity = clusters.modularity
-    return membership, modularity
+class RunTimeout(Exception):
+    pass
 
 
-def run_louvain_worker(g, result_queue):
-    """
-    A worker function to run Louvain in a separate process.
-    Puts the result in a queue.
-    """
-    try:
-        membership, modularity = run_louvain(g)
-        result_queue.put((membership, modularity))
-    except Exception as e:
-        # Pass exceptions back to the main process
-        result_queue.put(e)
+def _alarm(signum, frame):
+    raise RunTimeout()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Louvain clustering.")
-    parser.add_argument("--input_file", help="Path to the input graph file in METIS format.")
-    parser.add_argument("--output_file", help="Base name for output cluster files.")
-    parser.add_argument("--verbose", type=int, help="Enable verbose output.")
-    parser.add_argument("--k", type=int, help="Number of times to run the clustering.")
-    parser.add_argument("--timeout", type=int, default=0, help="Timeout in seconds for each clustering run. Default is 0 (no timeout).")
-    args = parser.parse_args()
+    p = argparse.ArgumentParser(description="Run Louvain clustering.")
+    p.add_argument("--graph", required=True, help="binary CSR graph file")
+    p.add_argument("--output-prefix", required=True)
+    p.add_argument("--runs", type=int, default=1)
+    p.add_argument("--time", type=float, default=0.0, help="per-run limit, 0 disables")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--resolution", type=float, default=1.0)
+    args = p.parse_args()
 
-    if (args.verbose):
-        print(f"Reading graph from {args.input_file} ...")
-    g = read_metis_graph(args.input_file)
+    t0 = time.perf_counter()
+    csr = graphio.load_csr(args.graph)
+    g = csr.to_igraph()
+    parse_seconds = time.perf_counter() - t0
 
-    if (args.verbose):
-        print("Running Louvain clustering ...")
+    weights = g.es["weight"] if "weight" in g.edge_attributes() else None
 
-    for i in range(args.k):
-        gc.collect()
-        result_queue = multiprocessing.Queue()
-        p = multiprocessing.Process(target=run_louvain_worker, args=(g, result_queue))
+    signal.signal(signal.SIGALRM, _alarm)
 
-        start_time = time.time()
-        p.start()
+    for i in range(args.runs):
+        # igraph draws from Python's global RNG, so seeding it makes each run
+        # reproducible. Without this, tuning partly optimises RNG luck rather
+        # than the parameter, since run-to-run spread exceeds the effect size.
+        seed = args.seed + i
+        random.seed(seed)
+        ig.set_random_number_generator(random)
 
+        report = {
+            "run": i,
+            "seed": seed,
+            "parse_seconds": round(parse_seconds, 6),
+            "resolution": args.resolution,
+        }
+
+        if args.time > 0:
+            signal.setitimer(signal.ITIMER_REAL, args.time)
+
+        start = time.perf_counter()
         try:
-            # Wait for the result with a timeout
-            if args.timeout > 0:
-                result = result_queue.get(timeout=args.timeout)
-            else:
-                result = result_queue.get()
+            clusters = g.community_multilevel(
+                weights=weights, resolution=args.resolution
+            )
+            elapsed = time.perf_counter() - start
+            signal.setitimer(signal.ITIMER_REAL, 0)
 
-            if isinstance(result, Exception):
-                raise result
+            report["status"] = "ok"
+            report["solve_seconds"] = round(elapsed, 6)
+            report["modularity"] = g.modularity(
+                clusters.membership, weights=weights, resolution=args.resolution
+            )
+            report["n_clusters"] = len(clusters)
+            report["iterations"] = {"done": 1, "requested": 1}
 
-            membership, modularity = result
-            end_time = time.time()
-            elapsed = end_time - start_time
+            graphio.write_clustering(
+                f"{args.output_prefix}{i}.txt", clusters.membership
+            )
+        except RunTimeout:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "tle"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
+        except Exception as exc:  # noqa: BLE001 - reported, not swallowed
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            report["status"] = "error"
+            report["error"] = f"{type(exc).__name__}: {exc}"
+            report["solve_seconds"] = round(time.perf_counter() - start, 6)
 
-            if (args.verbose):
-                print(f"N: {len(g.vs)}\nModularity: {modularity:.4f}\nTime: {elapsed:.4f}")
-                print(f"Writing cluster assignments to {args.output_file} ...")
-            else:
-                print(f"{elapsed:.4f},{modularity:.10f},", end="")
-                sys.stdout.flush()
+        with open(f"{args.output_prefix}{i}.json", "w") as f:
+            json.dump(report, f)
 
-            with open(args.output_file + str(i) + ".txt", "w") as out:
-                out.write("\n".join(map(str, membership)))
-                out.write("\n")
-        except queue.Empty:
-            if (args.verbose):
-                print("Clustering timed out.")
-            else:
-                print("tle,tle,", end="")
-                sys.stdout.flush()
-            # The file for this run won't be created, so the calling script will know it failed.
-            continue
-        except Exception as e:
-            if (args.verbose):
-                print(f"An error occurred during clustering: {e}")
-            else:
-                print("err,err,", end="")
-                sys.stdout.flush()
-            continue
-        finally:
-            # Ensure the process is terminated and joined
-            if p.is_alive():
-                p.terminate()
-            p.join()
+    return 0
 
-    if (args.verbose):
-        print("Done.")
-    else:
-        print()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

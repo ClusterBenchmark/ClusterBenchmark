@@ -1,0 +1,23 @@
+{
+  "name": "cnm",
+  "class": "classical",
+  "reference": "Clauset, Newman & Moore. Finding community structure in very large networks. Phys. Rev. E 2004. (python-igraph community_fastgreedy)",
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_cnm.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {}
+}

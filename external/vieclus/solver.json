@@ -1,0 +1,38 @@
+{
+  "name": "vieclus",
+  "class": "classical",
+  "reference": "Biedermann, Henzinger, Schulz & Schuster. Memetic Graph Clustering. SEA 2018. (KaHIP/VieClus CLI, commit 0e27f24, MPI island parallelism)",
+  "cwd": ".",
+  "entry": "python3 run_vieclus.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": true,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "threads": "--threads",
+    "seed": "--seed"
+  },
+  "params": {
+    "leiden": {
+      "flag": "--leiden",
+      "default": false,
+      "type": "bool",
+      "tunable": false,
+      "doc": "Use VieClus's Leiden mode, which guarantees connected communities. Off by default (standard memetic VieClus); an algorithm variant, not a tuned knob; set-only."
+    },
+    "leiden_theta": {
+      "flag": "--leiden-theta",
+      "default": 0.01,
+      "type": "float",
+      "tunable": false,
+      "doc": "Leiden refinement temperature, only meaningful with --leiden. VieClus default 0.01; set-only. VieClus optimises plain modularity with no resolution parameter, so its only quality lever is the time budget (--time): Protocol A and B coincide. Parallelism is exposed via --threads (mpirun -n) and time-of-best via time_to_best_seconds in the report."
+    }
+  }
+}

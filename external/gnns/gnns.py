@@ -18,6 +18,18 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+#    Provenance: the authors publish GNNS only as a Jupyter notebook. This file
+#    is the algorithm hand-extracted from the code cells of GNNS.ipynb at
+#    https://github.com/Alexander-Belyi/GNNS commit
+#    12e12c49a9245d2f76b7e2323b0e7e4694739612 (notebook sha256
+#    8ded87b0394ae338806a0fdcae32e1eee9a6ff49568622e3ed9e3864ae584f9c). The
+#    surrounding notebook cells -- pip installs, a demo, and benchmarking
+#    against other methods -- are not part of the algorithm and are omitted; run
+#    scripts/nbextract.py on the pinned notebook to reproduce the full source and
+#    confirm the algorithm cells match. Our only change to the algorithm is the
+#    `timeout` argument threaded into runGNNSSeries' loops so the harness can
+#    bound a run. Loading, seeding, and reporting live in run_gnns.py.
+#
 
 import gc
 import time
@@ -26,7 +38,6 @@ import random
 import numpy as np
 import scipy
 import networkx as nx
-import argparse
 
 class Engine:
     def __init__(self, engine: str) -> None:
@@ -431,111 +442,3 @@ def runGNNSSeries(G, max_num_communities, iterations_per_stage, num_random_confi
         gc.collect()
         torch.cuda.empty_cache()
     return best_communities, modularities, best_parameters, best_modularity, time.time()-start_time, finished_iterations
-
-def read_metis_graph(filename):
-    with open(filename, "r") as f:
-        # Skip comment lines
-        first_line = ""
-        for line in f:
-            if line.strip() and not line.startswith('%'):
-                first_line = line.strip()
-                break
-
-        parts = first_line.split()
-        n_vertices = int(parts[0])
-        n_edges = int(parts[1])
-        t = 0
-        if (len(parts) > 2):
-            t = int(parts[2])
-
-        vertex_weights = (t == 10 or t == 11)
-        edge_weights = (t == 1 or t == 11)
-
-        G = nx.Graph()
-        G.add_nodes_from(range(n_vertices))
-
-        for u, line in enumerate(f):
-            if not line.strip() or line.startswith('%'):
-                continue
-
-            N = list(map(int, line.split()))
-            if vertex_weights:
-                N = N[1:]
-
-            if edge_weights:
-                N = zip(N[::2], N[1::2])
-                for v, w in N:
-                    G.add_edge(u, v - 1)
-            else:
-                for v in N:
-                    G.add_edge(u, v - 1)
-
-    gc.collect()
-
-    return G
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", help="Input graph in METIS format")
-    parser.add_argument("--output", help="Output file for clustering")
-    parser.add_argument("--K", type=int, help="Number of clusterings to produce")
-    parser.add_argument("--num-communities", type=int, help="Number of communities to find")
-    parser.add_argument("--timeout", type=int, help="Timeout in seconds for the training loop.")
-    parser.add_argument("--num-processes", type=int, help="Number of threads to use.")
-    args = parser.parse_args()
-
-    G = read_metis_graph(args.input)
-
-    torch.set_default_dtype(torch.float64)
-
-    global hypers, eng
-    hypers = {}
-    hypers['ENGINE'] = 'torch'
-    eng = Engine(hypers['ENGINE'])
-
-    hypers['seed'] = 13
-    hypers['strip_diagonal'] = True
-    hypers['normalize_modularity'] = False
-    hypers['normalize_each_step'] = True
-    hypers['use_sparse'] = True
-    hypers['max_batch_size'] = 1000
-    hypers['max_total_tensor_size'] = 100_000_000
-    hypers["num_processes"] = args.num_processes
-    
-    set_all_random_seeds(hypers['seed'])
-    iterations_per_stage = [10, 10, 30]
-    num_initial_GNNS_configs = 100
-    fraction_to_keep = 1/3
-    
-    num_communities = args.num_communities
-    if not num_communities:
-        num_communities = int(np.sqrt(len(G)))
-
-    for i in range(args.K):
-        C, _, _, _, t, finished_iterations = runGNNSSeries(G, max_num_communities = num_communities,
-                                                    iterations_per_stage=iterations_per_stage,
-                                                    num_random_configs=num_initial_GNNS_configs,
-                                                    fraction_to_keep=fraction_to_keep,
-                                                    manual_gc=(len(G) > 1000),
-                                                    verbose=0,
-                                                    timeout=args.timeout)
-        
-        if C is None:
-            print(f"timeout,{finished_iterations},", end="")
-            continue
-
-        partition = C.argmax(axis=1)
-        
-        output_filename = f"{args.output}_gnns_{i}.txt"
-        with open(output_filename, 'w') as f:
-            for node_id in range(len(partition)):
-                f.write(str(partition[node_id].item()) + '\n')
-        
-        print(f"{t},{finished_iterations},", end="")
-
-    print()
-
-
-if __name__ == "__main__":
-    main()

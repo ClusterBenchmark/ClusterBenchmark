@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <omp.h>
 
@@ -20,10 +21,18 @@ graph *graph_parse(FILE *f)
     while (Data[p] == '%')
         util_skip_line(Data, &p);
 
-    long long n, m, t;
+    long long n = 0, m = 0, fmt = 0, ncon = 0;
     util_parse_id(Data, &p, &n);
     util_parse_id(Data, &p, &m);
-    util_parse_id(Data, &p, &t);
+    util_parse_id(Data, &p, &fmt);
+    util_parse_id(Data, &p, &ncon);
+
+    if (ncon == 0)
+        ncon = 1;
+
+    int edge_weights = (fmt % 10) == 1;
+    int vertex_weights = ((fmt / 10) % 10) == 1;
+    int vertex_sizes = ((fmt / 100) % 10) == 1;
 
     m *= 2;
 
@@ -32,54 +41,148 @@ graph *graph_parse(FILE *f)
     long long *V = malloc(sizeof(long long) * (n + 1));
     int *E = malloc(sizeof(int) * m);
 
-    int vertex_weights = (t == 10 || t == 11);
-    int edge_weights = (t == 1 || t == 11);
-
-    long long *VW = edge_weights ? malloc(sizeof(long long) * n) : NULL;
-    long long *EW = edge_weights ? malloc(sizeof(long long) * m) : NULL;
-
-    long long ei = 0, vw = 0;
+    long long ei = 0;
     for (int u = 0; u < n; u++)
     {
         while (Data[p] == '%')
             util_skip_line(Data, &p);
 
+        if (vertex_sizes)
+        {
+            long long vsize = 0;
+            util_parse_id(Data, &p, &vsize);
+        }
+
         if (vertex_weights)
-            util_parse_id(Data, &p, &vw);
+        {
+            for (int k = 0; k < ncon; k++)
+            {
+                long long vw = 0;
+                util_parse_id(Data, &p, &vw);
+            }
+        }
 
         V[u] = ei;
-        if (VW != NULL)
-            VW[u] = 0;
 
         while (ei < m)
         {
-            while (Data[p] == ' ')
+            while (Data[p] == ' ' || Data[p] == '\t' || Data[p] == '\r')
                 p++;
-            if (Data[p] == '\n')
+            if (Data[p] == '\n' || Data[p] == '\0')
                 break;
 
-            long long e;
+            long long e = 0;
             util_parse_id(Data, &p, &e);
-            E[ei] = e - 1;
 
             if (edge_weights)
             {
-                util_parse_id(Data, &p, EW + ei);
-                if (e - 1 == u)
-                    VW[u] += EW[ei];
+                long long ew = 0;
+                util_parse_id(Data, &p, &ew);
             }
 
             if (e - 1 != u)
+            {
+                E[ei] = e - 1;
                 ei++;
+            }
         }
-        p++;
+        if (Data[p] == '\n')
+            p++;
+        else if (Data[p] != '\0')
+            util_skip_line(Data, &p);
     }
     V[n] = ei;
 
     munmap(Data, size);
 
     graph *g = malloc(sizeof(graph));
+    *g = (graph){.n = n, .m = m, .V = V, .E = E, .VW = NULL, .EW = NULL};
+
+    return g;
+}
+
+graph *graph_parse_csr(FILE *f)
+{
+    char magic[GRAPH_CSR_MAGIC_LEN];
+    long long n, m;
+    int flags, reserved;
+
+    if (fread(magic, 1, GRAPH_CSR_MAGIC_LEN, f) != GRAPH_CSR_MAGIC_LEN ||
+        fread(&n, sizeof(long long), 1, f) != 1 ||
+        fread(&m, sizeof(long long), 1, f) != 1 ||
+        fread(&flags, sizeof(int), 1, f) != 1 ||
+        fread(&reserved, sizeof(int), 1, f) != 1)
+    {
+        fprintf(stderr, "Truncated CSR header\n");
+        return NULL;
+    }
+
+    if (n < 0 || m < 0)
+    {
+        fprintf(stderr, "Invalid CSR header: n=%lld m=%lld\n", n, m);
+        return NULL;
+    }
+
+    long long *V = malloc(sizeof(long long) * (n + 1));
+    int *E = malloc(sizeof(int) * (m > 0 ? m : 1));
+
+    long long *EW = NULL, *VW = NULL;
+    if (flags & GRAPH_CSR_FLAG_EDGE_WEIGHTS)
+        EW = malloc(sizeof(long long) * (m > 0 ? m : 1));
+    if (flags & GRAPH_CSR_FLAG_VERTEX_WEIGHTS)
+        VW = malloc(sizeof(long long) * (n > 0 ? n : 1));
+
+    int ok = (V != NULL && E != NULL);
+    ok = ok && fread(V, sizeof(long long), n + 1, f) == (size_t)(n + 1);
+    ok = ok && fread(E, sizeof(int), m, f) == (size_t)m;
+    if (ok && EW != NULL)
+        ok = fread(EW, sizeof(long long), m, f) == (size_t)m;
+    if (ok && VW != NULL)
+        ok = fread(VW, sizeof(long long), n, f) == (size_t)n;
+
+    if (!ok)
+    {
+        fprintf(stderr, "Truncated CSR payload\n");
+        free(V);
+        free(E);
+        free(EW);
+        free(VW);
+        return NULL;
+    }
+
+    graph *g = malloc(sizeof(graph));
     *g = (graph){.n = n, .m = m, .V = V, .E = E, .VW = VW, .EW = EW};
+
+    return g;
+}
+
+graph *graph_load(const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    if (f == NULL)
+    {
+        fprintf(stderr, "Failed to open graph file %s\n", path);
+        return NULL;
+    }
+
+    char magic[GRAPH_CSR_MAGIC_LEN];
+    size_t got = fread(magic, 1, GRAPH_CSR_MAGIC_LEN, f);
+    rewind(f);
+
+    graph *g;
+    if (got == GRAPH_CSR_MAGIC_LEN &&
+        memcmp(magic, GRAPH_CSR_MAGIC, strlen(GRAPH_CSR_MAGIC)) == 0)
+    {
+        g = graph_parse_csr(f);
+        fclose(f);
+    }
+    else
+    {
+        g = graph_parse(f);
+        fclose(f);
+        if (g != NULL)
+            graph_sort_edges(g);
+    }
 
     return g;
 }

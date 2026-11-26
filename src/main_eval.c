@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 
 typedef struct
@@ -367,7 +368,7 @@ void compute_modularity(graph *g, int *cluster, __int128_t *n, double *q, int *n
 }
 
 void compute_metrics(graph *g, int *clusters, int *labels,
-                     int *tp, int *fp, int *tn, int *fn)
+                     long long *tp, long long *fp, long long *tn, long long *fn)
 {
     *tp = 0;
     *fp = 0;
@@ -397,89 +398,138 @@ void compute_metrics(graph *g, int *clusters, int *labels,
     }
 }
 
+static void print_i128(__int128_t n)
+{
+    if (n > LLONG_MAX)
+    {
+        long long base = 1000000000000000000LL; // 1e18
+        long long hi = n / (__int128_t)base;
+        long long lo = n % (__int128_t)base;
+        printf("%lld%018lld", hi, lo);
+    }
+    else
+    {
+        printf("%lld", (long long)n);
+    }
+}
+
 int main(int argc, char **argv)
 {
-    if (argc != 3 && argc != 4)
+    int json = 0;
+    char *positional[3] = {NULL, NULL, NULL};
+    int n_positional = 0;
+
+    for (int i = 1; i < argc; i++)
     {
-        fprintf(stderr, "Usage: %s <metis_graph> <clustering> {<ground_truth_labels>}\n", argv[0]);
+        if (strcmp(argv[i], "--json") == 0)
+            json = 1;
+        else if (n_positional < 3)
+            positional[n_positional++] = argv[i];
+        else
+        {
+            fprintf(stderr, "Unexpected argument %s\n", argv[i]);
+            return 1;
+        }
+    }
+
+    if (n_positional != 2 && n_positional != 3)
+    {
+        fprintf(stderr, "Usage: %s <graph> <clustering> [<ground_truth_labels>] [--json]\n", argv[0]);
+        fprintf(stderr, "  <graph> may be METIS or binary CSR, detected automatically.\n");
         return 1;
     }
 
-    FILE *f = fopen(argv[1], "r");
-    if (f == NULL)
-        printf("Failed to open graph file\n");
-    graph *g = graph_parse(f);
-    fclose(f);
-
-    graph_sort_edges(g);
+    graph *g = graph_load(positional[0]);
+    if (g == NULL)
+        return 1;
 
     if (!graph_validate(g))
     {
-        printf("Error in graph\n");
+        fprintf(stderr, "Error in graph\n");
         graph_free(g);
         return 1;
     }
 
-    f = fopen(argv[2], "r");
+    FILE *f = fopen(positional[1], "r");
     if (f == NULL)
-        printf("Failed to open clustering file\n");
+    {
+        fprintf(stderr, "Failed to open clustering file %s\n", positional[1]);
+        graph_free(g);
+        return 1;
+    }
     int *cluster = clustering_parse(f, g->n);
     fclose(f);
 
     int *truth = NULL;
-    if (argc == 4)
+    if (n_positional == 3)
     {
-        f = fopen(argv[3], "r");
+        f = fopen(positional[2], "r");
         if (f == NULL)
-            printf("Failed to open ground truth clustering file\n");
+        {
+            fprintf(stderr, "Failed to open ground truth clustering file %s\n", positional[2]);
+            graph_free(g);
+            free(cluster);
+            return 1;
+        }
         truth = clustering_parse(f, g->n);
         fclose(f);
     }
 
-    int offset = util_path_name_offset(argv[1]);
-
-    printf("%s,%lld,%lld", argv[1] + offset, g->n, g->m);
+    int offset = util_path_name_offset(positional[0]);
 
     double q;
     __int128_t n;
     int n_clusters;
     compute_modularity(g, cluster, &n, &q, &n_clusters);
 
-    printf(",%.9lf", q);
-    if (n > LLONG_MAX)
-    {
-        long long base = 1000000000000000000LL; // 1e18
-        long long hi = n / (__int128_t)base;
-        long long lo = n % (__int128_t)base;
-        printf(",%lld%018lld", hi, lo);
-    }
-    else
-    {
-        printf(",%lld", (long long)n);
-    }
-    printf(",%d", n_clusters);
-
     double avg_conductance = 0.0;
     double avg_cut_ratio = 0.0;
     compute_structure_metrics(g, cluster, &avg_conductance, &avg_cut_ratio);
-    printf(",%.8lf,%.8lf", avg_conductance, avg_cut_ratio);
 
+    long long tp = 0, fp = 0, tn = 0, fn = 0;
+    double ari = 0.0, nmi = 0.0, purity = 0.0, inv_purity = 0.0;
+    double f1 = 0.0, accuracy = 0.0;
     if (truth != NULL)
     {
-        int tp, fp, tn, fn;
         compute_metrics(g, cluster, truth, &tp, &fp, &tn, &fn);
-
-        printf(",%.8lf", (2.0 * (double)tp) / (2.0 * (double)tp + (double)fp + (double)fn));
-        printf(",%.8lf", (double)(tp + tn) / (double)g->V[g->n]);
-        printf(",%d,%d,%d,%d", tp, fp, tn, fn);
-
-        double ari, nmi, purity, inv_purity;
+        f1 = (2.0 * (double)tp) / (2.0 * (double)tp + (double)fp + (double)fn);
+        accuracy = (double)(tp + tn) / (double)g->V[g->n];
         compute_supervised_additional_metrics(cluster, truth, g->n,
                                               &ari, &nmi, &purity, &inv_purity);
-        printf(",%.8lf,%.8lf,%.8lf,%.8lf", ari, nmi, purity, inv_purity);
     }
 
-    printf("\n");
+    if (json)
+    {
+        printf("{\"instance\":\"%s\",\"n\":%lld,\"m\":%lld", positional[0] + offset, g->n, g->m);
+        printf(",\"modularity\":%.9lf", q);
+        printf(",\"modularity_numerator\":");
+        print_i128(n);
+        printf(",\"n_clusters\":%d", n_clusters);
+        printf(",\"conductance\":%.8lf,\"cut_ratio\":%.8lf", avg_conductance, avg_cut_ratio);
+        if (truth != NULL)
+        {
+            printf(",\"f1\":%.8lf,\"accuracy\":%.8lf", f1, accuracy);
+            printf(",\"tp\":%lld,\"fp\":%lld,\"tn\":%lld,\"fn\":%lld", tp, fp, tn, fn);
+            printf(",\"ari\":%.8lf,\"nmi\":%.8lf", ari, nmi);
+            printf(",\"purity\":%.8lf,\"inverse_purity\":%.8lf", purity, inv_purity);
+        }
+        printf("}\n");
+    }
+    else
+    {
+        printf("%s,%lld,%lld", positional[0] + offset, g->n, g->m);
+        printf(",%.9lf,", q);
+        print_i128(n);
+        printf(",%d", n_clusters);
+        printf(",%.8lf,%.8lf", avg_conductance, avg_cut_ratio);
+        if (truth != NULL)
+        {
+            printf(",%.8lf,%.8lf", f1, accuracy);
+            printf(",%lld,%lld,%lld,%lld", tp, fp, tn, fn);
+            printf(",%.8lf,%.8lf,%.8lf,%.8lf", ari, nmi, purity, inv_purity);
+        }
+        printf("\n");
+    }
 
     graph_free(g);
     free(cluster);

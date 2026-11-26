@@ -1,0 +1,32 @@
+{
+  "name": "walktrap",
+  "class": "classical",
+  "reference": "Pons & Latapy. Computing communities in large networks using random walks. 2005. (python-igraph community_walktrap)",
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_walktrap.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "steps": {
+      "flag": "--steps",
+      "default": 4,
+      "type": "int",
+      "range": [2, 8],
+      "scale": "linear",
+      "doc": "Random-walk length t. The paper explores it and recommends ~4-5; tunable."
+    }
+  }
+}

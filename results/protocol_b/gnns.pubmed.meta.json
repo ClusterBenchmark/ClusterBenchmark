@@ -1,0 +1,16 @@
+{
+  "solver": "gnns",
+  "metric": "modularity",
+  "aggregate": "geomean",
+  "direction": "maximize",
+  "trials_requested": 50,
+  "trials_completed": 50,
+  "best_value": 0.764051062,
+  "tuning_graphs": [
+    "pubmed.csr"
+  ],
+  "per_run_time_limit": 3600.0,
+  "memory_limit_gb": 120.0,
+  "device": "cuda",
+  "threads": 16
+}

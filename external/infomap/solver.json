@@ -1,0 +1,31 @@
+{
+  "name": "infomap",
+  "class": "classical",
+  "reference": "Rosvall & Bergstrom. Maps of random walks on complex networks reveal community structure. PNAS 2008. (infomap package)",
+  "cwd": ".",
+  "venv": ".venv",
+  "entry": "python3 run_infomap.py",
+  "capabilities": {
+    "features": false,
+    "clusters": false,
+    "threads": false,
+    "gpu": false,
+    "multi_run": true
+  },
+  "io": {
+    "graph": "--graph",
+    "output": "--output-prefix",
+    "runs": "--runs",
+    "timeout": "--time",
+    "seed": "--seed"
+  },
+  "params": {
+    "num_trials": {
+      "flag": "--num-trials",
+      "default": 1,
+      "type": "int",
+      "tunable": false,
+      "doc": "Number of restart trials; the best-codelength partition is kept. The map equation itself is parameter-free (Markov time 1). A compute/robustness knob, not a tuned hyperparameter: set-only, default 1 (the tool default). Raise it in Protocol B for more stable results."
+    }
+  }
+}

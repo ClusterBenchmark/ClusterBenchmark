@@ -1,0 +1,102 @@
+diff --git a/cpp/include/utils.h b/cpp/include/utils.h
+index 3e8bafc..0380059 100644
+--- a/cpp/include/utils.h
++++ b/cpp/include/utils.h
+@@ -1,6 +1,7 @@
+ #ifndef DYCOLA_UTILS_H
+ #define DYCOLA_UTILS_H
+ 
++#include <cstdint>
+ #include <stdlib.h>
+ #include <map>
+ #include <vector>
+diff --git a/cpp/source/streamcom/main.cpp b/cpp/source/streamcom/main.cpp
+index fb9cb0c..d73f3a1 100644
+--- a/cpp/source/streamcom/main.cpp
++++ b/cpp/source/streamcom/main.cpp
+@@ -8,6 +8,7 @@
+ #include <set>
+ #include <algorithm>
+ #include <string>
++#include <ctime>
+ #include "types.h"
+ #include "utils.h"
+ 
+@@ -194,7 +195,12 @@ int main(int argc, char ** argv) {
+         }
+         std::vector< uint32_t > nodeDegree (maxNodeId + 1);
+         std::vector< std::vector< uint32_t > > nodeCommunityList (volumeThresholdList.size(), std::vector< uint32_t > (maxNodeId + 1, 0));
+-        std::vector< std::vector< uint32_t > > communityVolumeList (volumeThresholdList.size(), std::vector< uint32_t > (maxNodeId + 1, 0));
++        // communityVolumeList is indexed by community id, which streamcom
++        // assigns starting at 1 and can reach maxNodeId + 1 (every node in its
++        // own community). Upstream sized this maxNodeId + 1, so that last id
++        // wrote one past the end -- harmless on large graphs, heap corruption on
++        // small ones. Sized maxNodeId + 2 to hold the full id range.
++        std::vector< std::vector< uint32_t > > communityVolumeList (volumeThresholdList.size(), std::vector< uint32_t > (maxNodeId + 2, 0));
+ 
+         //=================== ALGORITHM  =======================================
+         printf("Start algorithm...\n");
+diff --git a/cpp/source/utils.cpp b/cpp/source/utils.cpp
+index 17d7e0b..5acc058 100644
+--- a/cpp/source/utils.cpp
++++ b/cpp/source/utils.cpp
+@@ -1,5 +1,48 @@
+ #include "utils.h"
+ 
++#include <cstdint>
++#include <cstring>
++
++// Reads the project's binary CSR format directly, so the harness never has to
++// convert a graph to an edge-list file on disk. The layout is fixed and
++// documented in include/graph.h of the parent repository (magic "CBCSRv1",
++// then int64 n, int64 m, int32 flags, int32 reserved; a 32-byte header; then
++// V[n+1] int64 offsets and E[m] int32 neighbours). Only the structure is read;
++// weights, if present, are ignored (streamcom is unweighted). Returns 1 when
++// the file is not CSR, so LoadGraph can fall back to the text reader.
++static int LoadGraphCSR(const char * graphFileName,
++                        std::vector< Edge >& edgeList,
++                        Node& maxNodeId) {
++    std::ifstream in(graphFileName, std::ios::binary);
++    if (!in) return 1;
++    char magic[8];
++    in.read(magic, 8);
++    if (!in || std::memcmp(magic, "CBCSRv1", 7) != 0) return 1;
++
++    int64_t n = 0, m = 0;
++    in.read(reinterpret_cast<char*>(&n), 8);
++    in.read(reinterpret_cast<char*>(&m), 8);
++    // Skip flags(4) + reserved(4) to the end of the 32-byte header.
++    in.seekg(32, std::ios::beg);
++
++    std::vector<int64_t> V(n + 1);
++    in.read(reinterpret_cast<char*>(V.data()), (n + 1) * (int64_t)sizeof(int64_t));
++    std::vector<int32_t> E(m);
++    if (m > 0) in.read(reinterpret_cast<char*>(E.data()), m * (int64_t)sizeof(int32_t));
++    if (!in) { printf("Graph: Error reading CSR file\n"); return 2; }
++
++    // Each undirected edge is stored in both directions; emit it once (u < v).
++    edgeList.reserve(m / 2);
++    for (int64_t u = 0; u < n; u++) {
++        for (int64_t i = V[u]; i < V[u + 1]; i++) {
++            int32_t v = E[i];
++            if (u < v) edgeList.push_back(std::make_pair((Node)u, (Node)v));
++        }
++    }
++    maxNodeId = (n > 0) ? (Node)(n - 1) : 0;
++    return 0;
++}
++
+ int myrandom (int i) { return std::rand()%i; }
+ 
+ long unsigned StartClock() {
+@@ -20,6 +63,10 @@ int LoadGraph(char * graphFileName,
+               std::vector< Edge >& edgeList,
+               Node& maxNodeId,
+               uint32_t nbLinesToSkip) {
++    // Binary CSR is detected by magic and read directly; text edge lists fall
++    // through to the original reader below.
++    int csr = LoadGraphCSR(graphFileName, edgeList, maxNodeId);
++    if (csr != 1) return csr;
+     // Opening file
+     std::ifstream inFile;
+     inFile.open((const char *)graphFileName);

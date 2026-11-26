@@ -10,7 +10,8 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install python-igraph (C core + Python bindings)
-pip install igraph
+# Install python-igraph (C core + Python bindings).
+# numpy is required by scripts/graphio.py for the binary CSR reader.
+pip install igraph numpy
 
 echo "Environment setup complete."

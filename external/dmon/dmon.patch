@@ -20,15 +20,3 @@ index 2a4554a29..f4c48d036 100644
      else:
        self.skip_weight = 0
      super().build(input_shape)
-diff --git a/graph_embedding/dmon/train.py b/graph_embedding/dmon/train.py
-index 64785d389..12a4dd94e 100644
---- a/graph_embedding/dmon/train.py
-+++ b/graph_embedding/dmon/train.py
-@@ -162,6 +162,7 @@ def main(argv):
-   # graph, convert it to Tensorflow sparse tensor.
-   adjacency, features, labels, label_indices = load_npz(FLAGS.graph_path)
-   features = features.todense()
-+  features = tf.convert_to_tensor(features, dtype=tf.float32)
-   n_nodes = adjacency.shape[0]
-   feature_size = features.shape[1]
-   graph = convert_scipy_sparse_to_sparse_tensor(adjacency)

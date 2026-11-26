@@ -1,0 +1,5 @@
+{
+  "base_model": "gat",
+  "feature_kind": "ldp+rni",
+  "threshold": 0.581618614767959
+}
