@@ -1045,8 +1045,9 @@ def write_fig4_scaling_csvs(rw_records, dimacs_records, dim_scale_dir: Path, pro
 
 def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    rw_records = load_protocol_a_dir(ROOT_DIR / "results_real_world")
-    dimacs_records = load_protocol_a_dir(ROOT_DIR / "results_dimacs")
+    results_dir = ROOT_DIR / "results"
+    rw_records = load_protocol_a_dir(results_dir / "protocol_a" / "ground_truth")
+    dimacs_records = load_protocol_a_dir(results_dir / "protocol_a" / "dimacs")
 
     write_summary_csv(rw_records, GT_INSTANCES, DATA_DIR / "prot_a_real_world_summary.csv")
     write_summary_csv(dimacs_records, DIMACS_INSTANCES, DATA_DIR / "prot_a_dimacs_summary.csv")
@@ -1058,20 +1059,22 @@ def main():
     write_strip_wide_csv(rw_records, GT_INSTANCES, "f1", DATA_DIR / "prot_a_gt_f1_strip.csv", split=0.90)
 
     write_efficiency_csv(rw_records, dimacs_records, DATA_DIR / "prot_a_efficiency.csv")
-    if (ROOT_DIR / "out_scale").exists():
-        write_protocol_s_csv(rw_records, ROOT_DIR / "out_scale", DATA_DIR / "prot_s_scaling.csv")
-        write_protocol_b_csv(rw_records, ROOT_DIR / "out_scale", ROOT_DIR / "params", DATA_DIR / "prot_b_tuning.csv")
-    if (ROOT_DIR / "out_scale_gt_fixed").exists():
-        update_protocol_s_csv(rw_records, ROOT_DIR / "out_scale_gt_fixed", DATA_DIR / "prot_s_scaling.csv")
+    scale_cf_dir = results_dir / "protocol_s" / "ground_truth_cluster_free"
+    scale_gt_dir = results_dir / "protocol_s" / "ground_truth"
+    if scale_cf_dir.exists():
+        write_protocol_s_csv(rw_records, scale_cf_dir, DATA_DIR / "prot_s_scaling.csv")
+        write_protocol_b_csv(rw_records, scale_cf_dir, results_dir / "protocol_b", DATA_DIR / "prot_b_tuning.csv")
+    if scale_gt_dir.exists():
+        update_protocol_s_csv(rw_records, scale_gt_dir, DATA_DIR / "prot_s_scaling.csv")
     write_fig4_scaling_csvs(
         rw_records,
         dimacs_records,
-        ROOT_DIR / "out_scale_dimacs",
+        results_dir / "protocol_s" / "dimacs",
         DATA_DIR / "prot_s_scaling.csv",
         DATA_DIR,
     )
     write_adc_sbm_csvs(
-        ROOT_DIR / "results_adc_sbm",
+        results_dir / "adc_sbm",
         DATA_DIR / "adc_sbm_dout.csv",
         DATA_DIR / "adc_sbm_sigma.csv",
     )

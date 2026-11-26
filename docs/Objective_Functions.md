@@ -1,75 +1,54 @@
-# Objective Functions
+# Objective Functions and Evaluation Metrics
 
-Here is a list of commonly used objective functions used for graph clustering. [Return to main page](../README.md).
+This document summarizes the objective functions and partition-quality metrics used in the benchmark and companion manuscript. [Return to README](../README.md).
 
 ## Modularity ($Q$)
 
-$$Q(C) = \frac{1}{m} \sum_{C_i \in C}{(K_{C_i \rightarrow C_i} - \frac{vol(C_i)^2}{2m})}$$
+Modularity measures the fraction of edges falling within communities minus the expected fraction under a degree-preserving random null model:
 
-Where $K_{C_i \rightarrow C_i}$ is the weight of intra-cluster edges in $C_i$, and $vol(C_i)$ is the weight of edges connected to any vertex in $C_i$.
+$$Q(\mathcal{C}) = \sum_{c \in \mathcal{C}} \left[ \frac{L_c}{m} - \left(\frac{K_c}{2m}\right)^2 \right]$$
 
-Problem with resolution. Can be remedied somewhat by a resolution limit (resolution parameter).
+where:
+* $L_c$ is the number of undirected internal edges with both endpoints in community $c$,
+* $K_c = \sum_{v \in c} \deg(v)$ is the sum of vertex degrees in community $c$,
+* $m = |E|$ is the total number of undirected edges in the graph.
 
-Another equivalent formulation that is easy to implement is defined as follows.
+For numerically stable evaluation in C (`EVAL`), multiplying $Q$ by $4m^2$ yields an exact integer numerator:
 
-$$Q = \sum_{c \in C} \left[ \frac{L_c}{m} - \left(\frac{K_c}{2m}\right)^2 \right]$$
+$$N = 4m \sum_{c \in \mathcal{C}} L_c - \sum_{c \in \mathcal{C}} K_c^2, \qquad Q(\mathcal{C}) = \frac{N}{4m^2}.$$
 
-Where:
-* $L_c$ is the number of internal edges in community $c$ (counted once ?)
-* $K_c$ is the sum of degrees of nodes in community $c$
-* $m$ is the number of edges in the graph
+## Ground-Truth Recovery Metrics
 
-Furthermore, for programming a numerically stable modularity score, it is beneficial to use only integer values. To achive this, the general idea is to multiply the modularity with $4m^2$ to get a discrete integer optimization function.
+When reference node labels $\mathcal{T}$ are available (as in the **Ground-Truth** and **ADC-SBM** benchmarks), predicted partitions $\mathcal{C}$ are evaluated against $\mathcal{T}$ using two standard set-level metrics:
 
-Let:
-* $L_\Sigma = \sum_{c \in C} L_c$
-* $S = \sum_{c \in C} K_c^2$
+### Normalized Mutual Information (NMI)
 
-Now, we can maximize a single integer value $N$ defined as follows. $$N = 4mL_\Sigma - S$$
-To get the modularity, we can simply take $Q = \frac{N}{4m^2}$.
+NMI measures how much information the predicted clustering $\mathcal{C}$ shares with the ground-truth partition $\mathcal{T}$, normalized by their average Shannon entropy:
 
-## Coverage
+$$\operatorname{NMI}(\mathcal{C}, \mathcal{T}) = \frac{2\, I(\mathcal{C}; \mathcal{T})}{H(\mathcal{C}) + H(\mathcal{T})}$$
 
-Fraction of edges contained inside the clusters and edges containd in the graph.
+where $H(\cdot)$ is the Shannon entropy of a partition's cluster-size distribution and $I(\mathcal{C}; \mathcal{T})$ is their mutual information. NMI lies in $[0, 1]$, where $1$ denotes an exact match and $0$ denotes statistical independence.
 
-$$cov(C) = \frac{m(C)}{m}$$
+### Adjusted Rand Index (ARI)
 
-## Performance
+ARI counts all unordered node pairs that are grouped consistently by $\mathcal{C}$ and $\mathcal{T}$ (either placed together in both partitions or separated in both) and corrects the resulting agreement rate for chance:
 
-Performance measures how many node pairs are grouped correctly in the clustering.
+$$\operatorname{ARI}(\mathcal{C}, \mathcal{T}) = \frac{\operatorname{RI}(\mathcal{C}, \mathcal{T}) - \mathbb{E}[\operatorname{RI}]}{1 - \mathbb{E}[\operatorname{RI}]}$$
 
-$$perf(C) = \frac{m(C)+\bar{m}(C)}{0.5n(n - 1)}$$
+where $\operatorname{RI}$ is the raw Rand Index and $\mathbb{E}[\operatorname{RI}]$ is its expectation under random partitions with the same cluster sizes. ARI equals $1$ for an exact match and has an expected value of $0$ for independent random clusterings (and can take small negative values when agreement falls below chance).
 
-## Conductance
+## Structural Diagnostics
 
-Conductance measures the bottleneck of a cut in a graph.
+In addition to modularity, `EVAL` reports two topology-based structural diagnostics:
 
-$$\phi(C_i) = \frac{m(C_i, V \setminus C_i)}{\min(\sum_{v \in C_i}{deg(v)}, \sum_{v \in V \setminus C_i}{deg(v)})}$$
+* **Conductance** of a cluster $c$:
+  $$\phi(c) = \frac{m(c, V \setminus c)}{\min\!\left(\operatorname{vol}(c),\; \operatorname{vol}(V \setminus c)\right)}$$
+  where $m(c, V \setminus c)$ is the number of edges crossing the boundary of $c$ and $\operatorname{vol}(c) = \sum_{v \in c} \deg(v)$. Lower values indicate more well-separated clusters.
+* **Coverage**: the fraction of graph edges contained inside clusters, $\operatorname{cov}(\mathcal{C}) = \frac{1}{m} \sum_{c \in \mathcal{C}} L_c$.
 
-## Inter-Cluster Conductance
+## Alternative Objectives Used by Benchmarked Solvers
 
-$$icc(C) = 1 - \max_{C_i \in C} \phi(C_i)$$
+While modularity is the primary unsupervised objective in this benchmark, two classical solvers optimize related community objectives:
 
-## Weighted Community Detection (WCC)
-
-The weighted community detection metric is based on the fact that real networks contain a large number of triangles due to their community structure.
-
-$$WCC(x, C) = \frac{t(x, C)}{t(x,V)} * \frac{vt(x,V)}{|C \setminus \{x\}| + vt(x, V \setminus C)}$$
-
-(when $t(x, V) = 0$, $WCC(x, C) = 0$).
-
-Where $t(x, C)$ is the number of triangles that $x$ closes with the vertices in $C$, and $vt(x, C)$ is the number of vertices in $C$ that closes at least one triangle with $x$ and another vertex in $V$.
-
-$$WCC(C_i) = \frac{1}{|C_i|} \sum_{x \in C_i}{WCC(x, C_i)}$$
-
-And finally
-
-$$WCC(C) = \frac{1}{|V|} \sum_{C_i \in C}{(|C_i|*WCC(C_i))}$$
-
-## Map Equation (ME)
-
-The formal definition uses some non-standard notation. But it can essentially be described as minimizing the expected description length (using Huffman coding-like principles) of the random walk.
-
-$$L(C) = q_\curvearrowright H(\mathcal{Q}) + \sum_{C_i \in C}{p^i_\circlearrowleft H(C_i)}$$
-
-Where $q_\curvearrowright$ is the probability that the walk exits a cluster, $H(\mathcal{Q})$ is the entropy of the codebook for clusters (low if a random walk mostly stays in few clusters), $p^i_\circlearrowleft$ is the probability that the walk is inside cluster $i$, and $H(C_i)$ is the entropy of the codebook for nodes within cluster $i$.
+* **Map Equation** (**Infomap**): minimizes the expected description length $L(\mathcal{C}) = q_\curvearrowright H(\mathcal{Q}) + \sum_{c \in \mathcal{C}} p^c_\circlearrowleft H(\mathcal{P}^c)$ of a random walk using a two-level Huffman codebook, where $q_\curvearrowright$ is the inter-cluster transition probability and $p^c_\circlearrowleft$ is the stay-plus-exit probability for cluster $c$.
+* **Random-Walk Distance** (**Walktrap**): performs hierarchical agglomerative clustering using a Ward-style distance between short-length random-walk transition distributions, selecting the dendrogram cut that maximizes modularity $Q$.

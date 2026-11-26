@@ -4,7 +4,6 @@ bin/*
 
 other_papers/*
 results_A/*
-out_scale/*
 
 external/*/.venv
 

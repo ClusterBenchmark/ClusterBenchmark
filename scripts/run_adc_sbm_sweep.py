@@ -7,7 +7,7 @@ Generates synthetic graphs under controlled signal degradation:
 
 Instances are stored in /tmp/adc_sbm/ (.csr, .feat, .labels).
 Each solver runs on the EXACT same prepared instance files via harness.py.
-Outputs land in results_adc_sbm/<solver>.jsonl.
+Outputs land in results/adc_sbm/<solver>.jsonl.
 """
 
 import argparse
@@ -25,7 +25,7 @@ import gen_adc_sbm  # noqa: E402
 import graphio      # noqa: E402
 
 TMP_DIR = Path("/tmp/adc_sbm")
-RESULTS_DIR = REPO_ROOT / "results_adc_sbm"
+RESULTS_DIR = REPO_ROOT / "results" / "adc_sbm"
 CONVERT_BIN = REPO_ROOT / "CONVERT"
 HARNESS_PY = REPO_ROOT / "scripts" / "harness.py"
 

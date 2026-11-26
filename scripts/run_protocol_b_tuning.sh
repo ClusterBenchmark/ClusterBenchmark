@@ -6,7 +6,7 @@
 # Learning solvers run on CUDA (if available), classical solvers run on CPU.
 #
 # Output:
-#   Writes params/<solver>.<instance>.json overlays and companion .meta.json provenance.
+#   Writes results/protocol_b/<solver>.<instance>.json overlays and companion .meta.json provenance.
 #
 # Usage:
 #   scripts/run_protocol_b_tuning.sh CSR_DIR [PARAMS_OUT_DIR] [TRIALS] [TARGET_INSTANCES]
@@ -18,7 +18,7 @@ PYTHON="${PYTHON:-$here/scripts/.venv/bin/python}"
 [ -f "$PYTHON" ] || PYTHON="python3"
 
 CSR_DIR="${1:-/tmp/prep}"
-PARAMS_DIR="${2:-params}"
+PARAMS_DIR="${2:-results/protocol_b}"
 TRIALS="${3:-50}"
 INSTANCES="${4:-cora citeseer pubmed}"
 
