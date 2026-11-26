@@ -27,6 +27,8 @@
 \renewcommand{\bottomfraction}{0.8}
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.85}
+\clubpenalty=10000
+\widowpenalty=10000
 \usepackage{microtype}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 
@@ -205,8 +207,6 @@ Despite active research in both communities, experimental comparisons between th
 Here we bridge this divide with a large-scale experimental benchmark of 17 representative community detection algorithms across seven optimization paradigms. We integrate all 17 solvers into an open-source benchmarking framework with standardized input/output formats, consistent timing and memory tracking, and an interactive companion website (see Code Availability). We evaluate all methods across three standardized protocols covering out-of-the-box defaults (Protocol~A), multi-core CPU and GPU hardware scaling (Protocol~S), and Bayesian hyperparameter tuning (Protocol~B). Using attributed real-world networks, topology-only benchmarks with up to 3.3 billion edges, and synthetic graphs with controlled structural and feature noise, our study clarifies when classical combinatorial heuristics suffice and when learning-based GNNs offer a genuine advantage.
 
 \section{Results}\label{sec:results}\label{sec:experiments}
-
-\subsection{Overview of Benchmarked Paradigms and Protocols}
 
 \begin{table}[tbp]
     \caption{Overview of surveyed community detection methods and software characteristics. The upper block lists the 17 methods integrated into our unified benchmarking framework, while the lower block lists surveyed methods whose implementations are unavailable or not evaluated. \textit{Code} reflects original software maturity prior to our integration ($\star\star$: production/package release with standard I/O, $\star$: research prototype adapted into our harness, $\times$: unreleased/unavailable). \textit{Parallel} indicates multi-threading or GPU support in the evaluated implementation. \textit{Fixed $k$} denotes whether a target cluster count ($\checkmark$) or maximum cluster capacity ($\dagger$) must be specified in advance. \textit{Features} indicates utilization of node attributes, and \textit{Py} indicates availability in standard Python package repositories. A double dagger ($\ddagger$) denotes exact solvers.}
@@ -426,7 +426,7 @@ Figures~\ref{fig:perf_quality} and~\ref{fig:perf_gt_recovery} show the out-of-th
 
 When we evaluate ground-truth community recovery on the \textsc{Ground-Truth} dataset (Figure~\ref{fig:perf_gt_recovery} and Appendix~\ref{sec:detailed-results}, Tables~\ref{tab:nmi_gt} and~\ref{tab:ari_gt}), the picture changes substantially. Here, attribute-aware learning-based methods compete closely with, and often beat, pure modularity maximizers. In NMI (Figure~\ref{fig:perf_gt_recovery}, left), \textsc{MAGI} has the strongest overall profile (mean NMI of $0.533$ across 9/10 solved instances, winning \texttt{amazon-computers} and \texttt{reddit}), while \textsc{CommDGI} achieves the highest NMI on three networks (\texttt{coauthor-cs}, \texttt{pubmed}, \texttt{coauthor-physics}), \textsc{UCoDe} leads on two (\texttt{cora}, \texttt{citeseer}), and \textsc{DGCluster}, \textsc{Walktrap}, and \textsc{Leiden} each lead on one (\texttt{amazon-photo}, \texttt{ogbn-arxiv}, and \texttt{ogbn-products}, respectively). Under chance-corrected ARI (Figure~\ref{fig:perf_gt_recovery}, right), the advantage of attribute-aware GNNs is even sharper: \textsc{MAGI} leads with a mean ARI of $0.422$ across 9/10 solved graphs (winning 4/10 instances, including $0.904$ on \texttt{reddit}), followed by \textsc{CommDGI} ($0.387$), \textsc{UCoDe} ($0.379$, winning \texttt{cora} and \texttt{citeseer}), \textsc{LIM} ($0.373$), and \textsc{DGCluster} ($0.349$), all outperforming \textsc{VieClus} and \textsc{Leiden} ($0.333$ mean ARI). Notably, this advantage is not simply because fixed-$k$ neural models receive the true number of classes $|C|$: the cluster-free neural methods \textsc{DGCluster} and \textsc{LIM}, which infer $k$ automatically without knowing $|C|$, also surpass classical topology-only heuristics in ARI and on several networks in NMI. Across the five stochastic trials per instance, classical multilevel heuristics show near-zero run-to-run variance ($\text{SD}_Q < 0.003$), whereas multi-loss and contrastive GNNs such as \textsc{CommDGI}, \textsc{DMoN}, and \textsc{UCoDe} exhibit substantial seed sensitivity (standard deviations up to $0.08$--$0.13$ in $Q$ and NMI). Overall, the divergence between Figure~\ref{fig:perf_quality} and Figure~\ref{fig:perf_gt_recovery} reflects a mismatch between topological modularity and semantic class labels: for example, on CiteSeer, the ground-truth class partition has a modularity of only $0.54$, whereas classical and neural modularity maximizers find partitions with modularity up to $0.89$. Comparing against a feature-only $k$-means baseline ($k = |C|$, bottom row of Tables~\ref{tab:nmi_gt} and~\ref{tab:ari_gt}) confirms that GNNs achieve their semantic gains through genuine graph--attribute fusion rather than raw attributes alone: feature-only $k$-means scores well below both classical heuristics and GNNs on nine of the ten networks (for instance, $\text{NMI} = 0.167$ and $\text{ARI} = 0.091$ on Cora). The lone exception is PubMed, where feature-only $k$-means ($\text{NMI} = 0.312$, $\text{ARI} = 0.280$) already surpasses every topology-only heuristic, explaining why attribute-aware GNNs achieve their largest semantic uplift on that graph.
 
-The streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} trade solution quality for high scalability. Both solve all 10 \textsc{Ground-Truth} and all 32 \textsc{DIMACS} graphs, including \texttt{uk-2007-05} ($3.3$~billion edges), with \textsc{CluStRE} consistently outperforming \textsc{Hollocou} in modularity, NMI, and ARI. At the opposite end of the spectrum, the exact branch-and-cut solver \textsc{Bayan} terminates with the globally optimal modularity on six of the eight smallest \textsc{DIMACS} networks (\texttt{karate}, \texttt{chesapeake}, \texttt{dolphins}, \texttt{lesmis}, \texttt{polbooks}, and \texttt{football}, $\tau = 1.000$), and also solves the disconnected medium-scale network \texttt{netscience} ($Q = 0.960$, $\tau = 0.9996$) in $549$~s. On \texttt{adjnoun}, it reaches its one-hour total budget ($3\,092.1$~s solver time) having already found the globally optimal partition ($Q = 0.313$, matching \textsc{VieClus} at full precision), though with a remaining $23.6\%$ optimality gap. On \texttt{jazz} and all remaining medium-to-large graphs, its $\mathcal{O}(n^3)$ triangular constraint formulation exceeds the one-hour time limit (\textsc{TLE}) or the 120~GiB memory limit (\textsc{MLE}). Across the eight smallest \textsc{DIMACS} instances with known globally optimal modularity scores from exact ILP and MaxSAT solvers~\cite{bayan2024,maxsat2025} (verified at full floating-point precision), \textsc{VieClus} finds the optimal modularity on all 8/8 instances, \textsc{Bayan} on 7/8, \textsc{Leiden} and \textsc{GNNS} on 6/8, \textsc{COMBO} on 5/8, \textsc{Louvain} and \textsc{DGCluster} on 2/8, and \textsc{Infomap} and \textsc{CommDGI} on 1/8.
+The streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} trade solution quality for high scalability. Both solve all 10 \textsc{Ground-Truth} and all 32 \textsc{DIMACS} graphs, including \texttt{uk-2007-05} ($3.3$~billion edges), with \textsc{CluStRE} consistently outperforming \textsc{Hollocou} in modularity, NMI, and ARI. At the opposite extreme, the exact solver \textsc{Bayan} terminates with optimal modularity on six of the eight smallest \textsc{DIMACS} networks (\texttt{karate}, \texttt{chesapeake}, \texttt{dolphins}, \texttt{lesmis}, \texttt{polbooks}, and \texttt{football}, $\tau = 1.000$), and also solves the disconnected network \texttt{netscience} ($Q = 0.960$, $\tau = 0.9996$) in $549$~s. On \texttt{adjnoun}, it reaches its one-hour budget ($3\,092.1$~s solver time) having already found the optimal partition ($Q = 0.313$, matching \textsc{VieClus} at full precision), though with a $23.6\%$ optimality gap. On \texttt{jazz} and all remaining medium-to-large graphs, its $\mathcal{O}(n^3)$ triangular constraint formulation exceeds the one-hour limit (\textsc{TLE}) or the 120~GiB memory limit (\textsc{MLE}). Across the eight small \textsc{DIMACS} graphs with known exact optima~\cite{bayan2024,maxsat2025} (at full precision), \textsc{VieClus} matches the optimum on 8/8, \textsc{Bayan} on 7/8, \textsc{Leiden} and \textsc{GNNS} on 6/8, \textsc{COMBO} on 5/8, \textsc{Louvain} and \textsc{DGCluster} on 2/8, and \textsc{Infomap} and \textsc{CommDGI} on 1/8.
 
 \pgfplotsset{
 cycle list/.define={my marks}{
@@ -555,15 +555,15 @@ Figure~\ref{fig:efficiency} (left) shows the wall-clock runtime distributions on
 
 Peak memory usage shows an equally clear divide between paradigms (see Appendix~\ref{sec:memory}, Table~\ref{tab:memory}). Streaming methods process edges in a single pass with minimal state and need only $1.1$~GiB on \texttt{ogbn-products} ($61.9$~M edges), while \textsc{Leiden} and \textsc{Louvain} use $12.1$~GiB. In contrast, GNNs store high-dimensional node embeddings and intermediate activations, requiring $13$--$44$~GiB on medium and large graphs. Even worse, methods that build dense $\mathcal{O}(n^2)$ modularity or similarity matrices in RAM, specifically \textsc{LIM}, \textsc{UCoDe}, \textsc{CommDGI}, and the Python setup phase of \textsc{Bayan}, try to allocate $214$~GiB on \texttt{ogbn-arxiv} ($n = 169\,343$) and over $41$~TiB on \texttt{ogbn-products}. These runs immediately fail with memory limit exceeded (\textsc{MLE}).
 
-To measure how parallel hardware affects runtime and quality, \textbf{Protocol~S} runs the parallel and learning-based solvers under identical cluster budgets $k$ to Protocol~A with 32 CPU threads ($p = 32$, \texttt{device=cpu}) and with an NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}). Full per-instance runtimes are listed in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Note that the single-threaded classification in Figure~\ref{fig:efficiency} reflects the evaluated reference wrappers (such as \texttt{igraph} and \texttt{cdlib}), whereas specialized parallel implementations of several classical algorithms also exist (including \texttt{NetworKit}, \texttt{GVE-Leiden}, \texttt{cuGraph}, OpenMP \textsc{Infomap}, and multi-threaded \textsc{Gurobi}). Scaling from 1 to 32 CPU threads (Figure~\ref{fig:efficiency}, left, cyan triangles) gives geometric-mean wall-clock speedups of $9.8\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $4.1\times$ for \textsc{CommDGI}, $3.5\times$ for \textsc{DMoN}, $3.4\times$ for \textsc{GNNS}, and $1.3\times$ for \textsc{MAGI} across commonly solved networks. Moving training to the RTX~4090 GPU (orange diamonds) yields much larger speedups over single-threaded CPU runs, reaching geometric-mean wall-clock speedups of $153\times$ for \textsc{LIM} (reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $121\times$ for \textsc{UCoDe}, $96\times$ for \textsc{CommDGI}, $38\times$ for \textsc{DGCluster}, $33\times$ for \textsc{GNNS} (solving all 10 \textsc{Ground-Truth} graphs including \texttt{ogbn-products}), $12\times$ for \textsc{DMoN}, and $2.0\times$ for \textsc{MAGI} (whose random-walk sampling and $k$-means post-processing remain CPU-bound). Because several 1T~CPU runs hit the 1-hour wall-clock cap before completing their epoch budgets, normalizing by completed epochs/iterations reveals even stronger per-epoch GPU speedups: $177\times$ for \textsc{LIM}, $146\times$ for \textsc{UCoDe}, $117\times$ for \textsc{CommDGI}, $50\times$ for \textsc{GNNS}, $39\times$ for \textsc{DGCluster}, $13\times$ for \textsc{DMoN}, and $6.1\times$ for \textsc{MAGI} ($2.6\times$ on 32T~CPU).
+To measure how parallel hardware affects runtime and quality, \textbf{Protocol~S} runs the parallel and learning-based solvers under identical cluster budgets $k$ to Protocol~A on a 16-core (32-thread) Intel Xeon w5-3435X CPU ($p = 32$, \texttt{device=cpu}) and with an NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}). Full per-instance runtimes are listed in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Note that the single-threaded classification in Figure~\ref{fig:efficiency} reflects the evaluated reference wrappers (such as \texttt{igraph} and \texttt{cdlib}), whereas specialized parallel implementations of several classical algorithms also exist (including \texttt{NetworKit}, \texttt{GVE-Leiden}, \texttt{cuGraph}, OpenMP \textsc{Infomap}, and multi-threaded \textsc{Gurobi}). Scaling from 1 to 32 CPU threads (Figure~\ref{fig:efficiency}, left, cyan triangles) gives geometric-mean wall-clock speedups of $9.8\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $4.1\times$ for \textsc{CommDGI}, $3.5\times$ for \textsc{DMoN}, $3.4\times$ for \textsc{GNNS}, and $1.3\times$ for \textsc{MAGI} across commonly solved networks. Moving training to the RTX~4090 GPU (orange diamonds) yields much larger geometric-mean wall-clock speedups over 1T~CPU: $153\times$ for \textsc{LIM} (reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $121\times$ for \textsc{UCoDe}, $96\times$ for \textsc{CommDGI}, $38\times$ for \textsc{DGCluster}, $33\times$ for \textsc{GNNS} (solving all 10 \textsc{Ground-Truth} graphs including \texttt{ogbn-products}), $12\times$ for \textsc{DMoN}, and $2.0\times$ for \textsc{MAGI} (whose random-walk sampling and $k$-means post-processing remain CPU-bound). Because several 1T~CPU runs hit the 1-hour wall-clock cap before completing their epoch budgets, normalizing by completed epochs/iterations reveals even stronger per-epoch GPU speedups: $177\times$ for \textsc{LIM}, $146\times$ for \textsc{UCoDe}, $117\times$ for \textsc{CommDGI}, $50\times$ for \textsc{GNNS}, $39\times$ for \textsc{DGCluster}, $13\times$ for \textsc{DMoN}, and $6.1\times$ for \textsc{MAGI} ($2.6\times$ on 32T~CPU).
 
-Figure~\ref{fig:efficiency} (right) shows the modularity gain $\Delta Q = Q_{\text{accel}} - Q_{1\text{T}}$ on compute-bound instances across both datasets. For \textsc{VieClus}, running its evolutionary search across 32 MPI processes improves modularity slightly ($\Delta Q \in [0, +0.002]$) on medium graphs, but duplicating graph data across 32 MPI ranks exceeds the 120~GiB RAM limit on the largest instances (\emph{MLE} band). For the neural methods, comparing completed training epochs on 1T~CPU (Appendix~\ref{sec:memory}, Table~\ref{tab:iterations}) and GPU (Appendix~\ref{sec:par-seq}, Table~\ref{tab:iterations_gpu}) explains why hardware acceleration improves quality. While small graphs finish all training epochs within an hour on 1T~CPU, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} stop early at the 1-hour limit (for example, \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}). Finishing all training epochs on 32T~CPU or GPU rescues these runs and boosts modularity by $\Delta Q \in [+0.002, +0.22]$ (Figure~\ref{fig:efficiency}, right, epoch-rescue regime), whereas occasional small negative shifts ($\Delta Q \in [-0.02, 0)$) reflect stochastic initialization and floating-point reduction variance across backends. At the same time, GPU execution introduces a tighter memory limit. Because the RTX~4090 has 24~GiB of VRAM compared to 120~GiB of system RAM, full-graph GNNs run out of memory on smaller graphs on the GPU than on the CPU (orange diamonds in the \emph{MLE} band). For example, \textsc{CommDGI} needs $28.3$~GiB on \texttt{coauthor-physics}, so it finishes on 32T~CPU but hits \textsc{MLE} on the GPU.
+Figure~\ref{fig:efficiency} (right) shows the modularity gain $\Delta Q = Q_{\text{accel}} - Q_{1\text{T}}$ on compute-bound instances across both datasets. For \textsc{VieClus}, running its evolutionary search across 32 MPI processes improves modularity slightly ($\Delta Q \in [0, +0.002]$) on medium graphs, but duplicating graph data across 32 MPI ranks exceeds the 120~GiB RAM limit on the largest instances (\emph{MLE} band). For neural methods, comparing completed epochs on 1T~CPU (Table~\ref{tab:iterations}) and GPU (Table~\ref{tab:iterations_gpu}) explains these gains. While small graphs finish all epochs within an hour on 1T~CPU, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} stop early at the 1-hour limit (for example, \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}). Finishing all epochs on 32T~CPU or GPU rescues these runs and boosts modularity by $\Delta Q \in [+0.002, +0.22]$ (Figure~\ref{fig:efficiency}, right, epoch-rescue regime), whereas occasional small negative shifts ($\Delta Q \in [-0.02, 0)$) reflect stochastic initialization and floating-point variance across backends. However, the RTX~4090's 24~GiB VRAM ceiling is tighter than 120~GiB of host RAM, so full-graph GNNs hit \textsc{MLE} on smaller graphs on GPU than on CPU (orange diamonds in the \emph{MLE} band). For example, \textsc{CommDGI} needs $28.3$~GiB on \texttt{coauthor-physics}, so it finishes on 32T~CPU but hits \textsc{MLE} on the GPU.
 
 \subsection{Hyperparameter Sensitivity (Protocol~B)}
 
 \begin{table}[!ht]
     \centering
-    \caption{Modularity ($Q$) achieved under out-of-the-box defaults versus 50-trial Optuna Bayesian hyperparameter tuning (\textbf{Protocol~B}) on Cora, CiteSeer, and PubMed. For fixed-$k$ neural models tuned under the cluster-free regime ($k = \lceil\sqrt{n}\rceil$), the default baseline under the same cluster budget is reported alongside the tuning gain ($\Delta Q$). For \textsc{COMBO} on PubMed (where the default timed out), $+0.740$ denotes the achieved tuned modularity; small negative $\Delta Q$ values reflect stochastic variance between the 5-trial default baseline and single-seed Optuna evaluations.}
+    \caption{Modularity ($Q$) achieved under out-of-the-box defaults versus 50-trial Optuna Bayesian hyperparameter tuning (\textbf{Protocol~B}) on Cora, CiteSeer, and PubMed. For fixed-$k$ neural models tuned under the cluster-free regime ($k = \lceil\sqrt{n}\rceil$), the default baseline under the same cluster budget is reported alongside the tuning gain ($\Delta Q$). For \textsc{COMBO} on PubMed (where the default timed out), $+0.740$ denotes the achieved tuned modularity; small negative $\Delta Q$ values reflect stochastic variance between the 5-trial defaults and single-seed Optuna runs.}
     \label{tab:protocol_b}
     \vspace{0.5em}
     \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ll rr rr rr@{}}
@@ -645,8 +645,11 @@ For learning-based methods, comparing the default scores in Table~\ref{tab:proto
                     }
                 }
             \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=dout, y=magi_gcn, col sep=comma] {data/adc_sbm_dout_binned.csv};
-            \addplot[color=black!80, sharp plot, densely dotted, very thick, mark=o, mark options={solid, fill=white, scale=0.85}] table[x=dout, y=kmeans, col sep=comma] {data/adc_sbm_dout_binned.csv};
-            \addplot[refstyle={vieclus}, sharp plot, solid, thick, mark options={solid, scale=0.85}, forget plot] table[x=dout, y=vieclus, col sep=comma] {data/adc_sbm_dout_binned.csv};
+            \addplot[color=black!80, sharp plot, densely dotted, very thick, mark=o, mark options={solid, fill=white, scale=0.95}] table[x=dout, y=kmeans, col sep=comma] {data/adc_sbm_dout_binned.csv};
+            \addplot[refstyle={magi}, sharp plot, solid, thick, mark options={solid, scale=0.80}, forget plot] table[x=dout, y=magi, col sep=comma] {data/adc_sbm_dout_binned.csv};
+            \addplot[refstyle={gnns}, sharp plot, solid, thick, mark options={solid, scale=1.0}, forget plot] table[x=dout, y=gnns, col sep=comma] {data/adc_sbm_dout_binned.csv};
+            \addplot[refstyle={vieclus}, sharp plot, solid, thick, mark options={solid, scale=0.82}, forget plot] table[x=dout, y=vieclus, col sep=comma] {data/adc_sbm_dout_binned.csv};
+            \addplot[refstyle={dgcluster}, sharp plot, solid, thick, mark options={solid, scale=0.72}, forget plot] table[x=dout, y=dgcluster, col sep=comma] {data/adc_sbm_dout_binned.csv};
 
             \nextgroupplot[
                 xmode=log,
@@ -670,8 +673,11 @@ For learning-based methods, comparing the default scores in Table~\ref{tab:proto
                     }
                 }
             \addplot[color=Dark2-G, sharp plot, dashed, thick, mark=pentagon*, mark options={solid, fill=Dark2-G!75!white, scale=0.9}] table[x=sigma, y=magi_gcn, col sep=comma] {data/adc_sbm_sigma_binned.csv};
-            \addplot[color=black!80, sharp plot, densely dotted, very thick, mark=o, mark options={solid, fill=white, scale=0.85}] table[x=sigma, y=kmeans, col sep=comma] {data/adc_sbm_sigma_binned.csv};
-            \addplot[refstyle={vieclus}, sharp plot, solid, thick, mark options={solid, scale=0.85}, forget plot] table[x=sigma, y=vieclus, col sep=comma] {data/adc_sbm_sigma_binned.csv};
+            \addplot[color=black!80, sharp plot, densely dotted, very thick, mark=o, mark options={solid, fill=white, scale=0.95}] table[x=sigma, y=kmeans, col sep=comma] {data/adc_sbm_sigma_binned.csv};
+            \addplot[refstyle={magi}, sharp plot, solid, thick, mark options={solid, scale=0.80}, forget plot] table[x=sigma, y=magi, col sep=comma] {data/adc_sbm_sigma_binned.csv};
+            \addplot[refstyle={gnns}, sharp plot, solid, thick, mark options={solid, scale=1.0}, forget plot] table[x=sigma, y=gnns, col sep=comma] {data/adc_sbm_sigma_binned.csv};
+            \addplot[refstyle={vieclus}, sharp plot, solid, thick, mark options={solid, scale=0.82}, forget plot] table[x=sigma, y=vieclus, col sep=comma] {data/adc_sbm_sigma_binned.csv};
+            \addplot[refstyle={dgcluster}, sharp plot, solid, thick, mark options={solid, scale=0.72}, forget plot] table[x=sigma, y=dgcluster, col sep=comma] {data/adc_sbm_sigma_binned.csv};
 
             \addlegendentry{\textsc{VieClus} / \textsc{Leiden}}
             \addlegendentry{\textsc{GNNS}}
@@ -703,9 +709,9 @@ Comparing the two variants of \textsc{MAGI}, namely the two-stage GraphSAGE enco
 \section{Discussion}\label{sec:discussion}\label{sec:conclusion}
 Our experimental benchmark of 17 modularity-based clustering algorithms connects two research communities that have largely developed in isolation: classical combinatorial optimization and deep graph representation learning. Evaluating both paradigms under identical time, memory, and hardware budgets reveals clear trade-offs between topological optimization quality, semantic community recovery, scalability, and ease of use.
 
-When the goal is pure modularity maximization or fast partitioning of unattributed graphs, classical combinatorial methods remain the clear best choice. The memetic solver \textsc{VieClus} reaches the highest modularity on every instance it completes across both attributed and featureless datasets, and matches exact branch-and-cut (\textsc{Bayan}) and MaxSAT solutions on all small verification instances. For most practical applications, \textsc{Leiden} provides the best out-of-the-box trade-off between quality and speed: using its default 2-iteration budget, it terminates automatically in milliseconds to seconds without requiring a user-specified time limit or parameter tuning, while coming within $1\%$ of \textsc{VieClus}'s 1-hour modularity on the \textsc{Ground-Truth} suite (and running additional refinement iterations or multi-start restarts can narrow this small residual gap further at a fraction of the time). At web scale, where even multilevel heuristics exceed memory limits, single-pass streaming algorithms (\textsc{CluStRE} and \textsc{Hollocou}) partition graphs with $3.3$~billion edges (\texttt{uk-2007-05}) using only a few gibibytes of RAM. Moreover, enabling multi-pass quotient-graph refinement in \textsc{CluStRE} closes nearly the entire modularity gap to \textsc{Leiden} on medium-scale networks.
+When the goal is pure modularity maximization or fast partitioning of unattributed graphs, classical combinatorial methods remain the clear best choice. The memetic solver \textsc{VieClus} reaches the highest modularity on every instance it completes across both attributed and featureless datasets, and matches exact branch-and-cut (\textsc{Bayan}) and MaxSAT solutions on all small verification instances. For most practical applications, \textsc{Leiden} provides the best out-of-the-box trade-off between quality and speed: using its default 2-iteration budget, it terminates automatically in milliseconds to seconds without requiring a user-specified time limit or parameter tuning, while coming within $1\%$ of \textsc{VieClus}'s 1-hour modularity on the \textsc{Ground-Truth} suite (and running additional refinement iterations or multi-start restarts could narrow this small residual gap further). At web scale, where even multilevel heuristics exceed memory limits, single-pass streaming algorithms (\textsc{CluStRE} and \textsc{Hollocou}) partition graphs with $3.3$~billion edges (\texttt{uk-2007-05}) using only a few gibibytes of RAM. Moreover, enabling multi-pass quotient-graph refinement in \textsc{CluStRE} closes nearly the entire modularity gap to \textsc{Leiden} on medium-scale networks.
 
-At the same time, our results show why learning-based methods have gained popularity on attributed networks. In real-world citation and co-purchasing graphs, semantic class labels often disagree with purely structural modularity. By combining node attributes with graph topology, GNNs such as \textsc{MAGI}, \textsc{DGCluster}, \textsc{CommDGI}, and \textsc{UCoDe} match or beat classical heuristics in NMI and ARI. Crucially, our experiments clarify two mechanisms governing neural clustering performance:
+At the same time, our results show why learning-based methods have gained popularity on attributed networks. In real-world citation and co-purchasing graphs, semantic class labels often disagree with purely structural modularity. By combining node attributes with graph topology, GNNs such as \textsc{MAGI}, \textsc{DGCluster}, \textsc{CommDGI}, and \textsc{UCoDe} match or beat classical heuristics in NMI and ARI. Our experiments clarify two key mechanisms governing neural clustering:
 \begin{itemize}
     \item \textbf{Cluster count constraints versus attribute utility:} Under Protocol~A, fixed-$k$ neural models appear much weaker in modularity than classical methods partly because they are restricted to the small number of semantic classes $|C|$, whereas classical methods naturally split graphs into dozens of finer communities. When given the same larger cluster budget ($k = \lceil\sqrt{n}\rceil$ in Protocol~B), untuned GNN modularity rises substantially. Conversely, cluster-free GNNs (\textsc{DGCluster} and \textsc{LIM}) still outperform classical heuristics in NMI without knowing $|C|$, confirming that node attributes genuinely improve semantic recovery.
     \item \textbf{Message-passing resilience to structural versus attribute noise:} Our synthetic ADC-SBM sweeps show that GNN architecture determines failure modes under noise. Concatenating ego-features with neighborhood representations (as in \textsc{MAGI}-SAGE) protects against noisy edges when attributes are clean, but fails when attributes are noisy. Full-graph Laplacian smoothing (\textsc{MAGI}-GCN) or hybrid structural similarity (\textsc{DGCluster}) better handles noisy attributes on clean graph structures.
@@ -718,6 +724,7 @@ For practitioners choosing a clustering algorithm, these findings suggest three 
 Looking ahead, our results point to a clear opportunity for hybrid algorithm design. Current learning-based methods rely on slow gradient descent over soft assignments and dense matrix operations, whereas classical multilevel heuristics use fast, sparse discrete vertex moves but ignore node attributes. Early attributed extensions of \textsc{Louvain}, such as \textsc{I-Louvain}~\cite{combe2015ilouvain} (which adds an attribute-inertia term) and \textsc{EVA}~\cite{citraro2020eva} (which adds categorical attribute purity), explored this direction, but they rely on dense $\mathcal{O}(n^2)$ pairwise distances or discrete categorical labels and do not scale to modern high-dimensional continuous feature matrices. Combining sparse multilevel refinement and streaming quotient graphs with lightweight learned attribute similarities or sparse feature-$k$NN edges could bring the semantic accuracy of GNNs to billion-edge networks without the memory and tuning costs of current deep architectures. By releasing our open-source benchmarking harness, standardized datasets, and containerized solver wrappers, we aim to provide a reproducible foundation for developing and testing this next generation of community detection methods.
 
 \section{Methods}\label{sec:methods}
+This section details the mathematical definitions, algorithms, and experimental setup behind our benchmark. We first formalize the graph clustering problem and evaluation metrics, then review the 17 surveyed solvers across seven optimization paradigms, and finally describe our unified benchmarking interface, evaluation protocols, datasets, and computational environment.
 
 \subsection{Problem Formulation and Quality Metrics}\label{sec:preliminary}
 
@@ -727,14 +734,14 @@ An \emph{attributed graph} is defined as $G = (V, E, \mathcal{F})$, where $V = \
 A \emph{clustering} $C$ of $G$ is a partition of the vertex set $V$ into $k$ disjoint subsets (clusters) $V_1, \dots, V_k$ such that $V_1 \cup \cdots \cup V_k = V$. Classical algorithms use only the graph structure $(V,E)$, whereas learning-based methods also use the node attributes $\mathcal{F}$ to find communities that are coherent in both link structure and feature similarity.
 
 \paragraph*{\textbf{Modularity.}}
-The \emph{modularity} score~\cite{girvan2002,Newman2006} of a clustering is the fraction of edges that fall within clusters minus the expected fraction if edges were wired at random while preserving vertex degrees. Let $L_i := |\{\{u,v\} \in E : u,v \in V_i\}|$ denote the number of edges internal to cluster $V_i$. The modularity of $C$ is defined as
+The \emph{modularity} score~\cite{girvan2002,Newman2006} of a clustering is the fraction of edges that fall within clusters minus the expected fraction if edges were added at random while preserving vertex degrees. Let $L_i := |\{\{u,v\} \in E : u,v \in V_i\}|$ denote the number of edges internal to cluster $V_i$. The modularity of $C$ is defined as
 \[Q(C) := \sum_{i = 1}^{k}{\left(\frac{L_i}{m} - \left(\sum_{u \in V_i}{\frac{\deg(u)}{2m}}\right)^2 \right)}. \]
 Modularity can also be written in matrix (spectral) form. Let $C \in \{0,1\}^{n \times k}$ be the cluster assignment matrix, where $C_{ip} = 1$ if vertex $v_i$ belongs to cluster $p$ and $C_{ip} = 0$ otherwise. Defining the \emph{modularity matrix} as $B := A - \frac{\mathbf{d}\mathbf{d}^\top}{2m}$, modularity is given by
 \[ Q(C) = \frac{1}{2m} \operatorname{Tr}(C^\top B C). \]
 This matrix formulation is the starting point for continuous and learning-based methods, which relax the binary matrix $C \in \{0,1\}^{n \times k}$ into a continuous soft-assignment matrix $S \in [0,1]^{n \times k}$ with rows summing to one.
 
 \paragraph*{\textbf{Ground-truth recovery metrics.}}
-On networks with known reference communities $T$, we measure agreement between a computed partition $C$ and $T$ using Normalized Mutual Information (NMI)~\cite{danon2005comparing} with geometric-mean normalization, $\text{NMI}(C, T) := I(C; T) / \sqrt{H(C)\,H(T)}$, and the chance-corrected Adjusted Rand Index (ARI)~\cite{hubert1985}. Computed exactly over all $\binom{n}{2}$ vertex pairs via the contingency table in $\mathcal{O}(n \log n)$ time, ARI equals $1$ for identical partitions and has an expected value of $0$ for independent or trivial single-cluster ($k=1$) partitions, avoiding the homophily inflation inherent to edge-restricted pairwise metrics.
+On networks with known reference communities $T$, we measure agreement between a computed partition $C$ and $T$ using Normalized Mutual Information (NMI)~\cite{danon2005comparing} and the Adjusted Rand Index (ARI)~\cite{hubert1985}. NMI is an information-theoretic measure defined as $\text{NMI}(C, T) := I(C; T) / \sqrt{H(C)\,H(T)}$, where $H(C)$ and $H(T)$ are the Shannon entropies of the two clusterings and $I(C; T)$ is their mutual information, which quantifies how much knowing a node's computed cluster reduces uncertainty about its ground-truth label. NMI ranges from $0$ (independent partitions) to $1$ (identical partitions). ARI measures agreement over all $\binom{n}{2}$ vertex pairs by counting how often two vertices are placed together or separated in both $C$ and $T$, corrected for the agreement expected by chance. It equals $1$ for identical partitions, has an expected value of $0$ for random or single-cluster ($k=1$) partitions, and can be computed exactly from the contingency table in $\mathcal{O}(n \log n)$ time.
 
 \paragraph*{\textbf{Graph neural networks.}}
 Graph neural networks (GNNs) compute vector representations (embeddings) for vertices in an attributed graph by repeatedly aggregating feature information from local graph neighborhoods. In community detection, GNNs map vertices into an embedding space where structurally or semantically similar vertices lie close together. Learning-based clustering algorithms then infer communities by optimizing differentiable relaxations of modularity, mutual information, or contrastive loss functions defined over these embeddings or over soft cluster assignments.
@@ -765,9 +772,9 @@ We include two widely used baselines that define communities through random walk
 \paragraph*{\textbf{Metaheuristics and memetic search.}}
 Metaheuristic and ensemble methods invest additional compute time to escape local optima that trap simple greedy search. Examples include Variable Neighborhood Search (\textsc{VNS})~\cite{vns2012}, its decomposition extension \textsc{ADVNDS}~\cite{advnds2019}, and the ensemble method \textsc{CGGCi-RG}~\cite{cggci_rg2012}, which combines recurring community structures across multiple runs.
 
-\textbf{\textsc{COMBO}}~\cite{combo2014} considers pairs of communities and optimizes full vertex redistributions between them using Kernighan--Lin-style moves, rather than moving one vertex at a time. By combining merges, splits, and recombinations in a single move type, \textsc{COMBO} reaches higher modularity than simple greedy search, with an empirical runtime bound of $\mathcal{O}(n^2 \log C)$ for $C$ clusters.
+\textbf{\textsc{COMBO}}~\cite{combo2014} considers pairs of communities and optimizes full vertex redistributions between them using Kernighan--Lin-style moves, rather than moving one vertex at a time. By combining merges, splits, and recombinations in a single move type, \textsc{COMBO} reaches higher modularity than greedy search, running in $\mathcal{O}(n^2 \log C)$ time for $C$ clusters.
 
-\textbf{\textsc{VieClus}}~\cite{vieclus2018} is a parallel memetic (evolutionary) algorithm that maintains a population of partitions and creates new candidate solutions through recombination and mutation. Its recombination operator uses overlay clustering, keeping two vertices in the same cluster only if they share a cluster in both parent partitions, and then refines the offspring with multilevel local search. \textsc{VieClus} runs until a fixed time limit and returns the highest-modularity partition found.
+\textbf{\textsc{VieClus}}~\cite{vieclus2018} is a parallel memetic (evolutionary) algorithm that maintains a population of partitions and creates new candidate solutions through recombination and mutation. Its recombination operator uses overlay clustering, keeping two vertices in the same cluster only if they share a cluster in both parent partitions, and then refines the offspring with multilevel local search. \textsc{VieClus} runs until a fixed time limit and returns the best partition found.
 
 \paragraph*{\textbf{Streaming algorithms.}}
 Most classical algorithms require random access to the entire graph in memory, which is difficult on billion-edge networks. Streaming algorithms process vertices or edges sequentially in one or a few passes under a small memory footprint.
@@ -790,9 +797,9 @@ These methods replace discrete cluster IDs with continuous soft assignments, opt
 
 \textbf{\textsc{GNNS}}~\cite{gnns2022} is a GNN-inspired continuous optimizer that updates soft cluster assignments directly through recurrent matrix multiplications with the modularity matrix, without trainable neural network weights or node attributes. It runs multiple random initializations in parallel batches and discretizes the highest-modularity solution.
 
-\textbf{\textsc{DGCluster}}~\cite{dgcluster2024} removes the need to specify the number of clusters $k$ in advance. A GNN maps vertices onto the positive unit hypersphere so that inner products give pairwise co-membership probabilities for a differentiable modularity loss, optionally combined with an auxiliary similarity loss. Final discrete clusters are extracted from the learned embeddings using \textsc{BIRCH}~\cite{birch1996}.
+\textbf{\textsc{DGCluster}}~\cite{dgcluster2024} removes the need to specify the number of clusters $k$ in advance. A GNN maps vertices onto the positive unit hypersphere so that inner products give pairwise co-membership probabilities for a differentiable modularity loss, optionally combined with an auxiliary similarity loss. Final clusters are then extracted from the embeddings using \textsc{BIRCH}~\cite{birch1996}.
 
-\textbf{\textsc{LIM}}~\cite{lim2025} also avoids fixing $k$ in advance while using a single modularity loss. It first runs \textsc{Louvain} to find coarse structural community centers, trains a GCN to embed nodes, computes soft assignments from embedding similarity to the centers, and optimizes spectral modularity end-to-end.
+\textbf{\textsc{LIM}}~\cite{lim2025} also avoids fixing $k$ in advance while using a single modularity loss. It first runs \textsc{Louvain} to find coarse community centers, trains a GCN to embed nodes, computes soft assignments from similarity to those centers, and optimizes spectral modularity end-to-end.
 
 \paragraph*{\textbf{Contrastive and mutual-information objectives.}}
 Instead of maximizing modularity alone, these methods use modularity to define positive and negative pairs or auxiliary losses in representation learning.
@@ -806,16 +813,18 @@ Instead of maximizing modularity alone, these methods use modularity to define p
 \subsection{Benchmarking Interface}\label{sec:evaluation}
 
 As shown in Table~\ref{tab:comp}, more than half of the surveyed algorithms are research prototypes without a standard command-line interface. Even among packaged tools, input graph formats, output formats, and runtime/memory reporting vary widely. To ensure a fair comparison, we wrap all 17 algorithms behind a unified interface:
-\[\textsc{Cluster}(G, T_{\max}, p, k, M_{\max}, \mathcal{F})\]
-where $G$ is the input graph, $T_{\max}$ is the wall-clock time limit, $p$ is the number of threads, $k$ is the target number of clusters, $M_{\max}$ is the memory limit in gibibytes (GiB), and $\mathcal{F}$ are the node features. Parallel solvers use $p$, fixed-$k$ solvers use $k$, and attribute-aware solvers accept $\mathcal{F}$.
+\[\textsc{Cluster}(G, T_{\max}, p, k, M_{\max}, \mathcal{F}, d)\]
+where $G$ is the input graph, $T_{\max}$ is the wall-clock time limit, $p$ is the number of threads, $k$ is the target number of clusters, $M_{\max}$ is the memory limit in gibibytes (GiB), $\mathcal{F}$ are the node features, and $d \in \{\texttt{cpu}, \texttt{cuda}\}$ selects the execution device. Parallel solvers use $p$, fixed-$k$ solvers use $k$, attribute-aware solvers accept $\mathcal{F}$, and GPU-capable solvers use $d$.
+
+In our open-source framework, a single execution harness drives all 17 solvers. Each algorithm is installed in its own isolated environment (a dedicated Python virtual environment or compiled C/C++ binary) and described by a declarative configuration manifest specifying its command-line options, supported capabilities, default settings, and tunable parameter ranges. Input graphs and node features are pre-converted once into compact binary compressed-sparse-row (CSR) and binary feature formats so that all solvers read identical inputs with minimal I/O overhead. During execution, each solver runs inside an isolated Linux \texttt{cgroup v2} scope that enforces $M_{\max}$ and records process-tree peak memory, paired with a per-run watchdog that terminates runs exceeding $T_{\max}$ plus its grace margin. Every output partition is then scored identically by a standalone C++ evaluator and logged in a structured JSON format.
 
 When a dataset does not include node attributes (as on the \textsc{DIMACS} suite) but a solver requires features $\mathcal{F}$, we generate a deterministic 69-dimensional feature vector (\texttt{ldp+rni}) for each vertex. This vector concatenates a 5-dimensional standardized Local Degree Profile (vertex degree plus the minimum, maximum, mean, and standard deviation of neighbor degrees) with a 64-dimensional seeded Gaussian Random Node Initialization, providing structural and node-identifying signals without $\mathcal{O}(n^2)$ memory cost. When a solver requires a cluster count $k$, labeled \textsc{Ground-Truth} graphs provide the true class count $|C|$ (or $\max(16, |C|)$ for over-provisioning methods \textsc{DMoN}, \textsc{UCoDe}, and \textsc{GNNS}, following their original evaluation setups), while unlabeled \textsc{DIMACS} graphs use $k = \lceil\sqrt{n}\rceil$.
 
 We use the authors' original source code or standard library implementations (\texttt{igraph}~\cite{igraph2006}, \texttt{cdlib}~\cite{cdlib2019}) with minimal changes, following three timing and reporting rules:
 \begin{itemize}
-    \item File parsing and writing cluster assignments to disk are excluded from algorithm runtime; reported runtimes are mean per-trial solve times.
+    \item File parsing and writing cluster assignments to disk are excluded from algorithm runtime, and reported runtimes are mean per-trial solve times.
     \item For the anytime evolutionary solver \textsc{VieClus}, each trial runs for its configured time budget ($0.96\,T_{\max} = 3\,456$~s under a 1-hour wall-clock cap, leaving margin for I/O and shutdown) and returns the highest-modularity partition found.
-    \item For neural methods, if training reaches $T_{\max}$ before finishing all epochs, the training loop stops cleanly and outputs the clustering from the current model state (which may extend slightly past $T_{\max}$ during final cluster extraction and evaluation within the $900$~s watchdog grace period).
+    \item For neural methods, if training reaches $T_{\max}$ before finishing all epochs, the training loop stops cleanly and outputs the clustering from the current model (which may extend slightly past $T_{\max}$ during cluster extraction and evaluation within the $900$~s grace period).
 \end{itemize}
 
 \subsection{Protocols and Parameter Settings}
@@ -877,6 +886,9 @@ All experiments were run on identical server nodes equipped with a 16-core (32-t
 
 \section*{Acknowledgements}
 We acknowledge support by DFG grant SCHU 2567/5-1.
+
+\medskip\noindent
+The study design, initial algorithm collection, baseline experiments, and original manuscript draft were completed by the authors without generative AI. During subsequent revisions for this journal version, large language models (Anthropic Claude and Google Gemini) were used to assist with refactoring the benchmarking harness, generating plotting and data-processing scripts, auditing solver configurations and result consistency, and editing the text for clarity. All code, experimental runs, analyses, and scientific claims were independently verified by the authors, who take full responsibility for the final manuscript.
 
 \section*{Author Contributions}
 A.C., K.L., and C.S. conceived the study. K.L. and A.C. developed the benchmark framework, performed the experiments, and analyzed the data. K.L., A.C., and C.S. wrote the manuscript.
@@ -1160,7 +1172,7 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
 
 \begin{table}[H]
     \centering
-    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Small-scale networks ($n \le 1\,133$). Bold indicates the highest modularity per instance (at full precision). Columns with a gray background indicate instances where \textsc{Bayan} terminated with the globally optimal modularity in our benchmark run. An asterisk ($^*$) marks additional instances whose global optimum is known from the literature~\cite{bayan2024,maxsat2025}, but where \textsc{Bayan} did not prove optimality within our 1-hour limit (\texttt{adjnoun} found the optimal $0.313$ partition but still had a $23.6\%$ optimality gap at timeout, and \texttt{jazz} timed out). Scores of $0.000$ denote collapse to a single community ($k=1$). Entries marked \textsc{ERR} indicate solver runtime failures (for \textsc{LIM}, when its coarse \textsc{Louvain} initialization at $\gamma = 0.3$ collapses to a single community).}
+    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Small-scale networks ($n \le 1\,133$). Bold indicates the highest modularity per instance (at full precision). Columns with a gray background indicate instances where \textsc{Bayan} terminated with the globally optimal modularity in our benchmark run. An asterisk ($^*$) marks additional instances whose global optimum is known from the literature~\cite{bayan2024,maxsat2025}, but where \textsc{Bayan} did not prove optimality within our 1-hour limit (\texttt{adjnoun} found the optimal $0.313$ partition but still had a $23.6\%$ optimality gap at timeout, and \texttt{jazz} timed out). Scores of $0.000$ denote collapse to a single community ($k=1$). Entries marked \textsc{ERR} indicate runtime failures (for \textsc{LIM}, when \textsc{Louvain} initialization at $\gamma = 0.3$ collapses to one cluster).}
     \label{tab:mod_dimacs_small}
     \vspace{0.5em}
     \small
@@ -1268,221 +1280,171 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
 @article{Newman2003,
   title     = {Properties of highly clustered networks},
   author    = {Newman, M. E. J.},
-  journal   = {Phys. Rev. E},
+  journal   = {Physical Review E},
   volume    = {68},
-  issue     = {2},
+  number    = {2},
   pages     = {026121},
-  numpages  = {6},
   year      = {2003},
-  month     = {Aug},
-  publisher = {American Physical Society},
   doi       = {10.1103/PhysRevE.68.026121},
-  url       = {https://link.aps.org/doi/10.1103/PhysRevE.68.026121}
+  url       = {https://doi.org/10.1103/PhysRevE.68.026121}
 }
 
 @inproceedings{McFarling89,
   author    = {Scott McFarling},
-  editor    = {Joel S. Emer and
-               John L. Hennessy},
-  title     = {Program Optimization for Instruction Caches},
-  booktitle = {{ASPLOS-III} Proceedings - Third International Conference on Architectural
-               Support for Programming Languages and Operating Systems, Boston, Massachusetts,
-               USA, April 3-6, 1989},
+  editor    = {Joel S. Emer and John L. Hennessy},
+  title     = {Program optimization for instruction caches},
+  booktitle = {Proceedings of the 3rd International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS 1989)},
   pages     = {183--191},
-  publisher = {{ACM} Press},
+  publisher = {Association for Computing Machinery},
   year      = {1989},
-  url       = {https://doi.org/10.1145/70082.68200},
   doi       = {10.1145/70082.68200},
-  timestamp = {Wed, 07 Jul 2021 13:23:09 +0200},
-  biburl    = {https://dblp.org/rec/conf/asplos/McFarling89.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  url       = {https://doi.org/10.1145/70082.68200}
 }
 
 @article{Demme2012,
-  author    = {John Demme and
-               Simha Sethumadhavan},
+  author    = {John Demme and Simha Sethumadhavan},
   title     = {Approximate graph clustering for program characterization},
-  journal   = {{ACM} Trans. Archit. Code Optim.},
+  journal   = {ACM Transactions on Architecture and Code Optimization},
   volume    = {8},
   number    = {4},
   pages     = {21:1--21:21},
   year      = {2012},
-  url       = {https://doi.org/10.1145/2086696.2086700},
   doi       = {10.1145/2086696.2086700},
-  timestamp = {Wed, 17 Feb 2021 22:02:37 +0100},
-  biburl    = {https://dblp.org/rec/journals/taco/DemmeS12.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  url       = {https://doi.org/10.1145/2086696.2086700}
 }
 
 @article{Akoglu2015,
-  author    = {Leman Akoglu and
-               Hanghang Tong and
-               Danai Koutra},
+  author    = {Leman Akoglu and Hanghang Tong and Danai Koutra},
   title     = {Graph based anomaly detection and description: a survey},
-  journal   = {Data Min. Knowl. Discov.},
+  journal   = {Data Mining and Knowledge Discovery},
   volume    = {29},
   number    = {3},
   pages     = {626--688},
   year      = {2015},
-  url       = {https://doi.org/10.1007/s10618-014-0365-y},
-  doi       = {10.1007/S10618-014-0365-Y},
-  timestamp = {Mon, 03 Mar 2025 21:36:44 +0100},
-  biburl    = {https://dblp.org/rec/journals/datamine/AkogluTK15.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  doi       = {10.1007/s10618-014-0365-y},
+  url       = {https://doi.org/10.1007/s10618-014-0365-y}
 }
 
 @article{Xu2002,
-  author    = {Ying Xu and
-               Victor Olman and
-               Dong Xu},
-  title     = {Clustering gene expression data using a graph-theoretic approach:
-               an application of minimum spanning trees},
-  journal   = {Bioinform.},
+  author    = {Ying Xu and Victor Olman and Dong Xu},
+  title     = {Clustering gene expression data using a graph-theoretic approach: an application of minimum spanning trees},
+  journal   = {Bioinformatics},
   volume    = {18},
   number    = {4},
   pages     = {536--545},
   year      = {2002},
-  url       = {https://doi.org/10.1093/bioinformatics/18.4.536},
-  doi       = {10.1093/BIOINFORMATICS/18.4.536},
-  timestamp = {Mon, 02 Mar 2020 16:26:24 +0100},
-  biburl    = {https://dblp.org/rec/journals/bioinformatics/XuOX02.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  doi       = {10.1093/bioinformatics/18.4.536},
+  url       = {https://doi.org/10.1093/bioinformatics/18.4.536}
 }
 
 @article{Cai2011,
-  author    = {Bingjing Cai and
-               Haiying Wang and
-               Huiru Zheng and
-               Hui Wang},
-  title     = {Detection of functional modules from protein interaction networks
-               with an enhanced random walk based algorithm},
-  journal   = {Int. J. Comput. Biol. Drug Des.},
+  author    = {Bingjing Cai and Haiying Wang and Huiru Zheng and Hui Wang},
+  title     = {Detection of functional modules from protein interaction networks with an enhanced random walk based algorithm},
+  journal   = {International Journal of Computational Biology and Drug Design},
   volume    = {4},
   number    = {3},
   pages     = {290--306},
   year      = {2011},
-  url       = {https://doi.org/10.1504/IJCBDD.2011.041416},
   doi       = {10.1504/IJCBDD.2011.041416},
-  timestamp = {Thu, 14 Oct 2021 08:55:44 +0200},
-  biburl    = {https://dblp.org/rec/journals/ijcbdd/CaiWZW11.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  url       = {https://doi.org/10.1504/IJCBDD.2011.041416}
 }
 
 @article{Newman2006,
-  author   = {M. E. J. Newman },
+  author   = {M. E. J. Newman},
   title    = {Modularity and community structure in networks},
   journal  = {Proceedings of the National Academy of Sciences},
   volume   = {103},
   number   = {23},
-  pages    = {8577-8582},
+  pages    = {8577--8582},
   year     = {2006},
   doi      = {10.1073/pnas.0601602103},
-  url      = {https://www.pnas.org/doi/abs/10.1073/pnas.0601602103},
-  abstract = {Many networks of interest in the sciences, including social networks, computer networks, and metabolic and regulatory networks, are found to divide naturally into communities or modules. The problem of detecting and characterizing this community structure is one of the outstanding issues in the study of networked systems. One highly effective approach is the optimization of the quality function known as “modularity” over the possible divisions of a network. Here I show that the modularity can be expressed in terms of the eigenvectors of a characteristic matrix for the network, which I call the modularity matrix, and that this expression leads to a spectral algorithm for community detection that returns results of demonstrably higher quality than competing methods in shorter running times. I illustrate the method with applications to several published network data sets.}
+  url      = {https://doi.org/10.1073/pnas.0601602103}
 }
 
 @article{Brandes2008,
-  author    = {Ulrik Brandes and
-               Daniel Delling and
-               Marco Gaertler and
-               Robert G{\"{o}}rke and
-               Martin Hoefer and
-               Zoran Nikoloski and
-               Dorothea Wagner},
-  title     = {On Modularity Clustering},
-  journal   = {{IEEE} Trans. Knowl. Data Eng.},
+  author    = {Ulrik Brandes and Daniel Delling and Marco Gaertler and Robert G{\"o}rke and Martin Hoefer and Zoran Nikoloski and Dorothea Wagner},
+  title     = {On modularity clustering},
+  journal   = {IEEE Transactions on Knowledge and Data Engineering},
   volume    = {20},
   number    = {2},
   pages     = {172--188},
   year      = {2008},
-  url       = {https://doi.org/10.1109/TKDE.2007.190689},
   doi       = {10.1109/TKDE.2007.190689},
-  timestamp = {Sun, 02 Oct 2022 15:51:31 +0200},
-  biburl    = {https://dblp.org/rec/journals/tkde/BrandesDGGHNW08.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  url       = {https://doi.org/10.1109/TKDE.2007.190689}
 }
 
 @article{girvan2002,
-  author   = {M. Girvan  and M. E. J. Newman },
+  author   = {M. Girvan and M. E. J. Newman},
   title    = {Community structure in social and biological networks},
   journal  = {Proceedings of the National Academy of Sciences},
   volume   = {99},
   number   = {12},
-  pages    = {7821-7826},
+  pages    = {7821--7826},
   year     = {2002},
   doi      = {10.1073/pnas.122653799},
-  url      = {https://www.pnas.org/doi/abs/10.1073/pnas.122653799},
-  abstract = {A number of recent studies have focused on the statistical properties of networked systems such as social networks and the Worldwide Web. Researchers have concentrated particularly on a few properties that seem to be common to many networks: the small-world property, power-law degree distributions, and network transitivity. In this article, we highlight another property that is found in many networks, the property of community structure, in which network nodes are joined together in tightly knit groups, between which there are only looser connections. We propose a method for detecting such communities, built around the idea of using centrality indices to find community boundaries. We test our method on computer-generated and real-world graphs whose community structure is already known and find that the method detects this known structure with high sensitivity and reliability. We also apply the method to two networks whose community structure is not well known—a collaboration network and a food web—and find that it detects significant and informative community divisions in both cases.}
+  url      = {https://doi.org/10.1073/pnas.122653799}
 }
 
 @article{cnm2004,
-  author  = {Clauset, Aaron 
-             and Newman, Mark E. J. 
-             and Moore, Cristopher},
+  author  = {Clauset, Aaron and Newman, Mark E. J. and Moore, Cristopher},
   title   = {Finding community structure in very large networks},
   journal = {Physical Review E},
   volume  = {70},
   number  = {6},
   pages   = {066111},
   year    = {2004},
-  doi     = {10.1103/PhysRevE.70.066111}
+  doi     = {10.1103/PhysRevE.70.066111},
+  url     = {https://doi.org/10.1103/PhysRevE.70.066111}
 }
 
 @inproceedings{walktrap2005,
-  author    = {Pons, Pascal
-               and Latapy, Matthieu},
-  title     = {Computing Communities in Large Networks Using Random Walks},
+  author    = {Pons, Pascal and Latapy, Matthieu},
+  title     = {Computing communities in large networks using random walks},
   booktitle = {Proceedings of the 20th International Symposium on Computer and Information Sciences (ISCIS 2005)},
   pages     = {284--293},
   year      = {2005},
-  publisher = {Springer Berlin Heidelberg},
-  doi       = {10.1007/11569596_31}
+  publisher = {Springer},
+  doi       = {10.1007/11569596_31},
+  url       = {https://doi.org/10.1007/11569596_31}
 }
 
 @inproceedings{wt2007,
-  author    = {Wakita, Ken 
-               and Tsurumi, Toshiyuki},
-  title     = {Finding community structure in mega-scale social networks: [extended abstract]},
+  author    = {Wakita, Ken and Tsurumi, Toshiyuki},
+  title     = {Finding community structure in mega-scale social networks},
   booktitle = {Proceedings of the 16th International Conference on World Wide Web (WWW 2007)},
   pages     = {1275--1276},
   year      = {2007},
   publisher = {Association for Computing Machinery},
-  doi       = {10.1145/1242572.1242805}
+  doi       = {10.1145/1242572.1242805},
+  url       = {https://doi.org/10.1145/1242572.1242805}
 }
 
 @article{infomap2008,
-  author  = {Martin Rosvall 
-             and Carl T. Bergstrom},
+  author  = {Martin Rosvall and Carl T. Bergstrom},
   title   = {Maps of random walks on complex networks reveal community structure},
   journal = {Proceedings of the National Academy of Sciences},
   volume  = {105},
   number  = {4},
   pages   = {1118--1123},
   year    = {2008},
-  doi     = {10.1073/pnas.0706851105}
+  doi     = {10.1073/pnas.0706851105},
+  url     = {https://doi.org/10.1073/pnas.0706851105}
 }
 
 @article{louvain2008,
-  author  = {Blondel, Vincent D. 
-             and Guillaume, Jean-Loup 
-             and Lambiotte, Renaud 
-             and Lefebvre, Etienne},
+  author  = {Blondel, Vincent D. and Guillaume, Jean-Loup and Lambiotte, Renaud and Lefebvre, Etienne},
   title   = {Fast unfolding of communities in large networks},
   journal = {Journal of Statistical Mechanics: Theory and Experiment},
   volume  = {2008},
   number  = {10},
   pages   = {P10008},
   year    = {2008},
-  doi     = {10.1088/1742-5468/2008/10/P10008}
+  doi     = {10.1088/1742-5468/2008/10/P10008},
+  url     = {https://doi.org/10.1088/1742-5468/2008/10/P10008}
 }
 
 @incollection{vns2012,
-  author    = {Aloise, Daniel 
-               and Caporossi, Gilles 
-               and Hansen, Pierre 
-               and Liberti, Leo 
-               and Perron, Sylvain 
-               and Ruiz, Manuel},
+  author    = {Aloise, Daniel and Caporossi, Gilles and Hansen, Pierre and Liberti, Leo and Perron, Sylvain and Ruiz, Manuel},
   title     = {Modularity maximization in networks by variable neighborhood search},
   booktitle = {Graph Partitioning and Graph Clustering},
   series    = {Contemporary Mathematics},
@@ -1490,12 +1452,12 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   pages     = {113--127},
   year      = {2013},
   publisher = {American Mathematical Society},
-  doi       = {10.1090/conm/588/11705}
+  doi       = {10.1090/conm/588/11705},
+  url       = {https://doi.org/10.1090/conm/588/11705}
 }
 
 @incollection{cggci_rg2012,
-  author    = {Ovelg\"{o}nne, Michael
-               and Geyer-Schulz, Andreas},
+  author    = {Ovelg{\"o}nne, Michael and Geyer-Schulz, Andreas},
   title     = {An ensemble learning strategy for graph clustering},
   booktitle = {Graph Partitioning and Graph Clustering},
   series    = {Contemporary Mathematics},
@@ -1503,526 +1465,405 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   pages     = {187--205},
   year      = {2013},
   publisher = {American Mathematical Society},
-  doi       = {10.1090/conm/588/11701}
+  doi       = {10.1090/conm/588/11701},
+  url       = {https://doi.org/10.1090/conm/588/11701}
 }
 
 @inproceedings{scd2014,
-  author    = {Prat-P\'{e}rez, Arnau 
-               and Dominguez-Sal, David 
-               and Larriba-Pey, Josep-Lluis},
+  author    = {Prat-P{\'e}rez, Arnau and Dominguez-Sal, David and Larriba-Pey, Josep-Lluis},
   title     = {High quality, scalable and parallel community detection for large real graphs},
   booktitle = {Proceedings of the 23rd International Conference on World Wide Web (WWW 2014)},
   pages     = {225--236},
   year      = {2014},
   publisher = {Association for Computing Machinery},
-  doi       = {10.1145/2566486.2568010}
+  doi       = {10.1145/2566486.2568010},
+  url       = {https://doi.org/10.1145/2566486.2568010}
 }
 
 @article{combo2014,
-  author  = {Sobolevsky, Stanislav 
-             and Campari, Riccardo 
-             and Belyi, Alexander 
-             and Ratti, Carlo},
+  author  = {Sobolevsky, Stanislav and Campari, Riccardo and Belyi, Alexander and Ratti, Carlo},
   title   = {General optimization technique for high-quality community detection in complex networks},
   journal = {Physical Review E},
   volume  = {90},
   number  = {1},
   pages   = {012811},
   year    = {2014},
-  doi     = {10.1103/PhysRevE.90.012811}
+  doi     = {10.1103/PhysRevE.90.012811},
+  url     = {https://doi.org/10.1103/PhysRevE.90.012811}
 }
 
 @misc{hollocou2017,
-  author       = {Alexandre Hollocou 
-                  and Julien Maudet 
-                  and Thomas Bonald 
-                  and Marc Lelarge},
-  title        = {A Streaming Algorithm for Graph Clustering},
+  author       = {Alexandre Hollocou and Julien Maudet and Thomas Bonald and Marc Lelarge},
+  title        = {A streaming algorithm for graph clustering},
   year         = {2017},
   howpublished = {Preprint at \url{https://arxiv.org/abs/1712.04337}},
   doi          = {10.48550/arXiv.1712.04337}
 }
 
 @inproceedings{vieclus2018,
-  author    = {Biedermann, Sonja 
-               and Henzinger, Monika 
-               and Schulz, Christian 
-               and Schuster, Bernhard},
-  title     = {Memetic Graph Clustering},
+  author    = {Biedermann, Sonja and Henzinger, Monika and Schulz, Christian and Schuster, Bernhard},
+  title     = {Memetic graph clustering},
   year      = {2018},
   booktitle = {Proceedings of the 17th International Symposium on Experimental Algorithms (SEA 2018)},
   pages     = {3:1--3:15},
   publisher = {Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
-  doi       = {10.4230/LIPIcs.SEA.2018.3}
+  doi       = {10.4230/LIPIcs.SEA.2018.3},
+  url       = {https://doi.org/10.4230/LIPIcs.SEA.2018.3}
 }
 
 @article{infoflow2019,
   author  = {Fung, Park K.},
-  title   = {{InfoFlow}: A Distributed Algorithm to Detect Communities According to the Map Equation},
+  title   = {{InfoFlow}: A distributed algorithm to detect communities according to the map equation},
   journal = {Big Data and Cognitive Computing},
   volume  = {3},
   number  = {3},
   pages   = {42},
   year    = {2019},
-  doi     = {10.3390/bdcc3030042}
+  doi     = {10.3390/bdcc3030042},
+  url     = {https://doi.org/10.3390/bdcc3030042}
 }
 
 @article{leiden2019,
-  author  = {Traag, Vincent A.
-             and Waltman, Ludo
-             and van Eck, Nees Jan},
+  author  = {Traag, Vincent A. and Waltman, Ludo and van Eck, Nees Jan},
   title   = {From {Louvain} to {Leiden}: guaranteeing well-connected communities},
   journal = {Scientific Reports},
   volume  = {9},
   number  = {1},
   pages   = {5233},
   year    = {2019},
-  doi     = {10.1038/s41598-019-41695-z}
+  doi     = {10.1038/s41598-019-41695-z},
+  url     = {https://doi.org/10.1038/s41598-019-41695-z}
 }
 
 @article{advnds2019,
-  author  = {D\v{z}ami\'{c}, Du\v{s}an
-             and Aloise, Daniel
-             and Mladenovi\'{c}, Nenad},
+  author  = {D\v{z}ami\'{c}, Du\v{s}an and Aloise, Daniel and Mladenovi\'{c}, Nenad},
   title   = {Ascent-descent variable neighborhood decomposition search for community detection by modularity maximization},
   journal = {Annals of Operations Research},
   volume  = {272},
   number  = {1},
   pages   = {273--295},
   year    = {2019},
-  doi     = {10.1007/s10479-017-2553-9}
+  doi     = {10.1007/s10479-017-2553-9},
+  url     = {https://doi.org/10.1007/s10479-017-2553-9}
 }
 
 @inproceedings{commdgi2020,
-  author    = {Zhang, Tianqi 
-               and Xiong, Yun 
-               and Zhang, Jiawei 
-               and Zhang, Yao 
-               and Jiao, Yizhu 
-               and Zhu, Yangyong},
-  title     = {{CommDGI}: Community Detection Oriented Deep Graph Infomax},
+  author    = {Zhang, Tianqi and Xiong, Yun and Zhang, Jiawei and Zhang, Yao and Jiao, Yizhu and Zhu, Yangyong},
+  title     = {{CommDGI}: Community detection oriented deep graph infomax},
   year      = {2020},
-  booktitle = {Proceedings of the 29th ACM International Conference on Information \& Knowledge Management (CIKM 2020)},
+  booktitle = {Proceedings of the 29th ACM International Conference on Information and Knowledge Management (CIKM 2020)},
   pages     = {1843--1852},
   publisher = {Association for Computing Machinery},
-  doi       = {10.1145/3340531.3412042}
+  doi       = {10.1145/3340531.3412042},
+  url       = {https://doi.org/10.1145/3340531.3412042}
 }
 
 @article{dmon2023,
-  author  = {Anton Tsitsulin 
-             and John Palowitch 
-             and Bryan Perozzi 
-             and Emmanuel M\"{u}ller},
-  title   = {Graph Clustering with Graph Neural Networks},
+  author  = {Anton Tsitsulin and John Palowitch and Bryan Perozzi and Emmanuel M{\"u}ller},
+  title   = {Graph clustering with graph neural networks},
   journal = {Journal of Machine Learning Research},
   volume  = {24},
   number  = {127},
   pages   = {1--21},
   year    = {2023},
-  url     = {http://jmlr.org/papers/v24/20-998.html}
+  url     = {https://jmlr.org/papers/v24/20-998.html}
 }
 
 @article{gnns2022,
-  author  = {Stanislav Sobolevsky
-             and Alexander Belyi},
+  author  = {Stanislav Sobolevsky and Alexander Belyi},
   title   = {Graph neural network inspired algorithm for unsupervised network community detection},
   journal = {Applied Network Science},
   volume  = {7},
   number  = {1},
   pages   = {63},
   year    = {2022},
-  doi     = {10.1007/s41109-022-00500-z}
+  doi     = {10.1007/s41109-022-00500-z},
+  url     = {https://doi.org/10.1007/s41109-022-00500-z}
 }
 
 @article{ucode2023,
-  author  = {Moradan, Atefeh
-             and Draganov, Andrew
-             and Mottin, Davide
-             and Assent, Ira},
+  author  = {Moradan, Atefeh and Draganov, Andrew and Mottin, Davide and Assent, Ira},
   title   = {{UCoDe}: Unified community detection with graph convolutional networks},
   journal = {Machine Learning},
   volume  = {112},
   number  = {12},
   pages   = {5057--5080},
   year    = {2023},
-  doi     = {10.1007/s10994-023-06402-0}
+  doi     = {10.1007/s10994-023-06402-0},
+  url     = {https://doi.org/10.1007/s10994-023-06402-0}
 }
 
 @inproceedings{survey2023,
-  author    = {Aref, Samin
-               and Mostajabdaveh, Mahdi
-               and Chheda, Hriday},
-  title     = {Heuristic Modularity Maximization Algorithms for Community Detection Rarely Return an Optimal Partition or Anything Similar},
+  author    = {Aref, Samin and Mostajabdaveh, Mahdi and Chheda, Hriday},
+  title     = {Heuristic modularity maximization algorithms for community detection rarely return an optimal partition or anything similar},
   year      = {2023},
   booktitle = {Proceedings of the 23rd International Conference on Computational Science (ICCS 2023)},
   pages     = {612--626},
-  publisher = {Springer Nature Switzerland},
-  doi       = {10.1007/978-3-031-36027-5_48}
+  publisher = {Springer},
+  doi       = {10.1007/978-3-031-36027-5_48},
+  url       = {https://doi.org/10.1007/978-3-031-36027-5_48}
 }
 
-
 @inproceedings{dgcluster2024,
-  author    = {Bhowmick, Aritra 
-               and Kosan, Mert 
-               and Huang, Zexi 
-               and Singh, Ambuj 
-               and Medya, Sourav},
-  title     = {{DGCLUSTER}: A Neural Framework for Attributed Graph Clustering via Modularity Maximization},
+  author    = {Bhowmick, Aritra and Kosan, Mert and Huang, Zexi and Singh, Ambuj and Medya, Sourav},
+  title     = {{DGCluster}: A neural framework for attributed graph clustering via modularity maximization},
   year      = {2024},
   booktitle = {Proceedings of the 38th AAAI Conference on Artificial Intelligence (AAAI 2024)},
   pages     = {11069--11077},
-  publisher = {AAAI Press, Washington, DC, USA},
-  doi       = {10.1609/aaai.v38i10.28983}
+  publisher = {AAAI Press},
+  doi       = {10.1609/aaai.v38i10.28983},
+  url       = {https://doi.org/10.1609/aaai.v38i10.28983}
 }
 
 @inproceedings{magi2024,
-  author    = {Liu, Yunfei 
-               and Li, Jintang 
-               and Chen, Yuehe 
-               and Wu, Ruofan 
-               and Wang, Ericbk 
-               and Zhou, Jing 
-               and Tian, Sheng 
-               and Shen, Shuheng 
-               and Fu, Xing 
-               and Meng, Changhua 
-               and Wang, Weiqiang 
-               and Chen, Liang},
-  title     = {Revisiting Modularity Maximization for Graph Clustering: A Contrastive Learning Perspective},
+  author    = {Liu, Yunfei and Li, Jintang and Chen, Yuehe and Wu, Ruofan and Wang, Ericbk and Zhou, Jing and Tian, Sheng and Shen, Shuheng and Fu, Xing and Meng, Changhua and Wang, Weiqiang and Chen, Liang},
+  title     = {Revisiting modularity maximization for graph clustering: A contrastive learning perspective},
   year      = {2024},
   booktitle = {Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD 2024)},
   pages     = {1968--1979},
-  publisher = {Association for Computing Machinery, New York, NY, United States},
-  doi       = {10.1145/3637528.3671967}
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/3637528.3671967},
+  url       = {https://doi.org/10.1145/3637528.3671967}
 }
 
 @article{bayan2024,
-  author  = {Aref, Samin 
-             and Mostajabdaveh, Mahdi 
-             and Chheda, Hriday},
+  author  = {Aref, Samin and Mostajabdaveh, Mahdi and Chheda, Hriday},
   title   = {Bayan algorithm: Detecting communities in networks through exact and approximate optimization of modularity},
   journal = {Physical Review E},
   volume  = {110},
   number  = {4},
   pages   = {044315},
   year    = {2024},
-  doi     = {10.1103/PhysRevE.110.044315}
+  doi     = {10.1103/PhysRevE.110.044315},
+  url     = {https://doi.org/10.1103/PhysRevE.110.044315}
 }
 
 @inproceedings{neuromap2024,
-  author    = {Bl{\"o}cker, Christopher 
-               and Tan, Chester 
-               and Scholtes, Ingo},
+  author    = {Bl{\"o}cker, Christopher and Tan, Chester and Scholtes, Ingo},
   title     = {The map equation goes neural: Mapping network flows with graph neural networks},
   year      = {2024},
   booktitle = {Proceedings of the 38th Conference on Neural Information Processing Systems (NeurIPS 2024)},
   pages     = {17428--17456},
   publisher = {Curran Associates, Inc.},
-  doi       = {10.52202/079017-0554}
+  doi       = {10.52202/079017-0554},
+  url       = {https://doi.org/10.52202/079017-0554}
 }
 
 @inproceedings{clustre2025,
-  author    = {Chhabra, Adil 
-               and Dorian Peretz, Shai 
-               and Schulz, Christian},
-  title     = {{CluStRE}: Streaming Graph Clustering with Multi-Stage Refinement},
+  author    = {Chhabra, Adil and Dorian Peretz, Shai and Schulz, Christian},
+  title     = {{CluStRE}: Streaming graph clustering with multi-stage refinement},
   year      = {2025},
   booktitle = {Proceedings of the 23rd International Symposium on Experimental Algorithms (SEA 2025)},
   pages     = {11:1--11:20},
   publisher = {Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
-  doi       = {10.4230/LIPIcs.SEA.2025.11}
+  doi       = {10.4230/LIPIcs.SEA.2025.11},
+  url       = {https://doi.org/10.4230/LIPIcs.SEA.2025.11}
 }
 
 @article{lim2025,
-  author  = {Wang, Hong
-             and Zhang, Yinglong
-             and Zhao, Zhangqi
-             and Cai, Zhicong
-             and Xia, Xuewen
-             and Xu, Xing},
+  author  = {Wang, Hong and Zhang, Yinglong and Zhao, Zhangqi and Cai, Zhicong and Xia, Xuewen and Xu, Xing},
   title   = {Simple yet effective heuristic community detection with graph convolution network},
   journal = {Scientific Reports},
   volume  = {15},
   number  = {1},
   pages   = {39249},
   year    = {2025},
-  doi     = {10.1038/s41598-025-22860-z}
+  doi     = {10.1038/s41598-025-22860-z},
+  url     = {https://doi.org/10.1038/s41598-025-22860-z}
 }
 
 @inproceedings{maxsat2025,
-  author    = {Ans{\'o}tegui, Carlos
-               and Ramaswamy, Vaidyanathan Peruvemba
-               and Szeider, Stefan
-               and Xia, Hai},
-  title     = {Uncovering and Verifying Optimal Community Structure in Complex Networks: A {MaxSAT} Approach},
+  author    = {Ans{\'o}tegui, Carlos and Ramaswamy, Vaidyanathan Peruvemba and Szeider, Stefan and Xia, Hai},
+  title     = {Uncovering and verifying optimal community structure in complex networks: A {MaxSAT} approach},
   year      = {2025},
   booktitle = {Proceedings of the 25th International Conference on Computational Science (ICCS 2025)},
   pages     = {35--49},
-  publisher = {Springer Nature Switzerland},
-  doi       = {10.1007/978-3-031-97629-2_3}
+  publisher = {Springer},
+  doi       = {10.1007/978-3-031-97629-2_3},
+  url       = {https://doi.org/10.1007/978-3-031-97629-2_3}
 }
 
 @misc{adcsbm2022,
-  author       = {Anton Tsitsulin 
-                  and Benedek Rozemberczki 
-                  and John Palowitch 
-                  and Bryan Perozzi},
-  title        = {Synthetic Graph Generation to Benchmark Graph Learning},
+  author       = {Anton Tsitsulin and Benedek Rozemberczki and John Palowitch and Bryan Perozzi},
+  title        = {Synthetic graph generation to benchmark graph learning},
   year         = {2022},
   howpublished = {Preprint at \url{https://arxiv.org/abs/2204.01376}},
   doi          = {10.48550/arXiv.2204.01376}
 }
 
 @article{perf2002,
-  author  = {Dolan, Elizabeth D.
-             and Mor\'{e}, Jorge J.},
+  author  = {Dolan, Elizabeth D. and Mor{\'e}, Jorge J.},
   title   = {Benchmarking optimization software with performance profiles},
   journal = {Mathematical Programming},
   volume  = {91},
   number  = {2},
   pages   = {201--213},
   year    = {2002},
-  doi     = {10.1007/s101070100263}
+  doi     = {10.1007/s101070100263},
+  url     = {https://doi.org/10.1007/s101070100263}
 }
 
 @misc{gurobi,
   author = {{Gurobi Optimization, LLC}},
   title  = {{Gurobi Optimizer Reference Manual}},
-  year   = 2024,
+  year   = {2024},
   url    = {https://www.gurobi.com}
 }
 
 @inproceedings{wcc2012,
-  author    = {Prat-P{\'e}rez, Arnau 
-               and Dominguez-Sal, David 
-               and Brunat, Josep M. 
-               and Larriba-Pey, Josep-Lluis},
+  author    = {Prat-P{\'e}rez, Arnau and Dominguez-Sal, David and Brunat, Josep M. and Larriba-Pey, Josep-Lluis},
   title     = {Shaping communities out of triangles},
   year      = {2012},
-  booktitle = {Proceedings of the 21st ACM international conference on Information and knowledge management},
+  booktitle = {Proceedings of the 21st ACM International Conference on Information and Knowledge Management (CIKM 2012)},
   pages     = {1677--1681},
   publisher = {Association for Computing Machinery},
-  doi       = {10.1145/2396761.2398496}
+  doi       = {10.1145/2396761.2398496},
+  url       = {https://doi.org/10.1145/2396761.2398496}
 }
 
 @article{Li2024,
-  author    = {Jiakang Li and
-               Songning Lai and
-               Zhihao Shuai and
-               Yuan Tan and
-               Yifan Jia and
-               Mianyang Yu and
-               Zichen Song and
-               Xiaokang Peng and
-               Ziyang Xu and
-               Yongxin Ni and
-               Haifeng Qiu and
-               Jiayu Yang and
-               Yutong Liu and
-               Yonggang Lu},
+  author    = {Jiakang Li and Songning Lai and Zhihao Shuai and Yuan Tan and Yifan Jia and Mianyang Yu and Zichen Song and Xiaokang Peng and Ziyang Xu and Yongxin Ni and Haifeng Qiu and Jiayu Yang and Yutong Liu and Yonggang Lu},
   title     = {A comprehensive review of community detection in graphs},
   journal   = {Neurocomputing},
   volume    = {600},
   pages     = {128169},
   year      = {2024},
-  url       = {https://doi.org/10.1016/j.neucom.2024.128169},
-  doi       = {10.1016/J.NEUCOM.2024.128169},
-  timestamp = {Sat, 15 Nov 2025 13:50:18 +0100},
-  biburl    = {https://dblp.org/rec/journals/ijon/LiLSTJYSPXNQYLL24.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  doi       = {10.1016/j.neucom.2024.128169},
+  url       = {https://doi.org/10.1016/j.neucom.2024.128169}
 }
 
 @article{Jin2023,
-  author    = {Di Jin and
-               Zhizhi Yu and
-               Pengfei Jiao and
-               Shirui Pan and
-               Dongxiao He and
-               Jia Wu and
-               Philip S. Yu and
-               Weixiong Zhang},
-  title     = {A Survey of Community Detection Approaches: From Statistical Modeling
-               to Deep Learning},
-  journal   = {{IEEE} Trans. Knowl. Data Eng.},
+  author    = {Di Jin and Zhizhi Yu and Pengfei Jiao and Shirui Pan and Dongxiao He and Jia Wu and Philip S. Yu and Weixiong Zhang},
+  title     = {A survey of community detection approaches: From statistical modeling to deep learning},
+  journal   = {IEEE Transactions on Knowledge and Data Engineering},
   volume    = {35},
   number    = {2},
   pages     = {1149--1170},
   year      = {2023},
-  url       = {https://doi.org/10.1109/TKDE.2021.3104155},
   doi       = {10.1109/TKDE.2021.3104155},
-  timestamp = {Tue, 31 Jan 2023 20:44:56 +0100},
-  biburl    = {https://dblp.org/rec/journals/tkde/JinYJPHWYZ23.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  url       = {https://doi.org/10.1109/TKDE.2021.3104155}
 }
 
 @inproceedings{Liu2020,
-  author    = {Fanzhen Liu and
-               Shan Xue and
-               Jia Wu and
-               Chuan Zhou and
-               Wenbin Hu and
-               C{\'{e}}cile Paris and
-               Surya Nepal and
-               Jian Yang and
-               Philip S. Yu},
+  author    = {Fanzhen Liu and Shan Xue and Jia Wu and Chuan Zhou and Wenbin Hu and C{\'e}cile Paris and Surya Nepal and Jian Yang and Philip S. Yu},
   editor    = {Christian Bessiere},
-  title     = {Deep Learning for Community Detection: Progress, Challenges and Opportunities},
-  booktitle = {Proceedings of the Twenty-Ninth International Joint Conference on
-               Artificial Intelligence, {IJCAI} 2020},
+  title     = {Deep learning for community detection: Progress, challenges and opportunities},
+  booktitle = {Proceedings of the 29th International Joint Conference on Artificial Intelligence (IJCAI 2020)},
   pages     = {4981--4987},
   publisher = {ijcai.org},
   year      = {2020},
-  url       = {https://doi.org/10.24963/ijcai.2020/693},
-  doi       = {10.24963/IJCAI.2020/693},
-  timestamp = {Tue, 15 Oct 2024 16:43:28 +0200},
-  biburl    = {https://dblp.org/rec/conf/ijcai/LiuX0ZHPNYY20.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  doi       = {10.24963/ijcai.2020/693},
+  url       = {https://doi.org/10.24963/ijcai.2020/693}
 }
 
 @article{Messias2025,
-  author   = {Messias, Guilherme Henrique and Gonçalves Botelho, Tiago and Iasulaitis, Sylvia and Coelho Naldi, Murilo and Demétrius Baria Valejo, Alan},
+  author   = {Messias, Guilherme Henrique and Gon\c{c}alves Botelho, Tiago and Iasulaitis, Sylvia and Coelho Naldi, Murilo and Dem{\'e}trius Baria Valejo, Alan},
   journal  = {IEEE Access},
-  title    = {A Systematic Review of Graph Neural Network for Node Clustering in Homogeneous Attributed Networks},
+  title    = {A systematic review of graph neural network for node clustering in homogeneous attributed networks},
   year     = {2025},
   volume   = {13},
-  number   = {},
-  pages    = {215265-215285},
-  keywords = {Systematic literature review;Taxonomy;Graph neural networks;Clustering algorithms;Surveys;Protocols;Planning;Focusing;Data models;Computational efficiency;Community detection;graph neural networks;homogeneous networks;node clustering;systematic literature review;unsupervised learning},
-  doi      = {10.1109/ACCESS.2025.3646597}
+  pages    = {215265--215285},
+  doi      = {10.1109/ACCESS.2025.3646597},
+  url      = {https://doi.org/10.1109/ACCESS.2025.3646597}
 }
 
-@inproceedings{Gaertler2005,
-  abstract           = {Clustering is a synonym for the decomposition of a set of entities into `natural groups'. There are two major aspects to this task: the first involves algorithmic issues on how to find such decompositions, i.e., tractability, while the second concerns quality assignment, i.e., how good is the computed decomposition. Owing to the informal notion of natural groups, many different disciplines have developed their view of clustering independently.},
-  author             = {Marco Gaertler},
-  booktitle          = {Network Analysis: Methodological Foundations [outcome of a Dagstuhl seminar, 13-16 April 2004]},
-  isbn               = {978-3-540-31955-9},
-  pages              = {178--215},
-  publisher          = {Springer},
-  title              = {Clustering},
-  year               = {2004},
-  timestamp          = {Sun, 02 Oct 2022 01:00:00 +0200},
-  biburl             = {https://dblp.org/rec/conf/dagstuhl/Gaertler04.bib},
-  bibsource          = {dblp computer science bibliography, https://dblp.org},
-  doi                = {10.1007/978-3-540-31955-9_8},
-  volume             = {3418},
-  url                = {https://doi.org/10.1007/978-3-540-31955-9\_8},
-  editor             = {Ulrik Brandes and Thomas Erlebach},
-  series             = {Lecture Notes in Computer Science},
-  _bib2doi_selected  = {dblp:/rec/conf/dagstuhl/Gaertler04.bib},
-  _bib2doi_confirmed = {true},
-  _bib2doi_finished  = {true}
+@incollection{Gaertler2005,
+  author    = {Marco Gaertler},
+  editor    = {Ulrik Brandes and Thomas Erlebach},
+  title     = {Clustering},
+  booktitle = {Network Analysis: Methodological Foundations},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {3418},
+  pages     = {178--215},
+  publisher = {Springer},
+  year      = {2005},
+  doi       = {10.1007/978-3-540-31955-9_8},
+  url       = {https://doi.org/10.1007/978-3-540-31955-9_8}
 }
 
 @article{kannan2004clusterings,
-  abstract           = {We motivate and develop a natural bicriteria measure for assessing the quality of a clustering that avoids the drawbacks of existing measures. A simple recursive heuristic is shown to have poly-logarithmic worst-case guarantees under the new measure. The main result of the article is the analysis of a popular spectral algorithm. One variant of spectral clustering turns out to have effective worst-case guarantees; another finds a "good" clustering, if one exists.},
-  author             = {Ravi Kannan and Santosh S. Vempala and Adrian Vetta},
-  issn               = {0004-5411},
-  issue_date         = {May 2004},
-  journal            = {J. {ACM}},
-  keywords           = {spectral methods, graph algorithms, Clustering},
-  month              = {May},
-  number             = {3},
-  numpages           = {19},
-  pages              = {497--515},
-  title              = {On clusterings: Good, bad and spectral},
-  volume             = {51},
-  year               = {2004},
-  timestamp          = {Thu, 24 Oct 2019 01:00:00 +0200},
-  biburl             = {https://dblp.org/rec/journals/jacm/KannanVV04.bib},
-  bibsource          = {dblp computer science bibliography, https://dblp.org},
-  doi                = {10.1145/990308.990313},
-  url                = {https://doi.org/10.1145/990308.990313},
-  _bib2doi_selected  = {dblp:/rec/journals/jacm/KannanVV04.bib},
-  _bib2doi_confirmed = {true},
-  _bib2doi_finished  = {true}
+  author  = {Ravi Kannan and Santosh S. Vempala and Adrian Vetta},
+  title   = {On clusterings: Good, bad and spectral},
+  journal = {Journal of the ACM},
+  volume  = {51},
+  number  = {3},
+  pages   = {497--515},
+  year    = {2004},
+  doi     = {10.1145/990308.990313},
+  url     = {https://doi.org/10.1145/990308.990313}
 }
 
 @article{arnau2004iterative,
-  author             = {Arnau, V. and Mars, S. and Mar\'{\i}n, I.},
-  journal            = {Bioinformatics},
-  language           = {en},
-  month              = {February},
-  number             = {3},
-  pages              = {364--378},
-  title              = {{I}terative {C}luster {A}nalysis of {P}rotein {I}nteraction {D}ata},
-  volume             = {21},
-  year               = {2005},
-  doi                = {10.1093/bioinformatics/bti021}
+  author  = {Arnau, V. and Mars, S. and Mar\'{\i}n, I.},
+  title   = {Iterative cluster analysis of protein interaction data},
+  journal = {Bioinformatics},
+  volume  = {21},
+  number  = {3},
+  pages   = {364--378},
+  year    = {2005},
+  doi     = {10.1093/bioinformatics/bti021},
+  url     = {https://doi.org/10.1093/bioinformatics/bti021}
 }
 
 @proceedings{dimacschallengegraphpartandcluster,
-  publisher          = {American Mathematical Society},
-  series             = {Contemporary Mathematics},
-  title              = {Graph Partitioning and Graph Clustering, 10th {DIMACS} Implementation Challenge Workshop, Georgia Institute of Technology, Atlanta, GA, USA, February 13-14, 2012. Proceedings},
-  doi                = {10.1090/conm/588},
-  volume             = {588},
-  year               = {2013},
-  url                = {https://doi.org/10.1090/conm/588},
-  editor             = {David A. Bader and Henning Meyerhenke and Peter Sanders and Dorothea Wagner},
-  isbn               = {978-0-8218-9038-7}
+  editor    = {David A. Bader and Henning Meyerhenke and Peter Sanders and Dorothea Wagner},
+  title     = {Graph Partitioning and Graph Clustering: 10th {DIMACS} Implementation Challenge Workshop},
+  series    = {Contemporary Mathematics},
+  volume    = {588},
+  publisher = {American Mathematical Society},
+  year      = {2013},
+  doi       = {10.1090/conm/588},
+  url       = {https://doi.org/10.1090/conm/588}
 }
 
 @article{Peel2016,
-  author    = {Leto Peel and
-               Daniel B. Larremore and
-               Aaron Clauset},
-  title     = {The ground truth about metadata and community detection in networks},
-  journal   = {Science Advances},
-  volume    = {3},
-  number    = {5},
-  pages     = {e1602548},
-  year      = {2017},
-  doi       = {10.1126/sciadv.1602548}
+  author  = {Leto Peel and Daniel B. Larremore and Aaron Clauset},
+  title   = {The ground truth about metadata and community detection in networks},
+  journal = {Science Advances},
+  volume  = {3},
+  number  = {5},
+  pages   = {e1602548},
+  year    = {2017},
+  doi     = {10.1126/sciadv.1602548},
+  url     = {https://doi.org/10.1126/sciadv.1602548}
 }
 
 @article{Wani2024,
-  author    = {Aasim Ayaz Wani},
-  title     = {Comprehensive analysis of clustering algorithms: exploring limitations
-               and innovative solutions},
-  journal   = {PeerJ Comput. Sci.},
-  volume    = {10},
-  pages     = {e2286},
-  year      = {2024},
-  url       = {https://doi.org/10.7717/peerj-cs.2286},
-  doi       = {10.7717/PEERJ-CS.2286},
-  timestamp = {Thu, 03 Oct 2024 00:46:22 +0200},
-  biburl    = {https://dblp.org/rec/journals/peerj-cs/Wani24.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+  author  = {Aasim Ayaz Wani},
+  title   = {Comprehensive analysis of clustering algorithms: exploring limitations and innovative solutions},
+  journal = {PeerJ Computer Science},
+  volume  = {10},
+  pages   = {e2286},
+  year    = {2024},
+  doi     = {10.7717/peerj-cs.2286},
+  url     = {https://doi.org/10.7717/peerj-cs.2286}
 }
 
 @inproceedings{birch1996,
   author    = {Zhang, Tian and Ramakrishnan, Raghu and Livny, Miron},
   title     = {{BIRCH}: an efficient data clustering method for very large databases},
-  year      = {1996},
-  isbn      = {0897917944},
-  publisher = {Association for Computing Machinery},
-  address   = {New York, NY, USA},
-  url       = {https://doi.org/10.1145/233269.233324},
-  doi       = {10.1145/233269.233324},
-  abstract  = {Finding useful patterns in large datasets has attracted considerable interest recently, and one of the most widely studied problems in this area is the identification of clusters, or densely populated regions, in a multi-dimensional dataset. Prior work does not adequately address the problem of large datasets and minimization of I/O costs.This paper presents a data clustering method named BIRCH (Balanced Iterative Reducing and Clustering using Hierarchies), and demonstrates that it is especially suitable for very large databases. BIRCH incrementally and dynamically clusters incoming multi-dimensional metric data points to try to produce the best quality clustering with the available resources (i.e., available memory and time constraints). BIRCH can typically find a good clustering with a single scan of the data, and improve the quality further with a few additional scans. BIRCH is also the first clustering algorithm proposed in the database area to handle "noise" (data points that are not part of the underlying pattern) effectively.We evaluate BIRCH's time/space efficiency, data input order sensitivity, and clustering quality through several experiments. We also present a performance comparisons of BIRCH versus CLARANS, a clustering method proposed recently for large datasets, and show that BIRCH is consistently superior.},
-  booktitle = {Proceedings of the 1996 ACM SIGMOD International Conference on Management of Data},
+  booktitle = {Proceedings of the 1996 ACM SIGMOD International Conference on Management of Data (SIGMOD 1996)},
   pages     = {103--114},
-  numpages  = {12},
-  location  = {Montreal, Quebec, Canada},
-  series    = {SIGMOD '96}
+  publisher = {Association for Computing Machinery},
+  year      = {1996},
+  doi       = {10.1145/233269.233324},
+  url       = {https://doi.org/10.1145/233269.233324}
 }
 
 @article{cdlib2019,
-  author  = {Rossetti, Giulio
-             and Milli, Letizia
-             and Cazabet, R{\'e}my},
+  author  = {Rossetti, Giulio and Milli, Letizia and Cazabet, R{\'e}my},
   title   = {{CDLIB}: a {Python} library to extract, compare and evaluate communities from complex networks},
   journal = {Applied Network Science},
   volume  = {4},
   number  = {1},
   pages   = {52},
   year    = {2019},
-  doi     = {10.1007/s41109-019-0165-9}
+  doi     = {10.1007/s41109-019-0165-9},
+  url     = {https://doi.org/10.1007/s41109-019-0165-9}
 }
 
 @article{igraph2006,
-  author  = {Gabor Csardi 
-             and Tamas Nepusz},
+  author  = {Gabor Csardi and Tamas Nepusz},
   title   = {The igraph software package for complex network research},
   journal = {InterJournal},
   volume  = {Complex Systems},
@@ -2032,99 +1873,85 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
 }
 
 @misc{comboRepo,
-  author       = {Philipp Kats
-                  and Alexander Belyi},
-  howpublished = {\url{https://github.com/Casyfill/pyCombo.git}},
+  author       = {Philipp Kats and Alexander Belyi},
+  howpublished = {\url{https://github.com/Casyfill/pyCombo}},
   title        = {{COMBO} Repository},
   year         = {2019}
 }
 
 @misc{hollocouRepo,
   author       = {Alexandre Hollocou},
-  howpublished = {\url{https://github.com/ahollocou/graph-streaming.git}},
+  howpublished = {\url{https://github.com/ahollocou/graph-streaming}},
   title        = {{Hollocou} Repository},
   year         = {2017}
 }
 
 @misc{vieclusRepo,
-  author       = {Christian Schulz
-                  and Daniel Seemaier},
-  howpublished = {\url{https://github.com/VieClus/VieClus.git}},
+  author       = {Christian Schulz and Daniel Seemaier},
+  howpublished = {\url{https://github.com/VieClus/VieClus}},
   title        = {{VieClus} Repository},
   year         = {2018}
 }
 
 @misc{dmonRepo,
-  author       = {Tsitsulin, Anton 
-                  and Palowitch, John 
-                  and Perozzi, Bryan 
-                  and M\"uller, Emmanuel},
-  howpublished = {\url{https://github.com/google-research/google-research.git}},
+  author       = {Tsitsulin, Anton and Palowitch, John and Perozzi, Bryan and M{\"u}ller, Emmanuel},
+  howpublished = {\url{https://github.com/google-research/google-research}},
   title        = {{DMoN} Repository},
   year         = {2020}
 }
 
 @misc{commdgiRepo,
-  author       = {Zhang, Tianqi 
-                  and Xiong, Yun 
-                  and Zhang, Jiawei 
-                  and Zhang, Yao 
-                  and Jiao, Yizhu 
-                  and Zhu, Yangyong},
-  howpublished = {\url{https://github.com/FDUDSDE/CommDGI.git}},
+  author       = {Zhang, Tianqi and Xiong, Yun and Zhang, Jiawei and Zhang, Yao and Jiao, Yizhu and Zhu, Yangyong},
+  howpublished = {\url{https://github.com/FDUDSDE/CommDGI}},
   title        = {{CommDGI} Repository},
   year         = {2020}
 }
 
 @misc{gnnsRepo,
   author       = {Alexander Belyi},
-  howpublished = {\url{https://github.com/Alexander-Belyi/GNNS.git}},
+  howpublished = {\url{https://github.com/Alexander-Belyi/GNNS}},
   title        = {{GNNS} Repository},
   year         = {2022}
 }
 
 @misc{ucodeRepo,
-  author       = {Moradan, Atefeh 
-                  and Draganov, Andrew 
-                  and Mottin, Davide 
-                  and Assent, Ira},
-  howpublished = {\url{https://github.com/AU-DIS/UCODE.git}},
+  author       = {Moradan, Atefeh and Draganov, Andrew and Mottin, Davide and Assent, Ira},
+  howpublished = {\url{https://github.com/AU-DIS/UCODE}},
   title        = {{UCoDe} Repository},
   year         = {2023}
 }
 
 @misc{dgclusterRepo,
   author       = {Mert Kosan},
-  howpublished = {\url{https://github.com/pyrobits/DGCluster.git}},
+  howpublished = {\url{https://github.com/pyrobits/DGCluster}},
   title        = {{DGCluster} Repository},
   year         = {2024}
 }
 
 @misc{magiRepo,
   author       = {Jintang Li},
-  howpublished = {\url{https://github.com/EdisonLeeeee/MAGI.git}},
+  howpublished = {\url{https://github.com/EdisonLeeeee/MAGI}},
   title        = {{MAGI} Repository},
   year         = {2024}
 }
 
 @misc{bayanRepo,
-  author       = {Mahdi Mostajabdaveh
-                  and Samin Aref},
-  howpublished = {\url{https://github.com/saref/bayan.git}},
+  author       = {Mahdi Mostajabdaveh and Samin Aref},
+  howpublished = {\url{https://github.com/saref/bayan}},
   title        = {{Bayan} Repository},
   year         = {2024}
 }
 
 @misc{clustreRepo,
   author       = {Adil Chhabra},
-  howpublished = {\url{https://github.com/KaHIP/CluStRE.git}},
+  howpublished = {\url{https://github.com/KaHIP/CluStRE}},
   title        = {{CluStRE} Repository},
   year         = {2025}
 }
 
 @misc{limRepo,
   author       = {Hong Wang},
-  howpublished = {\url{https://github.com/wuanghoong/Less-is-More.git}},
+  howpublished = {\url{https://github.com/wuanghoong/Less-is-More}},
   title        = {{LIM} Repository},
   year         = {2025}
 }
@@ -2137,16 +1964,19 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   number  = {9},
   pages   = {P09008},
   year    = {2005},
-  doi     = {10.1088/1742-5468/2005/09/P09008}
+  doi     = {10.1088/1742-5468/2005/09/P09008},
+  url     = {https://doi.org/10.1088/1742-5468/2005/09/P09008}
 }
 
 @inproceedings{optuna2019,
-  title     = {Optuna: A Next-generation Hyperparameter Optimization Framework},
+  title     = {Optuna: A next-generation hyperparameter optimization framework},
   author    = {Akiba, Takuya and Sano, Shotaro and Yanase, Toshihiko and Ohta, Takeru and Koyama, Masanori},
-  booktitle = {Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining},
+  booktitle = {Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD 2019)},
   pages     = {2623--2631},
+  publisher = {Association for Computing Machinery},
   year      = {2019},
-  doi       = {10.1145/3292500.3330701}
+  doi       = {10.1145/3292500.3330701},
+  url       = {https://doi.org/10.1145/3292500.3330701}
 }
 
 @article{hubert1985,
@@ -2157,7 +1987,8 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   number  = {1},
   pages   = {193--218},
   year    = {1985},
-  doi     = {10.1007/BF01908075}
+  doi     = {10.1007/BF01908075},
+  url     = {https://doi.org/10.1007/BF01908075}
 }
 
 @article{sen2008collective,
@@ -2168,7 +1999,8 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   number  = {3},
   pages   = {93--106},
   year    = {2008},
-  doi     = {10.1609/aimag.v29i3.2157}
+  doi     = {10.1609/aimag.v29i3.2157},
+  url     = {https://doi.org/10.1609/aimag.v29i3.2157}
 }
 
 @inproceedings{yang2016revisiting,
@@ -2177,7 +2009,8 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   booktitle = {Proceedings of the 33rd International Conference on Machine Learning (ICML 2016)},
   pages     = {40--48},
   year      = {2016},
-  publisher = {PMLR}
+  publisher = {PMLR},
+  url       = {https://proceedings.mlr.press/v48/yanga16.html}
 }
 
 @misc{shchur2018pitfalls,
@@ -2194,7 +2027,8 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS 2017)},
   volume    = {30},
   pages     = {1024--1034},
-  year      = {2017}
+  year      = {2017},
+  url       = {https://proceedings.neurips.cc/paper/2017/hash/5dd9db5e033da9c6fb5ba83c7a7ebea9-Abstract.html}
 }
 
 @inproceedings{hu2020open,
@@ -2203,7 +2037,8 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS 2020)},
   volume    = {33},
   pages     = {22118--22133},
-  year      = {2020}
+  year      = {2020},
+  url       = {https://proceedings.neurips.cc/paper/2020/hash/fb60d411a5c5b72b2e7d3527cfc84fd0-Abstract.html}
 }
 
 @inproceedings{combe2015ilouvain,
@@ -2215,7 +2050,8 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   pages     = {181--192},
   year      = {2015},
   publisher = {Springer},
-  doi       = {10.1007/978-3-319-24465-5_16}
+  doi       = {10.1007/978-3-319-24465-5_16},
+  url       = {https://doi.org/10.1007/978-3-319-24465-5_16}
 }
 
 @article{citraro2020eva,
@@ -2226,7 +2062,8 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
   number  = {1},
   pages   = {55},
   year    = {2020},
-  doi     = {10.1007/s41109-020-00302-1}
+  doi     = {10.1007/s41109-020-00302-1},
+  url     = {https://doi.org/10.1007/s41109-020-00302-1}
 }
 \end{filecontents*}
 
