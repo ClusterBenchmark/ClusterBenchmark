@@ -687,6 +687,7 @@ def write_adc_sbm_csvs(adc_dir: Path, dout_csv: Path, sigma_csv: Path):
         ("commdgi", "commdgi"),
         ("ucode", "ucode"),
         ("lim", "lim"),
+        ("kmeans_feat", "kmeans"),
     ]
     dout_rows = defaultdict(dict)
     sigma_rows = defaultdict(dict)
@@ -735,35 +736,49 @@ def write_adc_sbm_csvs(adc_dir: Path, dout_csv: Path, sigma_csv: Path):
                 row[c] = f"{sigma_rows[val].get(c, 0.0):.6f}"
             writer.writerow(row)
 
-    # Also write non-overlapping binned CSVs for Figure 5:
+    # Also write non-overlapping binned CSVs for Figure 5 (with within-bin +/- 1 SD bands):
     # - dout: 13 non-overlapping bins of width 1.0 across [1, 14] (4 points per bin; 5 in the final [13, 14] bin)
     # - sigma: 12 non-overlapping bins of width 0.25 dex across [10^-2, 10^1] (5 points per bin; 6 in the final bin)
     import math
-    from statistics import mean
+    from statistics import mean, stdev
+    binned_fields = []
+    for c in col_names:
+        binned_fields.extend([c, f"{c}_lo", f"{c}_hi"])
+
     dout_keys = sorted(dout_rows.keys())
     dout_binned_csv = dout_csv.with_name("adc_sbm_dout_binned.csv")
     with open(dout_binned_csv, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["dout"] + col_names)
+        writer = csv.DictWriter(f, fieldnames=["dout"] + binned_fields)
         writer.writeheader()
         for b in range(13):
             pts = dout_keys[b * 4 : (b + 1) * 4 if b < 12 else len(dout_keys)]
             x_center = mean(pts)
             row = {"dout": f"{x_center:.4f}"}
             for c in col_names:
-                row[c] = f"{mean([dout_rows[p].get(c, 0.0) for p in pts]):.6f}"
+                vals = [dout_rows[p].get(c, 0.0) for p in pts]
+                mu = mean(vals)
+                sd = stdev(vals) if len(vals) > 1 else 0.0
+                row[c] = f"{mu:.6f}"
+                row[f"{c}_lo"] = f"{max(0.0, mu - sd):.6f}"
+                row[f"{c}_hi"] = f"{min(1.0, mu + sd):.6f}"
             writer.writerow(row)
 
     sigma_keys = sorted(sigma_rows.keys())
     sigma_binned_csv = sigma_csv.with_name("adc_sbm_sigma_binned.csv")
     with open(sigma_binned_csv, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["sigma"] + col_names)
+        writer = csv.DictWriter(f, fieldnames=["sigma"] + binned_fields)
         writer.writeheader()
         for b in range(12):
             pts = sigma_keys[b * 5 : (b + 1) * 5 if b < 11 else len(sigma_keys)]
             x_center = 10.0 ** mean([math.log10(p) for p in pts])
             row = {"sigma": f"{x_center:.6f}"}
             for c in col_names:
-                row[c] = f"{mean([sigma_rows[p].get(c, 0.0) for p in pts]):.6f}"
+                vals = [sigma_rows[p].get(c, 0.0) for p in pts]
+                mu = mean(vals)
+                sd = stdev(vals) if len(vals) > 1 else 0.0
+                row[c] = f"{mu:.6f}"
+                row[f"{c}_lo"] = f"{max(0.0, mu - sd):.6f}"
+                row[f"{c}_hi"] = f"{min(1.0, mu + sd):.6f}"
             writer.writerow(row)
 
 
