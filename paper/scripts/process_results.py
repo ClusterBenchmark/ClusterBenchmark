@@ -111,7 +111,9 @@ def summarize_solver_instance(runs):
     ok_runs = [
         r
         for r in runs
-        if r.get("status") == "ok" and (r.get("quality") or {}).get("modularity") is not None
+        if r.get("status") == "ok"
+        and (r.get("quality") or {}).get("modularity") is not None
+        and ((r.get("solver_report") or {}).get("solve_seconds") or 0.0) <= 4500.0
     ]
     if ok_runs:
         best_run = max(
@@ -523,6 +525,97 @@ def write_protocol_s_csv(rw_records, scale_dir: Path, out_csv: Path):
         writer.writerows(rows)
 
 
+def update_protocol_s_csv(rw_records, fixed_scale_dir: Path, prot_s_csv: Path):
+    """Overlay updated Protocol S JSONL records (e.g., out_scale_gt_fixed) onto prot_s_scaling.csv."""
+    scale_recs = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    for p in sorted(fixed_scale_dir.glob("*.jsonl")):
+        with open(p, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                r = json.loads(line)
+                mode = f"{r.get('device', 'cpu')}_{r.get('threads', 1)}"
+                scale_recs[r["solver"]][mode][r["instance"]].append(r)
+
+    if not scale_recs:
+        return
+
+    existing_rows = []
+    fieldnames = [
+        "solver", "label", "instance",
+        "status_1t", "time_1t", "mod_1t", "iter_1t",
+        "status_32t", "time_32t", "mod_32t", "iter_32t", "speedup_32t",
+        "status_gpu", "time_gpu", "mod_gpu", "iter_gpu", "speedup_gpu",
+    ]
+    if prot_s_csv.exists():
+        with open(prot_s_csv, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            if reader.fieldnames:
+                fieldnames = list(reader.fieldnames)
+            existing_rows = list(reader)
+
+    label_map = {
+        "vieclus": "VieClus",
+        "gnns": "GNNS",
+        "dgcluster": "DGCluster",
+        "magi-sage": "MAGI",
+        "lim": "LIM",
+        "dmon": "DMoN",
+        "ucode": "UCoDe",
+        "commdgi": "CommDGI",
+        "magi": "MAGI-GCN",
+    }
+
+    def build_row(raw_name, inst):
+        s1 = summarize_solver_instance(rw_records.get(raw_name, {}).get(inst, []))
+        s32 = summarize_solver_instance(scale_recs[raw_name]["cpu_32"].get(inst, [])) if scale_recs[raw_name]["cpu_32"].get(inst) else {"status": "MISSING"}
+        sgpu = summarize_solver_instance(scale_recs[raw_name]["cuda_32"].get(inst, [])) if scale_recs[raw_name]["cuda_32"].get(inst) else {"status": "MISSING"}
+        t1 = s1.get("solve_seconds")
+        t32 = s32.get("solve_seconds")
+        tgpu = sgpu.get("solve_seconds")
+        return {
+            "solver": raw_name,
+            "label": label_map.get(raw_name, raw_name),
+            "instance": inst,
+            "status_1t": s1.get("status"),
+            "time_1t": f"{t1:.2f}" if t1 is not None else s1.get("status", ""),
+            "mod_1t": f"{s1['modularity']:.4f}" if s1.get("modularity") is not None else "",
+            "iter_1t": f"{s1['iter_done']}/{s1['iter_req']}" if s1.get("iter_done") is not None else "",
+            "status_32t": s32.get("status"),
+            "time_32t": f"{t32:.2f}" if t32 is not None else s32.get("status", ""),
+            "mod_32t": f"{s32['modularity']:.4f}" if s32.get("modularity") is not None else "",
+            "iter_32t": f"{s32['iter_done']}/{s32['iter_req']}" if s32.get("iter_done") is not None else "",
+            "speedup_32t": f"{t1 / t32:.2f}" if (t1 and t32) else "",
+            "status_gpu": sgpu.get("status"),
+            "time_gpu": f"{tgpu:.2f}" if tgpu is not None else sgpu.get("status", ""),
+            "mod_gpu": f"{sgpu['modularity']:.4f}" if sgpu.get("modularity") is not None else "",
+            "iter_gpu": f"{sgpu['iter_done']}/{sgpu['iter_req']}" if sgpu.get("iter_done") is not None else "",
+            "speedup_gpu": f"{t1 / tgpu:.2f}" if (t1 and tgpu) else "",
+        }
+
+    updated_rows = []
+    seen = set()
+    for row in existing_rows:
+        s = row["solver"]
+        inst = row["instance"]
+        if s in scale_recs:
+            updated_rows.append(build_row(s, inst))
+            seen.add((s, inst))
+        else:
+            updated_rows.append(row)
+            seen.add((s, inst))
+
+    for s in sorted(scale_recs.keys()):
+        for inst in GT_INSTANCES:
+            if (s, inst) not in seen:
+                updated_rows.append(build_row(s, inst))
+
+    with open(prot_s_csv, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(updated_rows)
+
+
 def write_protocol_b_csv(rw_records, scale_dir: Path, params_dir: Path, out_csv: Path):
     """Write Protocol B hyperparameter tuning comparison on Cora, Citeseer, and Pubmed."""
     scale_recs = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -846,7 +939,7 @@ def write_fig4_scaling_csvs(rw_records, dimacs_records, dim_scale_dir: Path, pro
                         else:
                             if sgpu.get("status") in ("MLE", "TLE"):
                                 fgpu.append(1)
-            if raw in ("vieclus", "dgcluster", "lim", "gnns"):
+            if raw in ("vieclus", "gnns", "dgcluster", "magi-sage", "lim", "dmon", "ucode", "commdgi"):
                 for inst in GT_INSTANCES:
                     r = gt_scale[raw].get(inst, {})
                     if r.get("status_1t") == "OK":
@@ -854,8 +947,9 @@ def write_fig4_scaling_csvs(rw_records, dimacs_records, dim_scale_dir: Path, pro
                         it1 = r.get("iter_1t", "")
                         parts = it1.split("/") if "/" in it1 else []
                         is_trunc = (
-                            len(parts) == 2 and parts[1] != "None" and int(parts[0]) < int(parts[1])
-                        ) or float(r["time_1t"]) >= 3400.0
+                            (len(parts) == 2 and parts[1] != "None" and int(parts[0]) < int(parts[1]))
+                            or ((len(parts) != 2 or parts[1] == "None") and float(r["time_1t"]) >= 3400.0)
+                        )
                         if raw == "vieclus":
                             if r.get("status_32t") == "OK" and abs(float(r["mod_32t"]) - q1) > 5e-5:
                                 p32.append(float(r["mod_32t"]) - q1)
@@ -952,6 +1046,8 @@ def main():
     if (ROOT_DIR / "out_scale").exists():
         write_protocol_s_csv(rw_records, ROOT_DIR / "out_scale", DATA_DIR / "prot_s_scaling.csv")
         write_protocol_b_csv(rw_records, ROOT_DIR / "out_scale", ROOT_DIR / "params", DATA_DIR / "prot_b_tuning.csv")
+    if (ROOT_DIR / "out_scale_gt_fixed").exists():
+        update_protocol_s_csv(rw_records, ROOT_DIR / "out_scale_gt_fixed", DATA_DIR / "prot_s_scaling.csv")
     write_fig4_scaling_csvs(
         rw_records,
         dimacs_records,
