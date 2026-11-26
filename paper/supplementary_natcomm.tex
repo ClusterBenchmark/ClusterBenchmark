@@ -1,0 +1,430 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\setstretch{1.15}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+\usepackage{numprint}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{etoolbox}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\renewcommand{\tablename}{Supplementary Table}
+\AtBeginEnvironment{tabular}{\renewcommand{\bfseries}{\fontseries{b}\selectfont}}
+\AtBeginEnvironment{tabular*}{\renewcommand{\bfseries}{\fontseries{b}\selectfont}}
+
+\title{\textbf{Supplementary Information}\\[0.4em]
+\large From Heuristics to Graph Neural Networks: A Systematic Experimental Benchmark of Modularity-Based Graph Clustering}
+
+\author{
+  Adil Chhabra\textsuperscript{1},
+  Kenneth Langedal\textsuperscript{1,*},
+  Christian Schulz\textsuperscript{1}
+}
+
+\date{
+  \small
+  \textsuperscript{1}Heidelberg University, Heidelberg, Germany\\
+  \textsuperscript{*}Corresponding author: \texttt{kenneth.langedal@informatik.uni-heidelberg.de}
+}
+
+\begin{document}
+
+\maketitle
+
+\section*{Benchmark Instances}
+\label{sec:instances}
+\begin{table}[H]
+    \centering
+    \caption{Graphs from the 10th DIMACS Implementation Challenge used in our topology-only evaluation suite ($N=32$). These instances do not include vertex features or ground-truth community labels.}
+    \label{tab:dimacs_instances}
+    \vspace{0.5em}
+    \small
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrr c lrr@{}}
+        \toprule
+        Instance & $n$ & $m$ & & Instance & $n$ & $m$ \\
+        \midrule
+        karate                 & \numprint{34}        & \numprint{78}         & & astro-ph               & \numprint{16706}     & \numprint{121251}     \\
+        chesapeake             & \numprint{39}        & \numprint{170}        & & cond-mat               & \numprint{16726}     & \numprint{47594}      \\
+        dolphins               & \numprint{62}        & \numprint{159}        & & as-22july06            & \numprint{22963}     & \numprint{48436}      \\
+        lesmis                 & \numprint{77}        & \numprint{254}        & & cond-mat-2003          & \numprint{31163}     & \numprint{120029}     \\
+        polbooks               & \numprint{105}       & \numprint{441}        & & cond-mat-2005          & \numprint{40421}     & \numprint{175691}     \\
+        adjnoun                & \numprint{112}       & \numprint{425}        & & preferentialAttachment & \numprint{100000}    & \numprint{499985}     \\
+        football               & \numprint{115}       & \numprint{613}        & & smallworld             & \numprint{100000}    & \numprint{499998}     \\
+        jazz                   & \numprint{198}       & \numprint{2742}       & & G-n-pin-pout           & \numprint{100000}    & \numprint{501198}     \\
+        celegansneural         & \numprint{297}       & \numprint{2148}       & & caidaRouterLevel       & \numprint{192244}    & \numprint{609066}     \\
+        celegans-metabolic     & \numprint{453}       & \numprint{2025}       & & cnr-2000               & \numprint{325557}    & \numprint{2738969}    \\
+        email                  & \numprint{1133}      & \numprint{5451}       & & eu-2005                & \numprint{862664}    & \numprint{16138468}   \\
+        polblogs               & \numprint{1490}      & \numprint{16715}      & & in-2004                & \numprint{1382908}   & \numprint{13591473}   \\
+        netscience             & \numprint{1589}      & \numprint{2742}       & & road-central           & \numprint{14081816}  & \numprint{16933413}   \\
+        power                  & \numprint{4941}      & \numprint{6594}       & & uk-2002                & \numprint{18520486}  & \numprint{261787258}  \\
+        hep-th                 & \numprint{8361}      & \numprint{15751}      & & road-usa               & \numprint{23947347}  & \numprint{28854312}   \\
+        PGPgiantcompo          & \numprint{10680}     & \numprint{24316}      & & uk-2007-05             & \numprint{105896555} & \numprint{3301876564} \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\section*{Memory Usage and Training Convergence}
+\label{sec:memory}
+
+\begin{table}[H]
+    \centering
+    \caption{Peak memory consumption in gibibytes (GiB) of the evaluated algorithms on the \textsc{Ground-Truth} dataset under Protocol~A (recorded via Linux \texttt{cgroup} tracking). Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 120~GiB memory limit.}
+    \label{tab:memory}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{VieClus}   & 0.03 & 0.03     & 0.07  & 0.15 & 0.06  & 0.05   & 0.14    & 0.47  & 10.9   & TLE  \\
+        \textsc{Leiden}    & 0.02 & 0.02     & 0.04  & 0.08 & 0.03  & 0.03   & 0.07    & 0.25  & 11.2   & 12.1 \\
+        \textsc{Louvain}   & 0.02 & 0.02     & 0.04  & 0.08 & 0.03  & 0.03   & 0.07    & 0.25  & 11.2   & 12.1 \\
+        \textsc{COMBO}     & 0.14 & 0.20     & 0.94  & 2.95 & 5.08  & TLE    & TLE     & MLE   & MLE    & MLE  \\
+        \textsc{CNM}       & 0.02 & 0.02     & 0.04  & 0.07 & 0.04  & 0.04   & 0.07    & 0.25  & TLE    & TLE  \\
+        \textsc{Infomap}   & 0.03 & 0.03     & 0.10  & 0.20 & 0.13  & 0.11   & 0.27    & 1.22  & 24.6   & 36.7 \\
+        \textsc{Walktrap}  & 0.03 & 0.02     & 0.40  & 1.43 & 0.90  & 0.49   & 4.18    & 94.7  & TLE    & MLE  \\
+        \textsc{CluStRE}   & 0.02 & 0.02     & 0.02  & 0.04 & 0.02  & 0.02   & 0.02    & 0.05  & 0.92   & 1.05 \\
+        \textsc{Hollocou}  & 0.01 & 0.01     & 0.01  & 0.01 & 0.01  & 0.01   & 0.02    & 0.04  & 0.88   & 1.09 \\
+        \textsc{Bayan}     & TLE  & TLE      & TLE   & TLE  & TLE   & TLE    & TLE     & MLE   & MLE    & MLE  \\
+        \midrule
+        \textsc{GNNS}      & 0.67 & 0.73     & 1.42  & 2.47 & 2.62  & 2.77   & 4.71    & 8.33  & 38.5   & 44.4 \\
+        \textsc{DGCluster} & 0.48 & 0.50     & 1.01  & 2.12 & 1.03  & 1.08   & 1.84    & 5.82  & MLE    & MLE  \\
+        \textsc{MAGI}      & 0.74 & 0.88     & 1.48  & 2.85 & 5.52  & 2.03   & 13.2    & 6.72  & 41.3   & TLE  \\
+        \textsc{LIM}       & 0.63 & 0.73     & 2.04  & 4.79 & 6.27  & 6.49   & 20.0    & MLE   & MLE    & MLE  \\
+        \textsc{DMoN}      & 0.41 & 0.49     & 1.39  & 3.01 & 2.42  & 1.14   & 5.55    & 13.4  & MLE    & MLE  \\
+        \textsc{UCoDe}     & 0.57 & 0.67     & 1.66  & 4.60 & 6.48  & 6.61   & 21.1    & MLE   & MLE    & MLE  \\
+        \textsc{CommDGI}   & 0.68 & 0.73     & 1.82  & 5.29 & 8.50  & 9.27   & 28.3    & MLE   & MLE    & MLE  \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Target epoch budgets for neural models are 400 for \textsc{MAGI}, 300 for \textsc{DGCluster} and \textsc{LIM}, 1\,000 for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 for \textsc{CommDGI}. For \textsc{GNNS}, the table reports total recurrent steps across its 3-stage schedule ($10+10+30 = 50$ steps per vectorized batch of random initializations across $100$ initializations, where all $100$ initializations fit into a single $50$-step batch when $n \cdot k \le 10^8$ and split into multiple sequential batches of $50$ steps up to $100 \times 50 = 5\,000$ steps on larger graphs).}
+    \label{tab:iterations}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 120    & 300 \\
+        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 270   & MLE    & MLE \\
+        \textsc{MAGI}      & 400  & 400      & 400   & 142  & 50    & 140    & 12      & 5     & 7      & TLE \\
+        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 111     & MLE   & MLE    & MLE \\
+        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 819     & 583   & MLE    & MLE \\
+        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 960   & 1000   & 280     & MLE   & MLE    & MLE \\
+        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 986  & 564   & 560    & 166     & MLE   & MLE    & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\section*{Hardware Scaling Comparison (Protocol~S)}
+\label{sec:par-seq}
+
+\begin{table}[H]
+    \centering
+    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~S on multi-core CPU ($p=32$, \texttt{device=cpu}, 1-hour limit, matched cluster budgets $k$ identical to Protocol~A). Target epoch budgets are 400 for \textsc{MAGI}, 300 for \textsc{DGCluster} and \textsc{LIM}, 1\,000 for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 for \textsc{CommDGI}. For \textsc{GNNS}, total recurrent steps ($50$ per batch of random initializations across $100$ initializations) increase with $n \cdot k$ up to $100 \times 50 = 5\,000$.}
+    \label{tab:iterations_cpu32}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 500    & 2050 \\
+        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 300   & MLE    & MLE \\
+        \textsc{MAGI}      & 400  & 400      & 400   & 314  & 185   & 380    & 51      & 15    & 17     & TLE \\
+        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 300     & MLE   & MLE    & MLE \\
+        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & 1000  & MLE    & MLE \\
+        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & MLE   & MLE    & MLE \\
+        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 1001 & 1001  & 1001   & 1001    & MLE   & MLE    & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~S with GPU acceleration ($p=32$, \texttt{device=cuda} with an NVIDIA RTX~4090 GPU, 1-hour limit, matched cluster budgets $k$ identical to Protocol~A). Target epoch budgets and \textsc{GNNS} batch step counts follow Supplementary Table~\ref{tab:iterations_cpu32}.}
+    \label{tab:iterations_gpu}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 500    & 5000 \\
+        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 300   & MLE    & MLE \\
+        \textsc{MAGI}      & 400  & 400      & 400   & 400  & 400   & 400    & 165     & 32    & 25     & TLE \\
+        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 300     & MLE   & MLE    & MLE \\
+        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & 1000  & MLE    & MLE \\
+        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & MLE   & MLE    & MLE \\
+        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 1001 & 1001  & 1001   & MLE     & MLE   & MLE    & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Execution time in seconds across hardware configurations on the \textsc{Ground-Truth} dataset comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads, $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU) under identical cluster budgets $k$. Top panel: small-to-medium graphs. Bottom panel: medium-to-large graphs. \textsc{VieClus} is omitted as it is an anytime evolutionary algorithm with a fixed 1-hour time budget rather than a converging iterative solver.}
+    \label{tab:par-seq}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{2.0pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr@{}}
+        \toprule
+        & \multicolumn{3}{c}{\textbf{Cora}} & \multicolumn{3}{c}{\textbf{CiteSeer}} & \multicolumn{3}{c}{\textbf{Photo}} & \multicolumn{3}{c}{\textbf{Comp}} & \multicolumn{3}{c}{\textbf{Co-CS}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
+        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
+        \midrule
+        \textsc{GNNS}      & 5.27 & 1.73 & 0.25 & 6.69 & 1.90 & 0.19 & 19.9 & 4.19 & 0.49 & 45.1 & 11.5 & 1.26 & 48.4 & 12.0 & 0.73 \\
+        \textsc{DGCluster} & 25.6 & 6.71 & 2.47 & 43.4 & 8.15 & 2.14 & 287  & 68.2 & 5.98 & 604  & 132  & 9.69 & 494  & 74.8 & 7.51 \\
+        \textsc{MAGI}      & 162  & 90.5 & 60.8 & 301  & 121  & 64.8 & 3015 & 1587 & 561  & 3606 & 3605 & 1630 & 3616 & 3607 & 2438 \\
+        \textsc{LIM}       & 66.4 & 7.02 & 0.97 & 140  & 17.5 & 1.08 & 695  & 104  & 3.69 & 1877 & 239  & 9.12 & 2960 & 303  & 11.7 \\
+        \textsc{DMoN}      & 93.8 & 35.1 & 22.3 & 197  & 66.1 & 21.4 & 480  & 158  & 56.4 & 971  & 292  & 95.2 & 1862 & 240  & 49.5 \\
+        \textsc{UCoDe}     & 91.4 & 10.7 & 1.93 & 184  & 18.7 & 1.98 & 559  & 45.1 & 3.72 & 1740 & 142  & 9.46 & 3605 & 275  & 17.1 \\
+        \textsc{CommDGI}   & 107  & 24.6 & 3.56 & 258  & 60.3 & 3.67 & 1217 & 274  & 7.54 & 3603 & 685  & 19.4 & 3605 & 1034 & 31.7 \\
+        \bottomrule
+    \end{tabular*}
+
+    \vspace{0.8em}
+
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr@{}}
+        \toprule
+        & \multicolumn{3}{c}{\textbf{PubMed}} & \multicolumn{3}{c}{\textbf{Co-Phys}} & \multicolumn{3}{c}{\textbf{Arxiv}} & \multicolumn{3}{c}{\textbf{Reddit}} & \multicolumn{3}{c}{\textbf{Prod}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
+        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
+        \midrule
+        \textsc{GNNS}      & 50.9 & 12.6 & 0.65 & 99.0 & 21.4 & 1.40 & 1130 & 232  & 13.8 & 4129 & 1421 & 220  & 3966 & 3836 & 1667 \\
+        \textsc{DGCluster} & 212  & 41.0 & 6.63 & 1266 & 187  & 17.3 & 3613 & 846  & 76.9 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{MAGI}      & 3603 & 3604 & 1542 & 3646 & 3613 & 3607 & 3827 & 3678 & 3676 & 3825 & 3712 & 3707 & TLE  & TLE  & TLE \\
+        \textsc{LIM}       & 2839 & 286  & 11.2 & 3615 & 912  & 40.5 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{DMoN}      & 427  & 130  & 30.9 & 3604 & 596  & 130  & 3605 & 1936 & 541  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{UCoDe}     & 3551 & 261  & 16.7 & 3616 & 937  & 52.1 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \textsc{CommDGI}   & 3606 & 1221 & 32.2 & 3625 & 3591 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\section*{Detailed Quality Results}
+\label{sec:detailed-results}
+
+\begin{table}[H]
+    \centering
+    \caption{Modularity scores on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Bold indicates the highest modularity per instance (evaluated at full precision). Classical combinatorial methods are separated from continuous and learning-based methods by a midrule.}
+    \label{tab:mod_gt}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{VieClus} & \textbf{0.825} & \textbf{0.894} & \textbf{0.740} & \textbf{0.642} & \textbf{0.759} & \textbf{0.790} & \textbf{0.696} & \textbf{0.718} & \textbf{0.742} & TLE \\
+        \textsc{Leiden} & 0.822 & 0.893 & 0.740 & 0.641 & 0.753 & 0.784 & 0.688 & 0.715 & 0.742 & \textbf{0.882} \\
+        \textsc{Louvain} & 0.815 & 0.890 & 0.739 & 0.639 & 0.739 & 0.771 & 0.668 & 0.709 & 0.739 & 0.877 \\
+        \textsc{COMBO} & 0.824 & 0.893 & 0.740 & 0.641 & 0.755 & TLE & TLE & MLE & MLE & MLE \\
+        \textsc{CNM} & 0.807 & 0.874 & 0.652 & 0.539 & 0.655 & 0.727 & 0.526 & 0.611 & TLE & TLE \\
+        \textsc{Infomap} & 0.799 & 0.877 & 0.615 & 0.596 & 0.713 & 0.732 & 0.596 & 0.635 & 0.157 & 0.026 \\
+        \textsc{Walktrap} & 0.765 & 0.826 & 0.703 & 0.597 & 0.686 & 0.711 & 0.567 & 0.573 & TLE & MLE \\
+        \textsc{CluStRE} & 0.550 & 0.612 & 0.545 & 0.422 & 0.416 & 0.386 & 0.372 & 0.398 & 0.656 & 0.664 \\
+        \textsc{Hollocou} & 0.406 & 0.683 & 0.394 & 0.201 & 0.301 & 0.355 & 0.255 & 0.177 & 0.032 & 0.157 \\
+        \textsc{Bayan} & TLE & TLE & TLE & TLE & TLE & TLE & TLE & MLE & MLE & MLE \\
+        \midrule
+        \textsc{GNNS} & 0.770 & 0.827 & 0.723 & 0.631 & 0.726 & 0.731 & 0.649 & 0.679 & 0.738 & 0.828 \\
+        \textsc{DGCluster} & 0.809 & 0.876 & 0.715 & 0.617 & 0.748 & 0.739 & 0.677 & 0.662 & MLE & MLE \\
+        \textsc{MAGI} & 0.749 & 0.722 & 0.721 & 0.617 & 0.731 & 0.612 & 0.622 & 0.561 & 0.691 & TLE \\
+        \textsc{LIM} & 0.771 & 0.814 & 0.646 & 0.556 & 0.654 & 0.656 & 0.573 & MLE & MLE & MLE \\
+        \textsc{DMoN} & 0.775 & 0.839 & 0.269 & 0.181 & 0.727 & 0.646 & 0.656 & 0.486 & MLE & MLE \\
+        \textsc{UCoDe} & 0.685 & 0.705 & 0.565 & 0.504 & 0.675 & 0.626 & 0.542 & MLE & MLE & MLE \\
+        \textsc{CommDGI} & 0.716 & 0.698 & 0.455 & 0.400 & 0.709 & 0.484 & 0.568 & MLE & MLE & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Normalized Mutual Information (NMI) scores on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit), evaluated on each solver's highest-modularity partition across five trials. Bold indicates the highest NMI per instance. The bottom reference row reports feature-only $k$-means ($k = |C|$ on raw node attributes, lowest inertia across five seeds, using mini-batch $k$-means for \texttt{reddit} and \texttt{ogbn-products}).}
+    \label{tab:nmi_gt}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{VieClus} & 0.481 & 0.377 & 0.664 & 0.547 & 0.656 & 0.237 & 0.528 & 0.425 & 0.829 & TLE \\
+        \textsc{Leiden} & 0.486 & 0.374 & 0.670 & 0.541 & 0.626 & 0.234 & 0.518 & 0.414 & 0.828 & \textbf{0.546} \\
+        \textsc{Louvain} & 0.470 & 0.373 & 0.671 & 0.537 & 0.592 & 0.229 & 0.478 & 0.403 & 0.811 & 0.524 \\
+        \textsc{COMBO} & 0.472 & 0.311 & 0.651 & 0.536 & 0.640 & TLE & TLE & MLE & MLE & MLE \\
+        \textsc{CNM} & 0.488 & 0.378 & 0.570 & 0.398 & 0.507 & 0.243 & 0.301 & 0.334 & TLE & TLE \\
+        \textsc{Infomap} & 0.476 & 0.374 & 0.573 & 0.545 & 0.595 & 0.259 & 0.556 & 0.427 & 0.389 & 0.083 \\
+        \textsc{Walktrap} & 0.469 & 0.400 & 0.609 & 0.520 & 0.539 & 0.234 & 0.431 & \textbf{0.467} & TLE & MLE \\
+        \textsc{CluStRE} & 0.463 & 0.419 & 0.516 & 0.464 & 0.486 & 0.273 & 0.365 & 0.445 & 0.744 & 0.450 \\
+        \textsc{Hollocou} & 0.339 & 0.405 & 0.389 & 0.256 & 0.310 & 0.213 & 0.257 & 0.347 & 0.291 & 0.358 \\
+        \textsc{Bayan} & TLE & TLE & TLE & TLE & TLE & TLE & TLE & MLE & MLE & MLE \\
+        \midrule
+        \textsc{GNNS} & 0.281 & 0.063 & 0.578 & 0.474 & 0.526 & 0.119 & 0.323 & 0.263 & 0.822 & 0.314 \\
+        \textsc{DGCluster} & 0.504 & 0.272 & \textbf{0.700} & 0.520 & 0.713 & 0.283 & 0.574 & 0.411 & MLE & MLE \\
+        \textsc{MAGI} & 0.476 & 0.257 & 0.688 & \textbf{0.570} & 0.660 & 0.306 & 0.533 & 0.439 & \textbf{0.870} & TLE \\
+        \textsc{LIM} & 0.546 & 0.325 & 0.658 & 0.450 & 0.640 & 0.251 & 0.545 & MLE & MLE & MLE \\
+        \textsc{DMoN} & 0.504 & 0.307 & 0.172 & 0.166 & 0.712 & 0.273 & 0.563 & 0.368 & MLE & MLE \\
+        \textsc{UCoDe} & \textbf{0.565} & \textbf{0.430} & 0.539 & 0.385 & 0.703 & 0.221 & 0.507 & MLE & MLE & MLE \\
+        \textsc{CommDGI} & 0.509 & 0.345 & 0.355 & 0.268 & \textbf{0.743} & \textbf{0.338} & \textbf{0.611} & MLE & MLE & MLE \\
+        \midrule
+        \textsc{$k$-Means} (feat.) & 0.167 & 0.218 & 0.127 & 0.133 & 0.571 & 0.312 & 0.378 & 0.224 & 0.230 & 0.228 \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Adjusted Rand Index (ARI) scores on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit), evaluated on each solver's highest-modularity partition across five trials. Bold indicates the highest ARI per instance. The bottom reference row reports feature-only $k$-means ($k = |C|$ on raw node attributes).}
+    \label{tab:ari_gt}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
+        \midrule
+        \textsc{VieClus} & 0.238 & 0.098 & 0.560 & 0.300 & 0.514 & 0.086 & 0.231 & 0.257 & 0.710 & TLE \\
+        \textsc{Leiden} & 0.264 & 0.098 & 0.556 & 0.294 & 0.476 & 0.093 & 0.249 & 0.258 & 0.710 & \textbf{0.328} \\
+        \textsc{Louvain} & 0.261 & 0.094 & 0.555 & 0.295 & 0.436 & 0.099 & 0.234 & 0.255 & 0.662 & 0.302 \\
+        \textsc{COMBO} & 0.263 & 0.098 & 0.557 & 0.297 & 0.509 & TLE & TLE & MLE & MLE & MLE \\
+        \textsc{CNM} & 0.279 & 0.121 & 0.439 & 0.173 & 0.415 & 0.173 & 0.233 & 0.263 & TLE & TLE \\
+        \textsc{Infomap} & 0.281 & 0.140 & 0.351 & 0.301 & 0.566 & 0.224 & \textbf{0.501} & \textbf{0.377} & 0.038 & $-$0.018 \\
+        \textsc{Walktrap} & 0.190 & 0.125 & 0.420 & 0.320 & 0.351 & 0.080 & 0.214 & 0.245 & TLE & MLE \\
+        \textsc{CluStRE} & 0.021 & 0.008 & 0.168 & 0.100 & 0.018 & 0.002 & 0.003 & 0.048 & 0.684 & 0.016 \\
+        \textsc{Hollocou} & 0.062 & 0.107 & 0.244 & 0.094 & 0.106 & 0.036 & 0.051 & 0.026 & 0.027 & 0.003 \\
+        \textsc{Bayan} & TLE & TLE & TLE & TLE & TLE & TLE & TLE & MLE & MLE & MLE \\
+        \midrule
+        \textsc{GNNS} & 0.172 & 0.031 & 0.506 & 0.258 & 0.382 & 0.053 & 0.163 & 0.182 & 0.727 & 0.190 \\
+        \textsc{DGCluster} & 0.333 & 0.133 & 0.599 & 0.364 & 0.613 & 0.161 & 0.277 & 0.309 & MLE & MLE \\
+        \textsc{MAGI} & 0.376 & 0.106 & \textbf{0.604} & \textbf{0.404} & 0.501 & \textbf{0.294} & 0.374 & 0.239 & \textbf{0.904} & TLE \\
+        \textsc{LIM} & 0.412 & 0.292 & 0.492 & 0.315 & 0.495 & 0.208 & 0.395 & MLE & MLE & MLE \\
+        \textsc{DMoN} & 0.330 & 0.204 & 0.071 & 0.047 & 0.550 & 0.108 & 0.229 & 0.165 & MLE & MLE \\
+        \textsc{UCoDe} & \textbf{0.510} & \textbf{0.435} & 0.389 & 0.266 & 0.563 & 0.179 & 0.312 & MLE & MLE & MLE \\
+        \textsc{CommDGI} & 0.430 & 0.346 & 0.249 & 0.201 & \textbf{0.707} & 0.293 & 0.483 & MLE & MLE & MLE \\
+        \midrule
+        \textsc{$k$-Means} (feat.) & 0.091 & 0.161 & 0.051 & 0.072 & 0.320 & 0.280 & 0.143 & 0.071 & 0.066 & 0.059 \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Small-scale networks ($n \le 1\,133$). Bold indicates the highest modularity per instance (at full precision). Columns with a gray background indicate instances where \textsc{Bayan} terminated with the globally optimal modularity in our benchmark run. An asterisk ($^*$) marks additional instances whose global optimum is known from the literature, but where \textsc{Bayan} did not prove optimality within our 1-hour limit (\texttt{adjnoun} found the optimal $0.313$ partition but still had a $23.6\%$ optimality gap at timeout, and \texttt{jazz} timed out). Scores of $0.000$ denote collapse to a single community ($k=1$). Entries marked \textsc{ERR} indicate runtime failures (for \textsc{LIM}, when \textsc{Louvain} initialization at $\gamma = 0.3$ collapses to one cluster).}
+    \label{tab:mod_dimacs_small}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{2.9pt}
+    \setlength{\aboverulesep}{0pt}
+    \setlength{\belowrulesep}{0pt}
+    \setlength{\extrarowheight}{1.5pt}
+    \begin{tabular}{l >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r r >{\columncolor{gray!12}}r r r r r}
+        \toprule
+        Method & karate & chesap. & dolph. & lesmis & polbks. & adjnoun$^*$ & footb. & jazz$^*$ & celeg-n & celeg-m & email \\
+        \midrule
+        \textsc{VieClus} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & \textbf{0.313} & \textbf{0.605} & \textbf{0.445} & \textbf{0.406} & \textbf{0.453} & \textbf{0.583} \\
+        \textsc{Leiden} & \textbf{0.420} & \textbf{0.266} & 0.528 & \textbf{0.560} & \textbf{0.527} & 0.311 & \textbf{0.605} & \textbf{0.445} & 0.406 & 0.450 & 0.580 \\
+        \textsc{Louvain} & 0.419 & \textbf{0.266} & 0.528 & 0.558 & 0.527 & 0.303 & \textbf{0.605} & 0.445 & 0.398 & 0.443 & 0.569 \\
+        \textsc{COMBO} & \textbf{0.420} & \textbf{0.266} & 0.527 & \textbf{0.560} & \textbf{0.527} & 0.311 & \textbf{0.605} & 0.444 & 0.406 & 0.453 & 0.583 \\
+        \textsc{CNM} & 0.381 & 0.249 & 0.495 & 0.501 & 0.502 & 0.295 & 0.550 & 0.439 & 0.372 & 0.405 & 0.507 \\
+        \textsc{Infomap} & 0.402 & 0.000 & \textbf{0.529} & 0.551 & 0.527 & 0.009 & 0.603 & 0.443 & 0.394 & 0.423 & 0.539 \\
+        \textsc{Walktrap} & 0.353 & 0.226 & 0.489 & 0.521 & 0.507 & 0.216 & 0.603 & 0.438 & 0.353 & 0.349 & 0.531 \\
+        \textsc{CluStRE} & 0.251 & 0.198 & 0.355 & 0.516 & 0.482 & 0.250 & 0.420 & 0.382 & 0.296 & 0.296 & 0.434 \\
+        \textsc{Hollocou} & 0.020 & 0.000 & 0.279 & 0.006 & 0.007 & 0.000 & 0.000 & 0.001 & 0.000 & 0.003 & 0.003 \\
+        \textsc{Bayan} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & \textbf{0.313} & \textbf{0.605} & TLE & TLE & TLE & TLE \\
+        \midrule
+        \textsc{GNNS} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & 0.527 & 0.308 & \textbf{0.605} & \textbf{0.445} & 0.406 & 0.439 & 0.572 \\
+        \textsc{DGCluster} & \textbf{0.420} & \textbf{0.266} & 0.528 & 0.558 & 0.513 & 0.303 & 0.604 & 0.444 & 0.396 & 0.438 & 0.558 \\
+        \textsc{MAGI} & 0.260 & $-$0.020 & 0.189 & 0.279 & 0.129 & 0.013 & 0.127 & 0.020 & 0.024 & 0.047 & 0.018 \\
+        \textsc{LIM} & ERR & ERR & 0.000 & 0.000 & 0.000 & ERR & 0.000 & 0.000 & ERR & 0.000 & 0.000 \\
+        \textsc{DMoN} & 0.337 & 0.204 & 0.470 & 0.538 & 0.424 & 0.264 & 0.589 & 0.288 & 0.292 & 0.355 & 0.426 \\
+        \textsc{UCoDe} & 0.402 & 0.262 & 0.525 & 0.553 & 0.519 & 0.286 & 0.584 & 0.439 & 0.365 & 0.363 & 0.372 \\
+        \textsc{CommDGI} & \textbf{0.420} & 0.250 & 0.506 & 0.540 & 0.521 & 0.261 & 0.595 & 0.406 & 0.359 & 0.356 & 0.294 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Medium-scale networks ($1.5\,\text{k} \le n \le 100\,\text{k}$). Bold indicates the highest modularity per instance (at full precision).}
+    \label{tab:mod_dimacs_med}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{1.2pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrrr@{}}
+        \toprule
+        Method & polblogs & netsci & power & hep-th & PGPgiant & astro-ph & cond-mat & as-22j & cond-03 & cond-05 & pref-att \\
+        \midrule
+        \textsc{VieClus} & \textbf{0.427} & \textbf{0.960} & \textbf{0.941} & \textbf{0.858} & \textbf{0.887} & \textbf{0.746} & \textbf{0.855} & \textbf{0.679} & \textbf{0.782} & \textbf{0.750} & \textbf{0.311} \\
+        \textsc{Leiden} & \textbf{0.427} & 0.960 & 0.939 & 0.855 & 0.886 & 0.740 & 0.851 & 0.677 & 0.775 & 0.742 & 0.296 \\
+        \textsc{Louvain} & 0.427 & 0.959 & 0.936 & 0.852 & 0.883 & 0.734 & 0.846 & 0.662 & 0.766 & 0.729 & 0.291 \\
+        \textsc{COMBO} & 0.427 & 0.960 & 0.939 & 0.855 & 0.880 & 0.737 & 0.844 & TLE & TLE & TLE & MLE \\
+        \textsc{CNM} & 0.427 & 0.955 & 0.934 & 0.811 & 0.852 & 0.624 & 0.777 & 0.626 & 0.679 & 0.654 & 0.277 \\
+        \textsc{Infomap} & 0.425 & 0.958 & 0.795 & 0.847 & 0.131 & 0.667 & 0.841 & 0.614 & 0.664 & 0.661 & 0.192 \\
+        \textsc{Walktrap} & 0.425 & 0.956 & 0.831 & 0.756 & 0.789 & 0.636 & 0.742 & 0.586 & 0.646 & 0.599 & 0.151 \\
+        \textsc{CluStRE} & 0.276 & 0.929 & 0.633 & 0.732 & 0.599 & 0.627 & 0.746 & 0.541 & 0.656 & 0.612 & 0.260 \\
+        \textsc{Hollocou} & 0.003 & 0.880 & 0.635 & 0.515 & 0.506 & 0.342 & 0.505 & 0.149 & 0.391 & 0.339 & 0.135 \\
+        \textsc{Bayan} & TLE & 0.960 & TLE & TLE & TLE & TLE & TLE & TLE & TLE & TLE & TLE \\
+        \midrule
+        \textsc{GNNS} & 0.427 & 0.929 & 0.843 & 0.803 & 0.852 & 0.701 & 0.787 & 0.643 & 0.715 & 0.676 & 0.240 \\
+        \textsc{DGCluster} & 0.424 & 0.931 & 0.521 & 0.584 & 0.565 & 0.571 & 0.570 & 0.507 & 0.485 & 0.446 & 0.082 \\
+        \textsc{MAGI} & 0.001 & 0.388 & 0.913 & 0.799 & 0.821 & 0.562 & 0.725 & 0.408 & 0.499 & 0.417 & 0.027 \\
+        \textsc{LIM} & 0.402 & 0.823 & 0.426 & 0.461 & 0.420 & 0.507 & 0.492 & 0.315 & 0.392 & 0.272 & MLE \\
+        \textsc{DMoN} & 0.182 & 0.870 & 0.542 & 0.564 & 0.557 & 0.525 & 0.543 & 0.173 & 0.418 & 0.359 & 0.035 \\
+        \textsc{UCoDe} & 0.359 & 0.697 & 0.391 & 0.394 & 0.390 & 0.376 & 0.358 & 0.103 & 0.174 & 0.143 & MLE \\
+        \textsc{CommDGI} & 0.004 & 0.756 & 0.350 & 0.388 & 0.397 & 0.391 & 0.368 & 0.083 & 0.261 & 0.221 & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Large and web-scale networks ($100\,\text{k} \le n \le 105\,\text{M}$). Bold indicates the highest modularity per instance (at full precision). On \texttt{uk-2007-05} ($3.3$~billion edges), \textsc{VieClus} terminates with \textsc{ERR} due to 32-bit edge-index overflow.}
+    \label{tab:mod_dimacs_large}
+    \vspace{0.5em}
+    \small
+    \setlength{\tabcolsep}{1.2pt}
+    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
+        \toprule
+        Method & smallwld & G-pin-pout & caida & cnr-2000 & eu-2005 & in-2004 & road-cent & uk-2002 & road-usa & uk-2007 \\
+        \midrule
+        \textsc{VieClus} & \textbf{0.793} & \textbf{0.500} & \textbf{0.873} & \textbf{0.913} & \textbf{0.942} & \textbf{0.981} & \textbf{0.998} & TLE & \textbf{0.998} & ERR \\
+        \textsc{Leiden} & 0.793 & 0.488 & 0.870 & 0.913 & 0.941 & 0.981 & 0.998 & \textbf{0.990} & 0.998 & MLE \\
+        \textsc{Louvain} & 0.793 & 0.389 & 0.863 & 0.913 & 0.939 & 0.980 & 0.997 & TLE & 0.998 & MLE \\
+        \textsc{COMBO} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
+        \textsc{CNM} & 0.786 & 0.324 & 0.774 & 0.900 & TLE & 0.968 & 0.997 & MLE & 0.998 & MLE \\
+        \textsc{Infomap} & 0.791 & 0.477 & 0.864 & 0.551 & 0.523 & 0.884 & TLE & 0.688 & TLE & MLE \\
+        \textsc{Walktrap} & 0.745 & 0.351 & 0.682 & 0.863 & MLE & MLE & TLE & MLE & TLE & MLE \\
+        \textsc{CluStRE} & 0.694 & 0.200 & 0.731 & 0.592 & 0.736 & 0.712 & 0.595 & 0.699 & 0.643 & \textbf{0.694} \\
+        \textsc{Hollocou} & 0.323 & 0.154 & 0.391 & 0.447 & 0.231 & 0.600 & 0.671 & 0.621 & 0.671 & 0.271 \\
+        \textsc{Bayan} & TLE & TLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
+        \midrule
+        \textsc{GNNS} & 0.692 & 0.497 & 0.832 & 0.902 & 0.927 & 0.969 & MLE & MLE & MLE & MLE \\
+        \textsc{DGCluster} & 0.309 & 0.085 & 0.394 & 0.779 & 0.599 & 0.551 & MLE & MLE & MLE & MLE \\
+        \textsc{MAGI} & 0.413 & 0.049 & TLE & TLE & TLE & TLE & TLE & MLE & TLE & MLE \\
+        \textsc{LIM} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
+        \textsc{DMoN} & 0.244 & 0.041 & 0.137 & 0.125 & MLE & MLE & MLE & MLE & MLE & MLE \\
+        \textsc{UCoDe} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
+        \textsc{CommDGI} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
+        \bottomrule
+    \end{tabular*}
+\end{table}
+
+
+\end{document}

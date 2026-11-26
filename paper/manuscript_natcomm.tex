@@ -30,6 +30,7 @@
 \clubpenalty=10000
 \widowpenalty=10000
 \usepackage{microtype}
+\usepackage{lineno}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 
 \providecommand{\Description}[1]{}
@@ -51,6 +52,7 @@
 }
 
 \begin{document}
+\linenumbers
 
 \maketitle
 
@@ -250,7 +252,7 @@ Table~\ref{tab:comp} summarizes the 17 community detection algorithms integrated
 
 We evaluate these methods across three datasets: the attributed \textsc{Ground-Truth} suite ($N=10$ real-world networks with node features and known community labels, up to $61.9$~million edges), the topology-only \textsc{DIMACS} suite ($N=32$ graphs from the 10th DIMACS challenge, up to $3.3$~billion edges), and synthetic attributed graphs generated with the Attributed Degree-Corrected Stochastic Block Model (ADC-SBM)~\cite{adcsbm2022}. Each run has a wall-clock time limit of 1~hour and a host memory limit of 120~GiB (or 24~GiB VRAM on GPU). We measure topological clustering quality via modularity ($Q$) and ground-truth label agreement via Normalized Mutual Information (NMI) and the Adjusted Rand Index (ARI).
 
-To compare algorithms across diverse graphs without distorting results through raw-score averages, we use the relative performance normalization of Dolan and Mor{\'e}~\cite{perf2002}. On each graph instance and quality metric, an algorithm's score is divided by the best score achieved by any method on that instance, giving a relative ratio $\tau \in [0, 1]$. Instead of plotting 17 overlapping cumulative step functions, we show a horizontal strip lane for each algorithm. Every solved instance appears as a marker at its ratio $\tau$ (with slight vertical jitter to separate overlapping points near $\tau = 1$), while unresolved instances due to time limits (TLE), memory limits (MLE), or runtime errors (ERR) appear as $\times$ markers in a separate \emph{Fail} band on the right. Algorithms whose markers cluster near $\tau = 1$ with few markers in the \emph{Fail} band achieve both high quality and broad scalability. Detailed per-instance results can be seen in Appendices~\ref{sec:memory}--\ref{sec:detailed-results} (Tables~\ref{tab:memory}--\ref{tab:mod_dimacs_large}).
+To compare algorithms across diverse graphs without distorting results through raw-score averages, we use the relative performance normalization of Dolan and Mor{\'e}~\cite{perf2002}. On each graph instance and quality metric, an algorithm's score is divided by the best score achieved by any method on that instance, giving a relative ratio $\tau \in [0, 1]$. Instead of plotting 17 overlapping cumulative step functions, we show a horizontal strip lane for each algorithm. Every solved instance appears as a marker at its ratio $\tau$ (with slight vertical jitter to separate overlapping points near $\tau = 1$), while unresolved instances due to time limits (TLE), memory limits (MLE), or runtime errors (ERR) appear as $\times$ markers in a separate \emph{Fail} band on the right. Algorithms whose markers cluster near $\tau = 1$ with few markers in the \emph{Fail} band achieve both high quality and broad scalability. Detailed per-instance results are provided in Supplementary Tables~2--12.
 
 \pgfplotsset{
 cycle list/.define={my marks}{
@@ -422,9 +424,9 @@ stripperf/.style={
 
 \subsection{State-of-the-Art Comparisons (Protocol~A)}
 
-Figures~\ref{fig:perf_quality} and~\ref{fig:perf_gt_recovery} show the out-of-the-box Protocol~A performance distributions for modularity maximization and ground-truth community recovery (full per-instance tables are provided in Appendix~\ref{sec:detailed-results}, Tables~\ref{tab:mod_gt}--\ref{tab:mod_dimacs_large}). Across both the attributed \textsc{Ground-Truth} graphs and the topology-only \textsc{DIMACS} suite (Figure~\ref{fig:perf_quality}), classical modularity heuristics clearly lead in pure modularity maximization. \textsc{VieClus} reaches the highest modularity on every instance it completes ($\tau = 1.0$ on 9/10 \textsc{Ground-Truth} graphs and 30/32 \textsc{DIMACS} graphs), matching prior findings~\cite{vieclus2018,maxsat2025}. It fails only on the largest instances (\texttt{ogbn-products}, \texttt{uk-2002}, and \texttt{uk-2007-05}) due to time, memory, or 32-bit edge-index limits. \textsc{Leiden} and \textsc{Louvain} follow closely behind. In particular, \textsc{Leiden} solves all 10 \textsc{Ground-Truth} instances with $\tau \ge 0.989$ and 31/32 \textsc{DIMACS} instances with $\tau \ge 0.953$. Among continuous and learning-based methods, only \textsc{DGCluster} ($\tau \ge 0.922$ on 8/10 \textsc{Ground-Truth} graphs) and the topology-driven \textsc{GNNS} ($\tau \ge 0.924$ on 10/10 \textsc{Ground-Truth} graphs and 22/32 \textsc{DIMACS} graphs, out of 28/32 solved) approach the modularity of classical heuristics. In contrast, contrastive and deep GNN models score much lower in raw modularity, especially on the featureless \textsc{DIMACS} graphs where they rely on synthetic degree-profile and random node features (\texttt{ldp+rni}).
+Figures~\ref{fig:perf_quality} and~\ref{fig:perf_gt_recovery} show the out-of-the-box Protocol~A performance distributions for modularity maximization and ground-truth community recovery (full per-instance results are provided in Supplementary Tables~7--12). Across both the attributed \textsc{Ground-Truth} graphs and the topology-only \textsc{DIMACS} suite (Figure~\ref{fig:perf_quality}), classical modularity heuristics clearly lead in pure modularity maximization. \textsc{VieClus} reaches the highest modularity on every instance it completes ($\tau = 1.0$ on 9/10 \textsc{Ground-Truth} graphs and 30/32 \textsc{DIMACS} graphs), matching prior findings~\cite{vieclus2018,maxsat2025}. It fails only on the largest instances (\texttt{ogbn-products}, \texttt{uk-2002}, and \texttt{uk-2007-05}) due to time, memory, or 32-bit edge-index limits. \textsc{Leiden} and \textsc{Louvain} follow closely behind. In particular, \textsc{Leiden} solves all 10 \textsc{Ground-Truth} instances with $\tau \ge 0.989$ and 31/32 \textsc{DIMACS} instances with $\tau \ge 0.953$. Among continuous and learning-based methods, only \textsc{DGCluster} ($\tau \ge 0.922$ on 8/10 \textsc{Ground-Truth} graphs) and the topology-driven \textsc{GNNS} ($\tau \ge 0.924$ on 10/10 \textsc{Ground-Truth} graphs and 22/32 \textsc{DIMACS} graphs, out of 28/32 solved) approach the modularity of classical heuristics. In contrast, contrastive and deep GNN models score much lower in raw modularity, especially on the featureless \textsc{DIMACS} graphs where they rely on synthetic degree-profile and random node features (\texttt{ldp+rni}).
 
-When we evaluate ground-truth community recovery on the \textsc{Ground-Truth} dataset (Figure~\ref{fig:perf_gt_recovery} and Appendix~\ref{sec:detailed-results}, Tables~\ref{tab:nmi_gt} and~\ref{tab:ari_gt}), the picture changes substantially. Here, attribute-aware learning-based methods compete closely with, and often beat, pure modularity maximizers. In NMI (Figure~\ref{fig:perf_gt_recovery}, left), \textsc{MAGI} has the strongest overall profile (mean NMI of $0.533$ across 9/10 solved instances, winning \texttt{amazon-computers} and \texttt{reddit}), while \textsc{CommDGI} achieves the highest NMI on three networks (\texttt{coauthor-cs}, \texttt{pubmed}, \texttt{coauthor-physics}), \textsc{UCoDe} leads on two (\texttt{cora}, \texttt{citeseer}), and \textsc{DGCluster}, \textsc{Walktrap}, and \textsc{Leiden} each lead on one (\texttt{amazon-photo}, \texttt{ogbn-arxiv}, and \texttt{ogbn-products}, respectively). Under chance-corrected ARI (Figure~\ref{fig:perf_gt_recovery}, right), the advantage of attribute-aware GNNs is even sharper: \textsc{MAGI} leads with a mean ARI of $0.422$ across 9/10 solved graphs (winning 4/10 instances, including $0.904$ on \texttt{reddit}), followed by \textsc{CommDGI} ($0.387$), \textsc{UCoDe} ($0.379$, winning \texttt{cora} and \texttt{citeseer}), \textsc{LIM} ($0.373$), and \textsc{DGCluster} ($0.349$), all outperforming \textsc{VieClus} and \textsc{Leiden} ($0.333$ mean ARI). Notably, this advantage is not simply because fixed-$k$ neural models receive the true number of classes $|C|$: the cluster-free neural methods \textsc{DGCluster} and \textsc{LIM}, which infer $k$ automatically without knowing $|C|$, also surpass classical topology-only heuristics in ARI and on several networks in NMI. Across the five stochastic trials per instance, classical multilevel heuristics show near-zero run-to-run variance ($\text{SD}_Q < 0.003$), whereas multi-loss and contrastive GNNs such as \textsc{CommDGI}, \textsc{DMoN}, and \textsc{UCoDe} exhibit substantial seed sensitivity (standard deviations up to $0.08$--$0.13$ in $Q$ and NMI). Overall, the divergence between Figure~\ref{fig:perf_quality} and Figure~\ref{fig:perf_gt_recovery} reflects a mismatch between topological modularity and semantic class labels: for example, on CiteSeer, the ground-truth class partition has a modularity of only $0.54$, whereas classical and neural modularity maximizers find partitions with modularity up to $0.89$. Comparing against a feature-only $k$-means baseline ($k = |C|$, bottom row of Tables~\ref{tab:nmi_gt} and~\ref{tab:ari_gt}) confirms that GNNs achieve their semantic gains through genuine graph--attribute fusion rather than raw attributes alone: feature-only $k$-means scores well below both classical heuristics and GNNs on nine of the ten networks (for instance, $\text{NMI} = 0.167$ and $\text{ARI} = 0.091$ on Cora). The lone exception is PubMed, where feature-only $k$-means ($\text{NMI} = 0.312$, $\text{ARI} = 0.280$) already surpasses every topology-only heuristic, explaining why attribute-aware GNNs achieve their largest semantic uplift on that graph.
+When we evaluate ground-truth community recovery on the \textsc{Ground-Truth} dataset (Figure~\ref{fig:perf_gt_recovery} and Supplementary Tables~8 and~9), the picture changes substantially. Here, attribute-aware learning-based methods compete closely with, and often beat, pure modularity maximizers. In NMI (Figure~\ref{fig:perf_gt_recovery}, left), \textsc{MAGI} has the strongest overall profile (mean NMI of $0.533$ across 9/10 solved instances, winning \texttt{amazon-computers} and \texttt{reddit}), while \textsc{CommDGI} achieves the highest NMI on three networks (\texttt{coauthor-cs}, \texttt{pubmed}, \texttt{coauthor-physics}), \textsc{UCoDe} leads on two (\texttt{cora}, \texttt{citeseer}), and \textsc{DGCluster}, \textsc{Walktrap}, and \textsc{Leiden} each lead on one (\texttt{amazon-photo}, \texttt{ogbn-arxiv}, and \texttt{ogbn-products}, respectively). Under chance-corrected ARI (Figure~\ref{fig:perf_gt_recovery}, right), the advantage of attribute-aware GNNs is even sharper: \textsc{MAGI} leads with a mean ARI of $0.422$ across 9/10 solved graphs (winning 4/10 instances, including $0.904$ on \texttt{reddit}), followed by \textsc{CommDGI} ($0.387$), \textsc{UCoDe} ($0.379$, winning \texttt{cora} and \texttt{citeseer}), \textsc{LIM} ($0.373$), and \textsc{DGCluster} ($0.349$), all outperforming \textsc{VieClus} and \textsc{Leiden} ($0.333$ mean ARI). Notably, this advantage is not simply because fixed-$k$ neural models receive the true number of classes $|C|$: the cluster-free neural methods \textsc{DGCluster} and \textsc{LIM}, which infer $k$ automatically without knowing $|C|$, also surpass classical topology-only heuristics in ARI and on several networks in NMI. Across the five stochastic trials per instance, classical multilevel heuristics show near-zero run-to-run variance ($\text{SD}_Q < 0.003$), whereas multi-loss and contrastive GNNs such as \textsc{CommDGI}, \textsc{DMoN}, and \textsc{UCoDe} exhibit substantial seed sensitivity (standard deviations up to $0.08$--$0.13$ in $Q$ and NMI). Overall, the divergence between Figure~\ref{fig:perf_quality} and Figure~\ref{fig:perf_gt_recovery} reflects a mismatch between topological modularity and semantic class labels: for example, on CiteSeer, the ground-truth class partition has a modularity of only $0.54$, whereas classical and neural modularity maximizers find partitions with modularity up to $0.89$. Comparing against a feature-only $k$-means baseline ($k = |C|$, bottom row of Supplementary Tables~8 and~9) confirms that GNNs achieve their semantic gains through genuine graph--attribute fusion rather than raw attributes alone: feature-only $k$-means scores well below both classical heuristics and GNNs on nine of the ten networks (for instance, $\text{NMI} = 0.167$ and $\text{ARI} = 0.091$ on Cora). The lone exception is PubMed, where feature-only $k$-means ($\text{NMI} = 0.312$, $\text{ARI} = 0.280$) already surpasses every topology-only heuristic, explaining why attribute-aware GNNs achieve their largest semantic uplift on that graph.
 
 The streaming algorithms \textsc{Hollocou} and \textsc{CluStRE} trade solution quality for high scalability. Both solve all 10 \textsc{Ground-Truth} and all 32 \textsc{DIMACS} graphs, including \texttt{uk-2007-05} ($3.3$~billion edges), with \textsc{CluStRE} consistently outperforming \textsc{Hollocou} in modularity, NMI, and ARI. At the opposite extreme, the exact solver \textsc{Bayan} terminates with optimal modularity on six of the eight smallest \textsc{DIMACS} networks (\texttt{karate}, \texttt{chesapeake}, \texttt{dolphins}, \texttt{lesmis}, \texttt{polbooks}, and \texttt{football}, $\tau = 1.000$), and also solves the disconnected network \texttt{netscience} ($Q = 0.960$, $\tau = 0.9996$) in $549$~s. On \texttt{adjnoun}, it reaches its one-hour budget ($3\,092.1$~s solver time) having already found the optimal partition ($Q = 0.313$, matching \textsc{VieClus} at full precision), though with a $23.6\%$ optimality gap. On \texttt{jazz} and all remaining medium-to-large graphs, its $\mathcal{O}(n^3)$ triangular constraint formulation exceeds the one-hour limit (\textsc{TLE}) or the 120~GiB memory limit (\textsc{MLE}). Across the eight small \textsc{DIMACS} graphs with known exact optima~\cite{bayan2024,maxsat2025} (at full precision), \textsc{VieClus} matches the optimum on 8/8, \textsc{Bayan} on 7/8, \textsc{Leiden} and \textsc{GNNS} on 6/8, \textsc{COMBO} on 5/8, \textsc{Louvain} and \textsc{DGCluster} on 2/8, and \textsc{Infomap} and \textsc{CommDGI} on 1/8.
 
@@ -553,11 +555,11 @@ perf/.style={
 
 Figure~\ref{fig:efficiency} (left) shows the wall-clock runtime distributions on the \textsc{Ground-Truth} dataset under Protocol~A ($p=1$) together with the average speedups gained from multi-core CPU ($p=32$) and GPU acceleration under Protocol~S. Across both the \textsc{Ground-Truth} and \textsc{DIMACS} suites, runtime per edge ($\mu\text{s}/m$) spans six orders of magnitude. Streaming algorithms (\textsc{Hollocou} at $0.04$--$0.05\,\mu\text{s}/m$ and \textsc{CluStRE} at $0.26$--$0.64\,\mu\text{s}/m$) are the fastest, finishing most graphs in milliseconds to seconds. Multilevel local-moving heuristics (\textsc{Leiden} at $0.78$--$0.85\,\mu\text{s}/m$ and \textsc{Louvain} at $1.74$--$2.12\,\mu\text{s}/m$) offer the best balance between speed and quality: they reach near-optimal modularity in milliseconds to seconds, whereas the memetic solver \textsc{VieClus} runs for its full configured 1-hour anytime budget to iteratively refine partitions. Among continuous and learning-based methods, the sparse matrix-free \textsc{GNNS} ($375\,\mu\text{s}/m$ on \textsc{Ground-Truth}) is $12\times$--$70\times$ faster than deep neural architectures ($4\,300$--$26\,400\,\mu\text{s}/m$) on attributed graphs (and $\sim 2\times$ faster than \textsc{MAGI} and \textsc{DGCluster} on \textsc{DIMACS}), as deep models spend substantial time in multi-epoch gradient training.
 
-Peak memory usage shows an equally clear divide between paradigms (see Appendix~\ref{sec:memory}, Table~\ref{tab:memory}). Streaming methods process edges in a single pass with minimal state and need only $1.1$~GiB on \texttt{ogbn-products} ($61.9$~M edges), while \textsc{Leiden} and \textsc{Louvain} use $12.1$~GiB. In contrast, GNNs store high-dimensional node embeddings and intermediate activations, requiring $13$--$44$~GiB on medium and large graphs. Even worse, methods that build dense $\mathcal{O}(n^2)$ modularity or similarity matrices in RAM, specifically \textsc{LIM}, \textsc{UCoDe}, \textsc{CommDGI}, and the Python setup phase of \textsc{Bayan}, try to allocate $214$~GiB on \texttt{ogbn-arxiv} ($n = 169\,343$) and over $41$~TiB on \texttt{ogbn-products}. These runs immediately fail with memory limit exceeded (\textsc{MLE}).
+Peak memory usage shows an equally clear divide between paradigms (see Supplementary Table~2). Streaming methods process edges in a single pass with minimal state and need only $1.1$~GiB on \texttt{ogbn-products} ($61.9$~M edges), while \textsc{Leiden} and \textsc{Louvain} use $12.1$~GiB. In contrast, GNNs store high-dimensional node embeddings and intermediate activations, requiring $13$--$44$~GiB on medium and large graphs. Even worse, methods that build dense $\mathcal{O}(n^2)$ modularity or similarity matrices in RAM, specifically \textsc{LIM}, \textsc{UCoDe}, \textsc{CommDGI}, and the Python setup phase of \textsc{Bayan}, try to allocate $214$~GiB on \texttt{ogbn-arxiv} ($n = 169\,343$) and over $41$~TiB on \texttt{ogbn-products}. These runs immediately fail with memory limit exceeded (\textsc{MLE}).
 
-To measure how parallel hardware affects runtime and quality, \textbf{Protocol~S} runs the parallel and learning-based solvers under identical cluster budgets $k$ to Protocol~A on a 16-core (32-thread) Intel Xeon w5-3435X CPU ($p = 32$, \texttt{device=cpu}) and with an NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}). Full per-instance runtimes are listed in Appendix~\ref{sec:par-seq} (Table~\ref{tab:par-seq}). Note that the single-threaded classification in Figure~\ref{fig:efficiency} reflects the evaluated reference wrappers (such as \texttt{igraph} and \texttt{cdlib}), whereas specialized parallel implementations of several classical algorithms also exist (including \texttt{NetworKit}, \texttt{GVE-Leiden}, \texttt{cuGraph}, OpenMP \textsc{Infomap}, and multi-threaded \textsc{Gurobi}). Scaling from 1 to 32 CPU threads (Figure~\ref{fig:efficiency}, left, cyan triangles) gives geometric-mean wall-clock speedups of $9.8\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $4.1\times$ for \textsc{CommDGI}, $3.5\times$ for \textsc{DMoN}, $3.4\times$ for \textsc{GNNS}, and $1.3\times$ for \textsc{MAGI} across commonly solved networks. Moving training to the RTX~4090 GPU (orange diamonds) yields much larger geometric-mean wall-clock speedups over 1T~CPU: $153\times$ for \textsc{LIM} (reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $121\times$ for \textsc{UCoDe}, $96\times$ for \textsc{CommDGI}, $38\times$ for \textsc{DGCluster}, $33\times$ for \textsc{GNNS} (solving all 10 \textsc{Ground-Truth} graphs including \texttt{ogbn-products}), $12\times$ for \textsc{DMoN}, and $2.0\times$ for \textsc{MAGI} (whose random-walk sampling and $k$-means post-processing remain CPU-bound). Because several 1T~CPU runs hit the 1-hour wall-clock cap before completing their epoch budgets, normalizing by completed epochs/iterations reveals even stronger per-epoch GPU speedups: $177\times$ for \textsc{LIM}, $146\times$ for \textsc{UCoDe}, $117\times$ for \textsc{CommDGI}, $50\times$ for \textsc{GNNS}, $39\times$ for \textsc{DGCluster}, $13\times$ for \textsc{DMoN}, and $6.1\times$ for \textsc{MAGI} ($2.6\times$ on 32T~CPU).
+To measure how parallel hardware affects runtime and quality, \textbf{Protocol~S} runs the parallel and learning-based solvers under identical cluster budgets $k$ to Protocol~A on a 16-core (32-thread) Intel Xeon w5-3435X CPU ($p = 32$, \texttt{device=cpu}) and with an NVIDIA RTX~4090 GPU ($p = 32$, \texttt{device=cuda}). Full per-instance runtimes are listed in Supplementary Table~6. Note that the single-threaded classification in Figure~\ref{fig:efficiency} reflects the evaluated reference wrappers (such as \texttt{igraph} and \texttt{cdlib}), whereas specialized parallel implementations of several classical algorithms also exist (including \texttt{NetworKit}, \texttt{GVE-Leiden}, \texttt{cuGraph}, OpenMP \textsc{Infomap}, and multi-threaded \textsc{Gurobi}). Scaling from 1 to 32 CPU threads (Figure~\ref{fig:efficiency}, left, cyan triangles) gives geometric-mean wall-clock speedups of $9.8\times$ for \textsc{UCoDe}, $7.6\times$ for \textsc{LIM}, $5.0\times$ for \textsc{DGCluster}, $4.1\times$ for \textsc{CommDGI}, $3.5\times$ for \textsc{DMoN}, $3.4\times$ for \textsc{GNNS}, and $1.3\times$ for \textsc{MAGI} across commonly solved networks. Moving training to the RTX~4090 GPU (orange diamonds) yields much larger geometric-mean wall-clock speedups over 1T~CPU: $153\times$ for \textsc{LIM} (reducing \texttt{coauthor-physics} from $3\,615$~s to $40.5$~s), $121\times$ for \textsc{UCoDe}, $96\times$ for \textsc{CommDGI}, $38\times$ for \textsc{DGCluster}, $33\times$ for \textsc{GNNS} (solving all 10 \textsc{Ground-Truth} graphs including \texttt{ogbn-products}), $12\times$ for \textsc{DMoN}, and $2.0\times$ for \textsc{MAGI} (whose random-walk sampling and $k$-means post-processing remain CPU-bound). Because several 1T~CPU runs hit the 1-hour wall-clock cap before completing their epoch budgets, normalizing by completed epochs/iterations reveals even stronger per-epoch GPU speedups: $177\times$ for \textsc{LIM}, $146\times$ for \textsc{UCoDe}, $117\times$ for \textsc{CommDGI}, $50\times$ for \textsc{GNNS}, $39\times$ for \textsc{DGCluster}, $13\times$ for \textsc{DMoN}, and $6.1\times$ for \textsc{MAGI} ($2.6\times$ on 32T~CPU).
 
-Figure~\ref{fig:efficiency} (right) shows the modularity gain $\Delta Q = Q_{\text{accel}} - Q_{1\text{T}}$ on compute-bound instances across both datasets. For \textsc{VieClus}, running its evolutionary search across 32 MPI processes improves modularity slightly ($\Delta Q \in [0, +0.002]$) on medium graphs, but duplicating graph data across 32 MPI ranks exceeds the 120~GiB RAM limit on the largest instances (\emph{MLE} band). For neural methods, comparing completed epochs on 1T~CPU (Table~\ref{tab:iterations}), 32T~CPU (Table~\ref{tab:iterations_cpu32}), and GPU (Table~\ref{tab:iterations_gpu}) explains these gains. While small graphs finish all epochs within an hour on 1T~CPU, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} stop early at the 1-hour limit (for example, \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}). Finishing all epochs on 32T~CPU or GPU rescues these runs and boosts modularity by $\Delta Q \in [+0.002, +0.22]$ (Figure~\ref{fig:efficiency}, right, epoch-rescue regime), whereas occasional small negative shifts ($\Delta Q \in [-0.02, 0)$) reflect stochastic initialization and floating-point variance across backends. However, the RTX~4090's 24~GiB VRAM ceiling is tighter than 120~GiB of host RAM, so full-graph GNNs hit \textsc{MLE} on smaller graphs on GPU than on CPU (orange diamonds in the \emph{MLE} band). For example, \textsc{CommDGI} needs $28.3$~GiB on \texttt{coauthor-physics}, so it finishes on 32T~CPU but hits \textsc{MLE} on the GPU.
+Figure~\ref{fig:efficiency} (right) shows the modularity gain $\Delta Q = Q_{\text{accel}} - Q_{1\text{T}}$ on compute-bound instances across both datasets. For \textsc{VieClus}, running its evolutionary search across 32 MPI processes improves modularity slightly ($\Delta Q \in [0, +0.002]$) on medium graphs, but duplicating graph data across 32 MPI ranks exceeds the 120~GiB RAM limit on the largest instances (\emph{MLE} band). For neural methods, comparing completed epochs on 1T~CPU (Supplementary Table~3), 32T~CPU (Supplementary Table~4), and GPU (Supplementary Table~5) explains these gains. While small graphs finish all epochs within an hour on 1T~CPU, larger networks such as \texttt{coauthor-physics} and \texttt{ogbn-arxiv} stop early at the 1-hour limit (for example, \textsc{DGCluster} completes $270/300$ epochs on \texttt{ogbn-arxiv}, and \textsc{LIM} completes $111/300$ on \texttt{coauthor-physics}). Finishing all epochs on 32T~CPU or GPU rescues these runs and boosts modularity by $\Delta Q \in [+0.002, +0.22]$ (Figure~\ref{fig:efficiency}, right, epoch-rescue regime), whereas occasional small negative shifts ($\Delta Q \in [-0.02, 0)$) reflect stochastic initialization and floating-point variance across backends. However, the RTX~4090's 24~GiB VRAM ceiling is tighter than 120~GiB of host RAM, so full-graph GNNs hit \textsc{MLE} on smaller graphs on GPU than on CPU (orange diamonds in the \emph{MLE} band). For example, \textsc{CommDGI} needs $28.3$~GiB on \texttt{coauthor-physics}, so it finishes on 32T~CPU but hits \textsc{MLE} on the GPU.
 
 \subsection{Hyperparameter Sensitivity (Protocol~B)}
 
@@ -595,7 +597,7 @@ To test how strongly algorithm rankings depend on hyperparameter tuning versus d
 
 The results show a clear difference in parameter sensitivity between classical and neural methods. Classical modularity heuristics (\textsc{Leiden}, \textsc{Louvain}, and \textsc{COMBO}) show almost no sensitivity ($\lvert\Delta Q\rvert \le 0.005$) because their default resolution parameter ($\gamma = 1.0$) already matches standard Newman--Girvan modularity. On PubMed, tuning \textsc{COMBO}'s resolution and community cap also allows it to finish within the one-hour limit ($Q = 0.740$). For \textsc{Walktrap}, tuning the random-walk length $t \in [2, 12]$ gives small, steady gains ($+0.016$ to $+0.028$). Allowing multi-pass refinement in \textsc{CluStRE} (\texttt{clustre-strong}) increases modularity by $+0.268$ to $+0.393$ over single-pass streaming (\texttt{clustre-fast}), bringing it within $0.005$ of \textsc{Leiden} on all three citation networks.
 
-For learning-based methods, comparing the default scores in Table~\ref{tab:protocol_b} ($k = \lceil\sqrt{n}\rceil$) with those in Table~\ref{tab:mod_gt} ($k = |C|$) highlights an important cluster-count effect. When fixed-$k$ neural models are restricted to the small number of ground-truth classes in Protocol~A ($|C| = 6$ on CiteSeer and $|C| = 7$ on Cora), their maximum achievable modularity is capped (for example, $Q = 0.722$ for \textsc{MAGI}-SAGE and $0.698$ for \textsc{CommDGI} on CiteSeer). Raising the cluster budget to $k = \lceil\sqrt{n}\rceil = 58$ in Table~\ref{tab:protocol_b} immediately increases their untuned modularity to $0.878$ and $0.813$. At the same time, finer partitions that maximize topological modularity split broad semantic classes into smaller sub-communities, which explains why tuning for $Q$ improves structural modularity rather than semantic NMI. Beyond the cluster budget $k$, neural models that balance multiple loss terms or depend on temperature scaling also benefit strongly from hyperparameter tuning, whereas single-objective models such as \textsc{DGCluster}, \textsc{DMoN}, and \textsc{UCoDe} show minimal tuning gains ($\Delta Q \le +0.006$, with \textsc{DMoN} suffering from the large $k = 141$ budget on PubMed). \textsc{GNNS} gains $+0.015$ to $+0.028$ by tuning its subspace rank and step count, while full-graph \textsc{MAGI} (GCN) improves by $+0.049$ to $+0.106$ and mini-batch \textsc{MAGI} (GraphSAGE) improves by $+0.049$ on PubMed. Most notably, \textsc{CommDGI}, which combines deep graph infomax, $k$-means clustering temperature, and modularity losses, collapses under default settings on PubMed ($Q = 0.003$ at $k = \lceil\sqrt{n}\rceil = 141$, and $Q = 0.484$ at $k=3$), but reaches $Q = 0.690$ after tuning its loss weights and temperature. Even after 50 trials of per-instance Bayesian optimization, however, no learning-based algorithm beats the untuned modularity of \textsc{VieClus} or \textsc{Leiden} on any of the three networks.
+For learning-based methods, comparing the default scores in Table~\ref{tab:protocol_b} ($k = \lceil\sqrt{n}\rceil$) with those in Supplementary Table~7 ($k = |C|$) highlights an important cluster-count effect. When fixed-$k$ neural models are restricted to the small number of ground-truth classes in Protocol~A ($|C| = 6$ on CiteSeer and $|C| = 7$ on Cora), their maximum achievable modularity is capped (for example, $Q = 0.722$ for \textsc{MAGI}-SAGE and $0.698$ for \textsc{CommDGI} on CiteSeer). Raising the cluster budget to $k = \lceil\sqrt{n}\rceil = 58$ in Table~\ref{tab:protocol_b} immediately increases their untuned modularity to $0.878$ and $0.813$. At the same time, finer partitions that maximize topological modularity split broad semantic classes into smaller sub-communities, which explains why tuning for $Q$ improves structural modularity rather than semantic NMI. Beyond the cluster budget $k$, neural models that balance multiple loss terms or depend on temperature scaling also benefit strongly from hyperparameter tuning, whereas single-objective models such as \textsc{DGCluster}, \textsc{DMoN}, and \textsc{UCoDe} show minimal tuning gains ($\Delta Q \le +0.006$, with \textsc{DMoN} suffering from the large $k = 141$ budget on PubMed). \textsc{GNNS} gains $+0.015$ to $+0.028$ by tuning its subspace rank and step count, while full-graph \textsc{MAGI} (GCN) improves by $+0.049$ to $+0.106$ and mini-batch \textsc{MAGI} (GraphSAGE) improves by $+0.049$ on PubMed. Most notably, \textsc{CommDGI}, which combines deep graph infomax, $k$-means clustering temperature, and modularity losses, collapses under default settings on PubMed ($Q = 0.003$ at $k = \lceil\sqrt{n}\rceil = 141$, and $Q = 0.484$ at $k=3$), but reaches $Q = 0.690$ after tuning its loss weights and temperature. Even after 50 trials of per-instance Bayesian optimization, however, no learning-based algorithm beats the untuned modularity of \textsc{VieClus} or \textsc{Leiden} on any of the three networks.
 
 \subsection{Controlled Synthetic Regimes (ADC-SBM)}
 
@@ -855,7 +857,7 @@ Among classical and topology-only methods (\textsc{CNM} has no tunable parameter
 
 \subsection{Datasets}\label{sec:datasets}
 
-We evaluate all methods across three benchmark suites. First, the \textsc{Ground-Truth} suite (Table~\ref{tab:ground_truth_graphs}) contains 10 real-world attributed networks with known community labels standard in the GNN literature: the Planetoid citation graphs (Cora, CiteSeer, PubMed)~\cite{sen2008collective,yang2016revisiting}, the Amazon co-purchasing and Microsoft Academic co-authorship graphs (Amazon-Photo, Amazon-Computers, Coauthor-CS, Coauthor-Physics)~\cite{shchur2018pitfalls}, the Reddit social interaction graph~\cite{hamilton2017inductive}, and two Open Graph Benchmark networks (\texttt{ogbn-arxiv}, \texttt{ogbn-products})~\cite{hu2020open}. All graphs are converted to simple undirected graphs by symmetrizing directed edges and removing self-loops and parallel edges, while preserving all vertices (including isolated nodes, e.g., in CiteSeer) and using the standard benchmark node features without additional dataset-specific preprocessing. Second, the \textsc{DIMACS} suite (Appendix~\ref{sec:instances}, Table~\ref{tab:dimacs_instances}) contains 32 unattributed undirected graphs from the 10th DIMACS Implementation Challenge~\cite{dimacschallengegraphpartandcluster}, ranging from 34 vertices (\texttt{karate}) to $105.9$~million vertices and $3.3$~billion edges (\texttt{uk-2007-05}). Third, our synthetic suite uses the Attributed Degree-Corrected Stochastic Block Model (ADC-SBM)~\cite{adcsbm2022}, which plants $k$ clusters and controls edge noise via the expected total degree $d$ and expected external degree $d_{\text{out}} \le d$, while controlling Gaussian node-feature separation via the within-cluster standard deviation $\sigma$ and the cluster-center standard deviation $\sigma_c$.
+We evaluate all methods across three benchmark suites. First, the \textsc{Ground-Truth} suite (Table~\ref{tab:ground_truth_graphs}) contains 10 real-world attributed networks with known community labels standard in the GNN literature: the Planetoid citation graphs (Cora, CiteSeer, PubMed)~\cite{sen2008collective,yang2016revisiting}, the Amazon co-purchasing and Microsoft Academic co-authorship graphs (Amazon-Photo, Amazon-Computers, Coauthor-CS, Coauthor-Physics)~\cite{shchur2018pitfalls}, the Reddit social interaction graph~\cite{hamilton2017inductive}, and two Open Graph Benchmark networks (\texttt{ogbn-arxiv}, \texttt{ogbn-products})~\cite{hu2020open}. All graphs are converted to simple undirected graphs by symmetrizing directed edges and removing self-loops and parallel edges, while preserving all vertices (including isolated nodes, e.g., in CiteSeer) and using the standard benchmark node features without additional dataset-specific preprocessing. Second, the \textsc{DIMACS} suite (Supplementary Table~1) contains 32 unattributed undirected graphs from the 10th DIMACS Implementation Challenge~\cite{dimacschallengegraphpartandcluster}, ranging from 34 vertices (\texttt{karate}) to $105.9$~million vertices and $3.3$~billion edges (\texttt{uk-2007-05}). Third, our synthetic suite uses the Attributed Degree-Corrected Stochastic Block Model (ADC-SBM)~\cite{adcsbm2022}, which plants $k$ clusters and controls edge noise via the expected total degree $d$ and expected external degree $d_{\text{out}} \le d$, while controlling Gaussian node-feature separation via the within-cluster standard deviation $\sigma$ and the cluster-center standard deviation $\sigma_c$.
 
 \begin{table}[tbp]
     \centering
@@ -884,11 +886,12 @@ We evaluate all methods across three benchmark suites. First, the \textsc{Ground
 
 All experiments were run on identical server nodes equipped with a 16-core (32-thread) Intel Xeon w5-3435X CPU, 125~GiB of RAM, and an NVIDIA GeForce RTX~4090 GPU with 24~GiB of VRAM (driver 560.35.03, CUDA~12.6), running Ubuntu~24.04.3~LTS (Linux kernel 6.8.0-107, GCC~13.3.0, Python~3.12.13). Each benchmark job ran exclusively on a node under Linux \texttt{cgroup} memory enforcement with a 1-hour wall-clock limit ($3\,600$~s, plus a $900$~s watchdog grace period for neural epoch termination) and a 120~GiB RAM limit (or 24~GiB VRAM on GPU). Runs exceeding the memory limit are recorded as \textsc{MLE}, and runs exceeding the 1-hour limit are recorded as \textsc{TLE}.
 
-\section*{Acknowledgements}
-We acknowledge support by DFG grant SCHU 2567/5-1.
+\subsection{Use of Large Language Models}
 
-\medskip\noindent
 The study design, initial algorithm collection, baseline experiments, and original manuscript draft were completed by the authors without generative AI. During subsequent revisions for this journal version, large language models (Anthropic Claude and Google Gemini) were used to assist with refactoring the benchmarking harness, generating plotting and data-processing scripts, auditing solver configurations and result consistency, and editing the text for clarity. All code, experimental runs, analyses, and scientific claims were independently verified by the authors, who take full responsibility for the final manuscript.
+
+\section*{Funding}
+The authors acknowledge support for the research of this work from the German Research Foundation (DFG), grant number SCHU 2567/5-1.
 
 \section*{Author Contributions}
 A.C., K.L., and C.S. conceived the study. K.L. and A.C. developed the benchmark framework, performed the experiments, and analyzed the data. K.L., A.C., and C.S. wrote the manuscript.
@@ -904,396 +907,6 @@ The complete benchmarking harness, standardized solver wrappers, preprocessing s
 
 \bibliographystyle{naturemag}
 \bibliography{\jobname}
-
-\appendix
-
-\section{Benchmark Instances}
-\label{sec:instances}
-\begin{table}[H]
-    \centering
-    \caption{Graphs from the 10th DIMACS Implementation Challenge~\cite{dimacschallengegraphpartandcluster} used in our topology-only evaluation suite ($N=32$). These instances do not include vertex features or ground-truth community labels.}
-    \label{tab:dimacs_instances}
-    \vspace{0.5em}
-    \small
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrr c lrr@{}}
-        \toprule
-        Instance & $n$ & $m$ & & Instance & $n$ & $m$ \\
-        \midrule
-        karate                 & \numprint{34}        & \numprint{78}         & & astro-ph               & \numprint{16706}     & \numprint{121251}     \\
-        chesapeake             & \numprint{39}        & \numprint{170}        & & cond-mat               & \numprint{16726}     & \numprint{47594}      \\
-        dolphins               & \numprint{62}        & \numprint{159}        & & as-22july06            & \numprint{22963}     & \numprint{48436}      \\
-        lesmis                 & \numprint{77}        & \numprint{254}        & & cond-mat-2003          & \numprint{31163}     & \numprint{120029}     \\
-        polbooks               & \numprint{105}       & \numprint{441}        & & cond-mat-2005          & \numprint{40421}     & \numprint{175691}     \\
-        adjnoun                & \numprint{112}       & \numprint{425}        & & preferentialAttachment & \numprint{100000}    & \numprint{499985}     \\
-        football               & \numprint{115}       & \numprint{613}        & & smallworld             & \numprint{100000}    & \numprint{499998}     \\
-        jazz                   & \numprint{198}       & \numprint{2742}       & & G-n-pin-pout           & \numprint{100000}    & \numprint{501198}     \\
-        celegansneural         & \numprint{297}       & \numprint{2148}       & & caidaRouterLevel       & \numprint{192244}    & \numprint{609066}     \\
-        celegans-metabolic     & \numprint{453}       & \numprint{2025}       & & cnr-2000               & \numprint{325557}    & \numprint{2738969}    \\
-        email                  & \numprint{1133}      & \numprint{5451}       & & eu-2005                & \numprint{862664}    & \numprint{16138468}   \\
-        polblogs               & \numprint{1490}      & \numprint{16715}      & & in-2004                & \numprint{1382908}   & \numprint{13591473}   \\
-        netscience             & \numprint{1589}      & \numprint{2742}       & & road-central           & \numprint{14081816}  & \numprint{16933413}   \\
-        power                  & \numprint{4941}      & \numprint{6594}       & & uk-2002                & \numprint{18520486}  & \numprint{261787258}  \\
-        hep-th                 & \numprint{8361}      & \numprint{15751}      & & road-usa               & \numprint{23947347}  & \numprint{28854312}   \\
-        PGPgiantcompo          & \numprint{10680}     & \numprint{24316}      & & uk-2007-05             & \numprint{105896555} & \numprint{3301876564} \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\section{Memory Usage and Training Convergence}
-\label{sec:memory}
-
-\begin{table}[H]
-    \centering
-    \caption{Peak memory consumption in gibibytes (GiB) of the evaluated algorithms on the \textsc{Ground-Truth} dataset under Protocol~A (recorded via Linux \texttt{cgroup} tracking). Entries marked \textsc{TLE} indicate runs exceeding the one-hour time limit, while \textsc{MLE} denotes runs exceeding the 120~GiB memory limit.}
-    \label{tab:memory}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
-        \midrule
-        \textsc{VieClus}   & 0.03 & 0.03     & 0.07  & 0.15 & 0.06  & 0.05   & 0.14    & 0.47  & 10.9   & TLE  \\
-        \textsc{Leiden}    & 0.02 & 0.02     & 0.04  & 0.08 & 0.03  & 0.03   & 0.07    & 0.25  & 11.2   & 12.1 \\
-        \textsc{Louvain}   & 0.02 & 0.02     & 0.04  & 0.08 & 0.03  & 0.03   & 0.07    & 0.25  & 11.2   & 12.1 \\
-        \textsc{COMBO}     & 0.14 & 0.20     & 0.94  & 2.95 & 5.08  & TLE    & TLE     & MLE   & MLE    & MLE  \\
-        \textsc{CNM}       & 0.02 & 0.02     & 0.04  & 0.07 & 0.04  & 0.04   & 0.07    & 0.25  & TLE    & TLE  \\
-        \textsc{Infomap}   & 0.03 & 0.03     & 0.10  & 0.20 & 0.13  & 0.11   & 0.27    & 1.22  & 24.6   & 36.7 \\
-        \textsc{Walktrap}  & 0.03 & 0.02     & 0.40  & 1.43 & 0.90  & 0.49   & 4.18    & 94.7  & TLE    & MLE  \\
-        \textsc{CluStRE}   & 0.02 & 0.02     & 0.02  & 0.04 & 0.02  & 0.02   & 0.02    & 0.05  & 0.92   & 1.05 \\
-        \textsc{Hollocou}  & 0.01 & 0.01     & 0.01  & 0.01 & 0.01  & 0.01   & 0.02    & 0.04  & 0.88   & 1.09 \\
-        \textsc{Bayan}     & TLE  & TLE      & TLE   & TLE  & TLE   & TLE    & TLE     & MLE   & MLE    & MLE  \\
-        \midrule
-        \textsc{GNNS}      & 0.67 & 0.73     & 1.42  & 2.47 & 2.62  & 2.77   & 4.71    & 8.33  & 38.5   & 44.4 \\
-        \textsc{DGCluster} & 0.48 & 0.50     & 1.01  & 2.12 & 1.03  & 1.08   & 1.84    & 5.82  & MLE    & MLE  \\
-        \textsc{MAGI}      & 0.74 & 0.88     & 1.48  & 2.85 & 5.52  & 2.03   & 13.2    & 6.72  & 41.3   & TLE  \\
-        \textsc{LIM}       & 0.63 & 0.73     & 2.04  & 4.79 & 6.27  & 6.49   & 20.0    & MLE   & MLE    & MLE  \\
-        \textsc{DMoN}      & 0.41 & 0.49     & 1.39  & 3.01 & 2.42  & 1.14   & 5.55    & 13.4  & MLE    & MLE  \\
-        \textsc{UCoDe}     & 0.57 & 0.67     & 1.66  & 4.60 & 6.48  & 6.61   & 21.1    & MLE   & MLE    & MLE  \\
-        \textsc{CommDGI}   & 0.68 & 0.73     & 1.82  & 5.29 & 8.50  & 9.27   & 28.3    & MLE   & MLE    & MLE  \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Target epoch budgets for neural models are 400 for \textsc{MAGI}, 300 for \textsc{DGCluster} and \textsc{LIM}, 1\,000 for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 for \textsc{CommDGI}. For \textsc{GNNS}, the table reports total recurrent steps across its 3-stage schedule ($10+10+30 = 50$ steps per vectorized batch of random initializations across $100$ initializations, where all $100$ initializations fit into a single $50$-step batch when $n \cdot k \le 10^8$ and split into multiple sequential batches of $50$ steps up to $100 \times 50 = 5\,000$ steps on larger graphs).}
-    \label{tab:iterations}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
-        \midrule
-        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 120    & 300 \\
-        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 270   & MLE    & MLE \\
-        \textsc{MAGI}      & 400  & 400      & 400   & 142  & 50    & 140    & 12      & 5     & 7      & TLE \\
-        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 111     & MLE   & MLE    & MLE \\
-        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 819     & 583   & MLE    & MLE \\
-        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 960   & 1000   & 280     & MLE   & MLE    & MLE \\
-        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 986  & 564   & 560    & 166     & MLE   & MLE    & MLE \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\section{Hardware Scaling Comparison (Protocol~S)}
-\label{sec:par-seq}
-
-\begin{table}[H]
-    \centering
-    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~S on multi-core CPU ($p=32$, \texttt{device=cpu}, 1-hour limit, matched cluster budgets $k$ identical to Protocol~A). Target epoch budgets are 400 for \textsc{MAGI}, 300 for \textsc{DGCluster} and \textsc{LIM}, 1\,000 for \textsc{DMoN} and \textsc{UCoDe}, and 1\,001 for \textsc{CommDGI}. For \textsc{GNNS}, total recurrent steps ($50$ per batch of random initializations across $100$ initializations) increase with $n \cdot k$ up to $100 \times 50 = 5\,000$.}
-    \label{tab:iterations_cpu32}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
-        \midrule
-        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 500    & 2050 \\
-        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 300   & MLE    & MLE \\
-        \textsc{MAGI}      & 400  & 400      & 400   & 314  & 185   & 380    & 51      & 15    & 17     & TLE \\
-        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 300     & MLE   & MLE    & MLE \\
-        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & 1000  & MLE    & MLE \\
-        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & MLE   & MLE    & MLE \\
-        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 1001 & 1001  & 1001   & 1001    & MLE   & MLE    & MLE \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Number of completed training epochs/iterations on the \textsc{Ground-Truth} dataset under Protocol~S with GPU acceleration ($p=32$, \texttt{device=cuda} with an NVIDIA RTX~4090 GPU, 1-hour limit, matched cluster budgets $k$ identical to Protocol~A). Target epoch budgets and \textsc{GNNS} batch step counts follow Table~\ref{tab:iterations_cpu32}.}
-    \label{tab:iterations_gpu}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method             & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
-        \midrule
-        \textsc{GNNS}      & 50   & 50       & 50    & 50   & 50    & 50     & 50      & 400   & 500    & 5000 \\
-        \textsc{DGCluster} & 300  & 300      & 300   & 300  & 300   & 300    & 300     & 300   & MLE    & MLE \\
-        \textsc{MAGI}      & 400  & 400      & 400   & 400  & 400   & 400    & 165     & 32    & 25     & TLE \\
-        \textsc{LIM}       & 300  & 300      & 300   & 300  & 300   & 300    & 300     & MLE   & MLE    & MLE \\
-        \textsc{DMoN}      & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & 1000  & MLE    & MLE \\
-        \textsc{UCoDe}     & 1000 & 1000     & 1000  & 1000 & 1000  & 1000   & 1000    & MLE   & MLE    & MLE \\
-        \textsc{CommDGI}   & 1001 & 1001     & 1001  & 1001 & 1001  & 1001   & MLE     & MLE   & MLE    & MLE \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Execution time in seconds across hardware configurations on the \textsc{Ground-Truth} dataset comparing Protocol~A ($t_1$: 1~CPU thread) against Protocol~S ($t_{32}$: 32~CPU threads, $t_{\text{GPU}}$: 32~CPU threads + NVIDIA RTX~4090 GPU) under identical cluster budgets $k$. Top panel: small-to-medium graphs. Bottom panel: medium-to-large graphs. \textsc{VieClus} is omitted as it is an anytime evolutionary algorithm with a fixed 1-hour time budget rather than a converging iterative solver.}
-    \label{tab:par-seq}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{2.0pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr@{}}
-        \toprule
-        & \multicolumn{3}{c}{\textbf{Cora}} & \multicolumn{3}{c}{\textbf{CiteSeer}} & \multicolumn{3}{c}{\textbf{Photo}} & \multicolumn{3}{c}{\textbf{Comp}} & \multicolumn{3}{c}{\textbf{Co-CS}} \\
-        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
-        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
-        \midrule
-        \textsc{GNNS}      & 5.27 & 1.73 & 0.25 & 6.69 & 1.90 & 0.19 & 19.9 & 4.19 & 0.49 & 45.1 & 11.5 & 1.26 & 48.4 & 12.0 & 0.73 \\
-        \textsc{DGCluster} & 25.6 & 6.71 & 2.47 & 43.4 & 8.15 & 2.14 & 287  & 68.2 & 5.98 & 604  & 132  & 9.69 & 494  & 74.8 & 7.51 \\
-        \textsc{MAGI}      & 162  & 90.5 & 60.8 & 301  & 121  & 64.8 & 3015 & 1587 & 561  & 3606 & 3605 & 1630 & 3616 & 3607 & 2438 \\
-        \textsc{LIM}       & 66.4 & 7.02 & 0.97 & 140  & 17.5 & 1.08 & 695  & 104  & 3.69 & 1877 & 239  & 9.12 & 2960 & 303  & 11.7 \\
-        \textsc{DMoN}      & 93.8 & 35.1 & 22.3 & 197  & 66.1 & 21.4 & 480  & 158  & 56.4 & 971  & 292  & 95.2 & 1862 & 240  & 49.5 \\
-        \textsc{UCoDe}     & 91.4 & 10.7 & 1.93 & 184  & 18.7 & 1.98 & 559  & 45.1 & 3.72 & 1740 & 142  & 9.46 & 3605 & 275  & 17.1 \\
-        \textsc{CommDGI}   & 107  & 24.6 & 3.56 & 258  & 60.3 & 3.67 & 1217 & 274  & 7.54 & 3603 & 685  & 19.4 & 3605 & 1034 & 31.7 \\
-        \bottomrule
-    \end{tabular*}
-
-    \vspace{0.8em}
-
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrr rrr rrr rrr rrr@{}}
-        \toprule
-        & \multicolumn{3}{c}{\textbf{PubMed}} & \multicolumn{3}{c}{\textbf{Co-Phys}} & \multicolumn{3}{c}{\textbf{Arxiv}} & \multicolumn{3}{c}{\textbf{Reddit}} & \multicolumn{3}{c}{\textbf{Prod}} \\
-        \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-16}
-        Method & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ & $t_1$ & $t_{32}$ & $t_{\text{GPU}}$ \\
-        \midrule
-        \textsc{GNNS}      & 50.9 & 12.6 & 0.65 & 99.0 & 21.4 & 1.40 & 1130 & 232  & 13.8 & 4129 & 1421 & 220  & 3966 & 3836 & 1667 \\
-        \textsc{DGCluster} & 212  & 41.0 & 6.63 & 1266 & 187  & 17.3 & 3613 & 846  & 76.9 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{MAGI}      & 3603 & 3604 & 1542 & 3646 & 3613 & 3607 & 3827 & 3678 & 3676 & 3825 & 3712 & 3707 & TLE  & TLE  & TLE \\
-        \textsc{LIM}       & 2839 & 286  & 11.2 & 3615 & 912  & 40.5 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{DMoN}      & 427  & 130  & 30.9 & 3604 & 596  & 130  & 3605 & 1936 & 541  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{UCoDe}     & 3551 & 261  & 16.7 & 3616 & 937  & 52.1 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \textsc{CommDGI}   & 3606 & 1221 & 32.2 & 3625 & 3591 & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE  & MLE \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\section{Detailed Quality Results}
-\label{sec:detailed-results}
-
-\begin{table}[H]
-    \centering
-    \caption{Modularity scores on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit). Bold indicates the highest modularity per instance (evaluated at full precision). Classical combinatorial methods are separated from continuous and learning-based methods by a midrule.}
-    \label{tab:mod_gt}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
-        \midrule
-        \textsc{VieClus} & \textbf{0.825} & \textbf{0.894} & \textbf{0.740} & \textbf{0.642} & \textbf{0.759} & \textbf{0.790} & \textbf{0.696} & \textbf{0.718} & \textbf{0.742} & TLE \\
-        \textsc{Leiden} & 0.822 & 0.893 & 0.740 & 0.641 & 0.753 & 0.784 & 0.688 & 0.715 & 0.742 & \textbf{0.882} \\
-        \textsc{Louvain} & 0.815 & 0.890 & 0.739 & 0.639 & 0.739 & 0.771 & 0.668 & 0.709 & 0.739 & 0.877 \\
-        \textsc{COMBO} & 0.824 & 0.893 & 0.740 & 0.641 & 0.755 & TLE & TLE & MLE & MLE & MLE \\
-        \textsc{CNM} & 0.807 & 0.874 & 0.652 & 0.539 & 0.655 & 0.727 & 0.526 & 0.611 & TLE & TLE \\
-        \textsc{Infomap} & 0.799 & 0.877 & 0.615 & 0.596 & 0.713 & 0.732 & 0.596 & 0.635 & 0.157 & 0.026 \\
-        \textsc{Walktrap} & 0.765 & 0.826 & 0.703 & 0.597 & 0.686 & 0.711 & 0.567 & 0.573 & TLE & MLE \\
-        \textsc{CluStRE} & 0.550 & 0.612 & 0.545 & 0.422 & 0.416 & 0.386 & 0.372 & 0.398 & 0.656 & 0.664 \\
-        \textsc{Hollocou} & 0.406 & 0.683 & 0.394 & 0.201 & 0.301 & 0.355 & 0.255 & 0.177 & 0.032 & 0.157 \\
-        \textsc{Bayan} & TLE & TLE & TLE & TLE & TLE & TLE & TLE & MLE & MLE & MLE \\
-        \midrule
-        \textsc{GNNS} & 0.770 & 0.827 & 0.723 & 0.631 & 0.726 & 0.731 & 0.649 & 0.679 & 0.738 & 0.828 \\
-        \textsc{DGCluster} & 0.809 & 0.876 & 0.715 & 0.617 & 0.748 & 0.739 & 0.677 & 0.662 & MLE & MLE \\
-        \textsc{MAGI} & 0.749 & 0.722 & 0.721 & 0.617 & 0.731 & 0.612 & 0.622 & 0.561 & 0.691 & TLE \\
-        \textsc{LIM} & 0.771 & 0.814 & 0.646 & 0.556 & 0.654 & 0.656 & 0.573 & MLE & MLE & MLE \\
-        \textsc{DMoN} & 0.775 & 0.839 & 0.269 & 0.181 & 0.727 & 0.646 & 0.656 & 0.486 & MLE & MLE \\
-        \textsc{UCoDe} & 0.685 & 0.705 & 0.565 & 0.504 & 0.675 & 0.626 & 0.542 & MLE & MLE & MLE \\
-        \textsc{CommDGI} & 0.716 & 0.698 & 0.455 & 0.400 & 0.709 & 0.484 & 0.568 & MLE & MLE & MLE \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Normalized Mutual Information (NMI) scores on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit), evaluated on each solver's highest-modularity partition across five trials. Bold indicates the highest NMI per instance. The bottom reference row reports feature-only $k$-means ($k = |C|$ on raw node attributes, lowest inertia across five seeds, using mini-batch $k$-means for \texttt{reddit} and \texttt{ogbn-products}).}
-    \label{tab:nmi_gt}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
-        \midrule
-        \textsc{VieClus} & 0.481 & 0.377 & 0.664 & 0.547 & 0.656 & 0.237 & 0.528 & 0.425 & 0.829 & TLE \\
-        \textsc{Leiden} & 0.486 & 0.374 & 0.670 & 0.541 & 0.626 & 0.234 & 0.518 & 0.414 & 0.828 & \textbf{0.546} \\
-        \textsc{Louvain} & 0.470 & 0.373 & 0.671 & 0.537 & 0.592 & 0.229 & 0.478 & 0.403 & 0.811 & 0.524 \\
-        \textsc{COMBO} & 0.472 & 0.311 & 0.651 & 0.536 & 0.640 & TLE & TLE & MLE & MLE & MLE \\
-        \textsc{CNM} & 0.488 & 0.378 & 0.570 & 0.398 & 0.507 & 0.243 & 0.301 & 0.334 & TLE & TLE \\
-        \textsc{Infomap} & 0.476 & 0.374 & 0.573 & 0.545 & 0.595 & 0.259 & 0.556 & 0.427 & 0.389 & 0.083 \\
-        \textsc{Walktrap} & 0.469 & 0.400 & 0.609 & 0.520 & 0.539 & 0.234 & 0.431 & \textbf{0.467} & TLE & MLE \\
-        \textsc{CluStRE} & 0.463 & 0.419 & 0.516 & 0.464 & 0.486 & 0.273 & 0.365 & 0.445 & 0.744 & 0.450 \\
-        \textsc{Hollocou} & 0.339 & 0.405 & 0.389 & 0.256 & 0.310 & 0.213 & 0.257 & 0.347 & 0.291 & 0.358 \\
-        \textsc{Bayan} & TLE & TLE & TLE & TLE & TLE & TLE & TLE & MLE & MLE & MLE \\
-        \midrule
-        \textsc{GNNS} & 0.281 & 0.063 & 0.578 & 0.474 & 0.526 & 0.119 & 0.323 & 0.263 & 0.822 & 0.314 \\
-        \textsc{DGCluster} & 0.504 & 0.272 & \textbf{0.700} & 0.520 & 0.713 & 0.283 & 0.574 & 0.411 & MLE & MLE \\
-        \textsc{MAGI} & 0.476 & 0.257 & 0.688 & \textbf{0.570} & 0.660 & 0.306 & 0.533 & 0.439 & \textbf{0.870} & TLE \\
-        \textsc{LIM} & 0.546 & 0.325 & 0.658 & 0.450 & 0.640 & 0.251 & 0.545 & MLE & MLE & MLE \\
-        \textsc{DMoN} & 0.504 & 0.307 & 0.172 & 0.166 & 0.712 & 0.273 & 0.563 & 0.368 & MLE & MLE \\
-        \textsc{UCoDe} & \textbf{0.565} & \textbf{0.430} & 0.539 & 0.385 & 0.703 & 0.221 & 0.507 & MLE & MLE & MLE \\
-        \textsc{CommDGI} & 0.509 & 0.345 & 0.355 & 0.268 & \textbf{0.743} & \textbf{0.338} & \textbf{0.611} & MLE & MLE & MLE \\
-        \midrule
-        \textsc{$k$-Means} (feat.) & 0.167 & 0.218 & 0.127 & 0.133 & 0.571 & 0.312 & 0.378 & 0.224 & 0.230 & 0.228 \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Adjusted Rand Index (ARI) scores on the \textsc{Ground-Truth} dataset under Protocol~A (single-threaded CPU, 1-hour limit), evaluated on each solver's highest-modularity partition across five trials. Bold indicates the highest ARI per instance. The bottom reference row reports feature-only $k$-means ($k = |C|$ on raw node attributes).}
-    \label{tab:ari_gt}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{3.5pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method & Cora & CiteSeer & Photo & Comp & Co-CS & PubMed & Co-Phys & Arxiv & Reddit & Prod \\
-        \midrule
-        \textsc{VieClus} & 0.238 & 0.098 & 0.560 & 0.300 & 0.514 & 0.086 & 0.231 & 0.257 & 0.710 & TLE \\
-        \textsc{Leiden} & 0.264 & 0.098 & 0.556 & 0.294 & 0.476 & 0.093 & 0.249 & 0.258 & 0.710 & \textbf{0.328} \\
-        \textsc{Louvain} & 0.261 & 0.094 & 0.555 & 0.295 & 0.436 & 0.099 & 0.234 & 0.255 & 0.662 & 0.302 \\
-        \textsc{COMBO} & 0.263 & 0.098 & 0.557 & 0.297 & 0.509 & TLE & TLE & MLE & MLE & MLE \\
-        \textsc{CNM} & 0.279 & 0.121 & 0.439 & 0.173 & 0.415 & 0.173 & 0.233 & 0.263 & TLE & TLE \\
-        \textsc{Infomap} & 0.281 & 0.140 & 0.351 & 0.301 & 0.566 & 0.224 & \textbf{0.501} & \textbf{0.377} & 0.038 & $-$0.018 \\
-        \textsc{Walktrap} & 0.190 & 0.125 & 0.420 & 0.320 & 0.351 & 0.080 & 0.214 & 0.245 & TLE & MLE \\
-        \textsc{CluStRE} & 0.021 & 0.008 & 0.168 & 0.100 & 0.018 & 0.002 & 0.003 & 0.048 & 0.684 & 0.016 \\
-        \textsc{Hollocou} & 0.062 & 0.107 & 0.244 & 0.094 & 0.106 & 0.036 & 0.051 & 0.026 & 0.027 & 0.003 \\
-        \textsc{Bayan} & TLE & TLE & TLE & TLE & TLE & TLE & TLE & MLE & MLE & MLE \\
-        \midrule
-        \textsc{GNNS} & 0.172 & 0.031 & 0.506 & 0.258 & 0.382 & 0.053 & 0.163 & 0.182 & 0.727 & 0.190 \\
-        \textsc{DGCluster} & 0.333 & 0.133 & 0.599 & 0.364 & 0.613 & 0.161 & 0.277 & 0.309 & MLE & MLE \\
-        \textsc{MAGI} & 0.376 & 0.106 & \textbf{0.604} & \textbf{0.404} & 0.501 & \textbf{0.294} & 0.374 & 0.239 & \textbf{0.904} & TLE \\
-        \textsc{LIM} & 0.412 & 0.292 & 0.492 & 0.315 & 0.495 & 0.208 & 0.395 & MLE & MLE & MLE \\
-        \textsc{DMoN} & 0.330 & 0.204 & 0.071 & 0.047 & 0.550 & 0.108 & 0.229 & 0.165 & MLE & MLE \\
-        \textsc{UCoDe} & \textbf{0.510} & \textbf{0.435} & 0.389 & 0.266 & 0.563 & 0.179 & 0.312 & MLE & MLE & MLE \\
-        \textsc{CommDGI} & 0.430 & 0.346 & 0.249 & 0.201 & \textbf{0.707} & 0.293 & 0.483 & MLE & MLE & MLE \\
-        \midrule
-        \textsc{$k$-Means} (feat.) & 0.091 & 0.161 & 0.051 & 0.072 & 0.320 & 0.280 & 0.143 & 0.071 & 0.066 & 0.059 \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Small-scale networks ($n \le 1\,133$). Bold indicates the highest modularity per instance (at full precision). Columns with a gray background indicate instances where \textsc{Bayan} terminated with the globally optimal modularity in our benchmark run. An asterisk ($^*$) marks additional instances whose global optimum is known from the literature~\cite{bayan2024,maxsat2025}, but where \textsc{Bayan} did not prove optimality within our 1-hour limit (\texttt{adjnoun} found the optimal $0.313$ partition but still had a $23.6\%$ optimality gap at timeout, and \texttt{jazz} timed out). Scores of $0.000$ denote collapse to a single community ($k=1$). Entries marked \textsc{ERR} indicate runtime failures (for \textsc{LIM}, when \textsc{Louvain} initialization at $\gamma = 0.3$ collapses to one cluster).}
-    \label{tab:mod_dimacs_small}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{2.9pt}
-    \setlength{\aboverulesep}{0pt}
-    \setlength{\belowrulesep}{0pt}
-    \setlength{\extrarowheight}{1.5pt}
-    \begin{tabular}{l >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r >{\columncolor{gray!12}}r r >{\columncolor{gray!12}}r r r r r}
-        \toprule
-        Method & karate & chesap. & dolph. & lesmis & polbks. & adjnoun$^*$ & footb. & jazz$^*$ & celeg-n & celeg-m & email \\
-        \midrule
-        \textsc{VieClus} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & \textbf{0.313} & \textbf{0.605} & \textbf{0.445} & \textbf{0.406} & \textbf{0.453} & \textbf{0.583} \\
-        \textsc{Leiden} & \textbf{0.420} & \textbf{0.266} & 0.528 & \textbf{0.560} & \textbf{0.527} & 0.311 & \textbf{0.605} & \textbf{0.445} & 0.406 & 0.450 & 0.580 \\
-        \textsc{Louvain} & 0.419 & \textbf{0.266} & 0.528 & 0.558 & 0.527 & 0.303 & \textbf{0.605} & 0.445 & 0.398 & 0.443 & 0.569 \\
-        \textsc{COMBO} & \textbf{0.420} & \textbf{0.266} & 0.527 & \textbf{0.560} & \textbf{0.527} & 0.311 & \textbf{0.605} & 0.444 & 0.406 & 0.453 & 0.583 \\
-        \textsc{CNM} & 0.381 & 0.249 & 0.495 & 0.501 & 0.502 & 0.295 & 0.550 & 0.439 & 0.372 & 0.405 & 0.507 \\
-        \textsc{Infomap} & 0.402 & 0.000 & \textbf{0.529} & 0.551 & 0.527 & 0.009 & 0.603 & 0.443 & 0.394 & 0.423 & 0.539 \\
-        \textsc{Walktrap} & 0.353 & 0.226 & 0.489 & 0.521 & 0.507 & 0.216 & 0.603 & 0.438 & 0.353 & 0.349 & 0.531 \\
-        \textsc{CluStRE} & 0.251 & 0.198 & 0.355 & 0.516 & 0.482 & 0.250 & 0.420 & 0.382 & 0.296 & 0.296 & 0.434 \\
-        \textsc{Hollocou} & 0.020 & 0.000 & 0.279 & 0.006 & 0.007 & 0.000 & 0.000 & 0.001 & 0.000 & 0.003 & 0.003 \\
-        \textsc{Bayan} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & \textbf{0.527} & \textbf{0.313} & \textbf{0.605} & TLE & TLE & TLE & TLE \\
-        \midrule
-        \textsc{GNNS} & \textbf{0.420} & \textbf{0.266} & \textbf{0.529} & \textbf{0.560} & 0.527 & 0.308 & \textbf{0.605} & \textbf{0.445} & 0.406 & 0.439 & 0.572 \\
-        \textsc{DGCluster} & \textbf{0.420} & \textbf{0.266} & 0.528 & 0.558 & 0.513 & 0.303 & 0.604 & 0.444 & 0.396 & 0.438 & 0.558 \\
-        \textsc{MAGI} & 0.260 & $-$0.020 & 0.189 & 0.279 & 0.129 & 0.013 & 0.127 & 0.020 & 0.024 & 0.047 & 0.018 \\
-        \textsc{LIM} & ERR & ERR & 0.000 & 0.000 & 0.000 & ERR & 0.000 & 0.000 & ERR & 0.000 & 0.000 \\
-        \textsc{DMoN} & 0.337 & 0.204 & 0.470 & 0.538 & 0.424 & 0.264 & 0.589 & 0.288 & 0.292 & 0.355 & 0.426 \\
-        \textsc{UCoDe} & 0.402 & 0.262 & 0.525 & 0.553 & 0.519 & 0.286 & 0.584 & 0.439 & 0.365 & 0.363 & 0.372 \\
-        \textsc{CommDGI} & \textbf{0.420} & 0.250 & 0.506 & 0.540 & 0.521 & 0.261 & 0.595 & 0.406 & 0.359 & 0.356 & 0.294 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Medium-scale networks ($1.5\,\text{k} \le n \le 100\,\text{k}$). Bold indicates the highest modularity per instance (at full precision).}
-    \label{tab:mod_dimacs_med}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{1.2pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrrr@{}}
-        \toprule
-        Method & polblogs & netsci & power & hep-th & PGPgiant & astro-ph & cond-mat & as-22j & cond-03 & cond-05 & pref-att \\
-        \midrule
-        \textsc{VieClus} & \textbf{0.427} & \textbf{0.960} & \textbf{0.941} & \textbf{0.858} & \textbf{0.887} & \textbf{0.746} & \textbf{0.855} & \textbf{0.679} & \textbf{0.782} & \textbf{0.750} & \textbf{0.311} \\
-        \textsc{Leiden} & \textbf{0.427} & 0.960 & 0.939 & 0.855 & 0.886 & 0.740 & 0.851 & 0.677 & 0.775 & 0.742 & 0.296 \\
-        \textsc{Louvain} & 0.427 & 0.959 & 0.936 & 0.852 & 0.883 & 0.734 & 0.846 & 0.662 & 0.766 & 0.729 & 0.291 \\
-        \textsc{COMBO} & 0.427 & 0.960 & 0.939 & 0.855 & 0.880 & 0.737 & 0.844 & TLE & TLE & TLE & MLE \\
-        \textsc{CNM} & 0.427 & 0.955 & 0.934 & 0.811 & 0.852 & 0.624 & 0.777 & 0.626 & 0.679 & 0.654 & 0.277 \\
-        \textsc{Infomap} & 0.425 & 0.958 & 0.795 & 0.847 & 0.131 & 0.667 & 0.841 & 0.614 & 0.664 & 0.661 & 0.192 \\
-        \textsc{Walktrap} & 0.425 & 0.956 & 0.831 & 0.756 & 0.789 & 0.636 & 0.742 & 0.586 & 0.646 & 0.599 & 0.151 \\
-        \textsc{CluStRE} & 0.276 & 0.929 & 0.633 & 0.732 & 0.599 & 0.627 & 0.746 & 0.541 & 0.656 & 0.612 & 0.260 \\
-        \textsc{Hollocou} & 0.003 & 0.880 & 0.635 & 0.515 & 0.506 & 0.342 & 0.505 & 0.149 & 0.391 & 0.339 & 0.135 \\
-        \textsc{Bayan} & TLE & 0.960 & TLE & TLE & TLE & TLE & TLE & TLE & TLE & TLE & TLE \\
-        \midrule
-        \textsc{GNNS} & 0.427 & 0.929 & 0.843 & 0.803 & 0.852 & 0.701 & 0.787 & 0.643 & 0.715 & 0.676 & 0.240 \\
-        \textsc{DGCluster} & 0.424 & 0.931 & 0.521 & 0.584 & 0.565 & 0.571 & 0.570 & 0.507 & 0.485 & 0.446 & 0.082 \\
-        \textsc{MAGI} & 0.001 & 0.388 & 0.913 & 0.799 & 0.821 & 0.562 & 0.725 & 0.408 & 0.499 & 0.417 & 0.027 \\
-        \textsc{LIM} & 0.402 & 0.823 & 0.426 & 0.461 & 0.420 & 0.507 & 0.492 & 0.315 & 0.392 & 0.272 & MLE \\
-        \textsc{DMoN} & 0.182 & 0.870 & 0.542 & 0.564 & 0.557 & 0.525 & 0.543 & 0.173 & 0.418 & 0.359 & 0.035 \\
-        \textsc{UCoDe} & 0.359 & 0.697 & 0.391 & 0.394 & 0.390 & 0.376 & 0.358 & 0.103 & 0.174 & 0.143 & MLE \\
-        \textsc{CommDGI} & 0.004 & 0.756 & 0.350 & 0.388 & 0.397 & 0.391 & 0.368 & 0.083 & 0.261 & 0.221 & MLE \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \caption{Modularity scores on the \textsc{DIMACS} benchmark suite under Protocol~A (single-threaded CPU, 1-hour limit): Large and web-scale networks ($100\,\text{k} \le n \le 105\,\text{M}$). Bold indicates the highest modularity per instance (at full precision). On \texttt{uk-2007-05} ($3.3$~billion edges), \textsc{VieClus} terminates with \textsc{ERR} due to 32-bit edge-index overflow.}
-    \label{tab:mod_dimacs_large}
-    \vspace{0.5em}
-    \small
-    \setlength{\tabcolsep}{1.2pt}
-    \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l rrrrrrrrrr@{}}
-        \toprule
-        Method & smallwld & G-pin-pout & caida & cnr-2000 & eu-2005 & in-2004 & road-cent & uk-2002 & road-usa & uk-2007 \\
-        \midrule
-        \textsc{VieClus} & \textbf{0.793} & \textbf{0.500} & \textbf{0.873} & \textbf{0.913} & \textbf{0.942} & \textbf{0.981} & \textbf{0.998} & TLE & \textbf{0.998} & ERR \\
-        \textsc{Leiden} & 0.793 & 0.488 & 0.870 & 0.913 & 0.941 & 0.981 & 0.998 & \textbf{0.990} & 0.998 & MLE \\
-        \textsc{Louvain} & 0.793 & 0.389 & 0.863 & 0.913 & 0.939 & 0.980 & 0.997 & TLE & 0.998 & MLE \\
-        \textsc{COMBO} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
-        \textsc{CNM} & 0.786 & 0.324 & 0.774 & 0.900 & TLE & 0.968 & 0.997 & MLE & 0.998 & MLE \\
-        \textsc{Infomap} & 0.791 & 0.477 & 0.864 & 0.551 & 0.523 & 0.884 & TLE & 0.688 & TLE & MLE \\
-        \textsc{Walktrap} & 0.745 & 0.351 & 0.682 & 0.863 & MLE & MLE & TLE & MLE & TLE & MLE \\
-        \textsc{CluStRE} & 0.694 & 0.200 & 0.731 & 0.592 & 0.736 & 0.712 & 0.595 & 0.699 & 0.643 & \textbf{0.694} \\
-        \textsc{Hollocou} & 0.323 & 0.154 & 0.391 & 0.447 & 0.231 & 0.600 & 0.671 & 0.621 & 0.671 & 0.271 \\
-        \textsc{Bayan} & TLE & TLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
-        \midrule
-        \textsc{GNNS} & 0.692 & 0.497 & 0.832 & 0.902 & 0.927 & 0.969 & MLE & MLE & MLE & MLE \\
-        \textsc{DGCluster} & 0.309 & 0.085 & 0.394 & 0.779 & 0.599 & 0.551 & MLE & MLE & MLE & MLE \\
-        \textsc{MAGI} & 0.413 & 0.049 & TLE & TLE & TLE & TLE & TLE & MLE & TLE & MLE \\
-        \textsc{LIM} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
-        \textsc{DMoN} & 0.244 & 0.041 & 0.137 & 0.125 & MLE & MLE & MLE & MLE & MLE & MLE \\
-        \textsc{UCoDe} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
-        \textsc{CommDGI} & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE & MLE \\
-        \bottomrule
-    \end{tabular*}
-\end{table}
-
 
 % =========================================================================
 % Embedded BibTeX Database (Self-Contained for Nature Communications)

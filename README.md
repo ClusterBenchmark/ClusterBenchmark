@@ -17,7 +17,6 @@ The benchmark evaluates **17 community detection algorithms** (10 classical heur
 ```text
 ClusterBenchmark/
 ├── data/                  # Small sample graph (Cora) for quick smoke tests
-├── docs/                  # Objective functions and evaluation metrics reference
 ├── external/              # Per-solver wrappers (build.sh, solver.json, adapter scripts)
 ├── include/, src/         # C source for CONVERT (METIS -> binary CSR) and EVAL
 ├── Makefile               # Builds CONVERT and EVAL
@@ -188,4 +187,4 @@ Input source files follow simple text formats (converted to binary `.csr` / `.fe
 
 ## Evaluation Metrics (`EVAL`)
 
-Build with `make EVAL` and run `./EVAL <graph.metis> <pred.labels> [truth.labels]`. `EVAL` reports modularity ($Q$), its exact integer numerator $N$, cluster count, conductance, cut ratio, and (when ground-truth labels are supplied) NMI, ARI, and edge-level F1. Mathematical definitions are documented in [docs/Objective_Functions.md](docs/Objective_Functions.md).
+Build with `make EVAL` and run `./EVAL <graph.metis> <pred.labels> [truth.labels]`. `EVAL` reports modularity ($Q$), its exact integer numerator $N$, cluster count, conductance, cut ratio, and (when ground-truth labels are supplied) NMI, ARI, and edge-level F1.
